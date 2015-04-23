@@ -220,8 +220,8 @@ class Transmition(object):
         if gear_one.beta is not gear_two.beta:
             raise Warning("the helix angle of the two gears are different")
 
-        self.u_real = gear_one.z / gear_two.z
-        self.u = rpm_out / rpm_in
+        self.u_real = gear_two.z / gear_one.z
+        self.u = rpm_in / rpm_out
         self.u_error = abs(1 - (self.u_real / self.u)) * 100
         inv = involute(gear_one.alpha_t) + 2 * (gear_one.x + gear_two.x) / (gear_one.z + gear_two.z) * tan(
             radians(gear_one.alpha))

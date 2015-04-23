@@ -1,35 +1,30 @@
 from math import pi, sqrt, log, ceil, sin, radians, degrees, asin, cos, atan, tan, acos
-
 from numpy import interp, max, abs
-
-
-# pitting from AGMA-2101 D04
 from main import arcinvolute
 
 
-class Pitting:
-    def __init__(self, ka, sHMin, pair):
-        self.ka = ka
-        self.sHMin = sHMin
-        self.pair = pair
-        self.Ft = 1000. * pair.n * 60000 / (
-            pi * pair.gearOne.d * pair.rpmGearOne)
+# pitting from AGMA-2101 D04
+class Pitting(object):
+    def __init__(self, transmition):
+        self.transmition = transmition
+
 
     def calculate(self):
-        d = self.pair.gearOne.d
-        b = self.pair.gearOne.bs
+        pair = self.transmition
+        d = pair.gear_one.d
+        b = pair.gear_two.bs
 
-        Cp = self.__ElasticCoefficient__()
-        Ft = self.Ft
-        Ka = self.ka
-        Ks = __SizeFactor__(self.pair)
-        Kh = __LoadDistribution__(self.pair)
+        Cp = self.__ElasticCoefficient__(pair)
+        Ft = pair.ft
+        Ka = pair.ka
+        Ks = __SizeFactor__(pair)
+        Kh = __LoadDistribution__(pair)
         Cf = 1
 
-        Kv = __DynamicFactor__(self.pair)
-        I = __GeometryFactor__(self.pair)['I']
+        Kv = __DynamicFactor__(pair)
+        I = __GeometryFactor__(pair)['I']
 
-        #Ko = OverloadFactor(pair)
+        # Ko = OverloadFactor(pair)
         SigmaH = Cp * sqrt(
             Ft * Ka * Kv * Ks * (Kh / (d * b)) * Cf / I)
         return {
@@ -44,11 +39,12 @@ class Pitting:
             'I': I
         }
 
-    def __ElasticCoefficient__(self):
-        eOne = self.pair.gearOne.e
-        eTwo = self.pair.gearTwo.e
-        pOne = self.pair.gearOne.poisson
-        pTwo = self.pair.gearTwo.poisson
+    @staticmethod
+    def __ElasticCoefficient__(pair):
+        eOne = pair.gear_one.material.e
+        eTwo = pair.gear_two.material.e
+        pOne = pair.gear_one.material.poisson
+        pTwo = pair.gear_two.material.poisson
 
         if eOne == eTwo:
             return sqrt(eOne / (2 * pi * (1 - pOne ** 2)))
@@ -57,26 +53,24 @@ class Pitting:
 
 
 #Bending from AGMA-2101 D04
-class Bending:
-    def __init__(self, ka, sFMin, pair):
-        self.ka = ka
-        self.sHMin = sFMin
-        self.pair = pair
-        self.Ft = 1000. * pair.n * 60000 / (
-            pi * pair.gearOne.d * pair.rpmGearOne)
+class Bending(object):
+    def __init__(self, transmition):
+        self.transmition = transmition
+
 
     def calculate(self):
-        Ft = self.Ft
-        Ka = self.ka
+        pair = self.transmition
+        Ft = pair.ft
+        Ka = pair.ka
 
-        b = self.pair.gearOne.bs
-        mt = self.pair.gearOne.m / cos(radians(self.pair.gearOne.beta))
+        b = pair.gear_one.bs
+        mt = pair.gear_one.m / cos(radians(pair.gear_one.beta))
 
-        Kv = __DynamicFactor__(self.pair)
-        Ks = __SizeFactor__(self.pair)
-        J = __GeometryFactor__(self.pair)['J']
-        Kh = __LoadDistribution__(self.pair)
-        Kb = __RimThicknessFactor__(self.pair)
+        Kv = __DynamicFactor__(pair)
+        Ks = __SizeFactor__(pair)
+        J = __GeometryFactor__(pair)['J']
+        Kh = __LoadDistribution__(pair)
+        Kb = __RimThicknessFactor__(pair)
 
         sigmaFOne = Ft * Ka * Kv * Ks * (1. / (b * mt)) * (Kh * Kb / J[0])
         sigmaFTwo = Ft * Ka * Kv * Ks * (1. / (b * mt)) * (Kh * Kb / J[1])
@@ -94,31 +88,31 @@ class Bending:
 
 #influence Factors from AGMA AGMA-2101 D04
 def __GeometryFactor__(pair):
-    n1 = pair.gearOne.z
-    n2 = pair.gearTwo.z
-    nc1 = pair.gearOne.profile.nc
-    nc2 = pair.gearTwo.profile.nc
+    n1 = pair.gear_one.z
+    n2 = pair.gear_two.z
+    nc1 = pair.gear_one.profile.nc
+    nc2 = pair.gear_two.profile.nc
 
-    mn = pair.gearOne.m
-    fi_n = radians(pair.gearOne.alpha)
-    psi = radians(pair.gearOne.beta)
-    F = pair.gearOne.b / mn
+    mn = pair.gear_one.m
+    fi_n = radians(pair.gear_one.alpha)
+    psi = radians(pair.gear_one.beta)
+    F = pair.gear_one.b / mn
 
-    x1 = pair.gearOne.x
-    x2 = pair.gearTwo.x
-    xo1 = pair.gearOne.profile.x
-    xo2 = pair.gearTwo.profile.x
-    hao1 = pair.gearOne.profile.haP
-    hao2 = pair.gearTwo.profile.haP
-    rho_ao1 = pair.gearOne.profile.RhoAo
-    rho_ao2 = pair.gearTwo.profile.RhoAo
-    delta_ao1 = pair.gearOne.profile.deltaAo
-    delta_ao2 = pair.gearTwo.profile.deltaAo
-    delta_sn1 = pair.gearOne.backlash
-    delta_sn2 = pair.gearTwo.backlash
-    Ro1 = (pair.gearOne.da / 2) / mn
-    Ro2 = (pair.gearTwo.da / 2) / mn
-    mG = pair.uReal
+    x1 = pair.gear_one.x
+    x2 = pair.gear_two.x
+    xo1 = pair.gear_one.profile.x
+    xo2 = pair.gear_two.profile.x
+    hao1 = pair.gear_one.profile.ha_p
+    hao2 = pair.gear_two.profile.ha_p
+    rho_ao1 = pair.gear_one.profile.rho_ao
+    rho_ao2 = pair.gear_two.profile.rho_ao
+    delta_ao1 = pair.gear_one.profile.delta_ao
+    delta_ao2 = pair.gear_two.profile.delta_ao
+    delta_sn1 = pair.gear_one.backlash
+    delta_sn2 = pair.gear_two.backlash
+    Ro1 = (pair.gear_one.da / 2) / mn
+    Ro2 = (pair.gear_two.da / 2) / mn
+    mG = pair.u_real
     R1 = n1 / (2 * cos(psi))
     R2 = R1 * mG
     Cr = R1 + R2
@@ -299,10 +293,10 @@ def __GeometryFactor__(pair):
 
 #FIXME
 def __DynamicFactor__(pair):
-    fpt = pair.gearOne.Fpt
-    dT1 = pair.gearOne.da - 2 * pair.gearOne.m
-    dT2 = pair.gearTwo.da - 2 * pair.gearTwo.m
-    m = pair.gearOne.m
+    fpt = pair.gear_one.f_pt
+    dT1 = pair.gear_one.da - 2 * pair.gear_one.m
+    dT2 = pair.gear_two.da - 2 * pair.gear_two.m
+    m = pair.gear_one.m
 
     if 5 < dT1 <= 400:
         #Av1 = (log(abs(fpt)) - log(0.3 * m + 0.003 * dT1 + 5.2))/0.3466  + 5
@@ -319,7 +313,7 @@ def __DynamicFactor__(pair):
     Av = ceil(max([Av1, Av2]))
     B = 0.25 * (Av - 5.0) ** (2. / 3)
     C = 50 + 56 * (1 - B)
-    vt = pi * pair.rpmGearOne * pair.gearOne.d / 60000
+    vt = pi * pair.rpm_in * pair.gear_one.d / 60000
 
     return (C / (C + sqrt(196.85 * vt))) ** (-B)
 
@@ -328,12 +322,12 @@ def __SizeFactor__(pair):
     a = [5, 6, 8, 12, 20]
     b = [1, 1.05, 1.15, 1.25, 1.40]
 
-    if pair.gearOne.m < 5:
+    if pair.gear_one.m < 5:
         Ks = 1
-    elif pair.gearOne.m > 20:
+    elif pair.gear_one.m > 20:
         Ks = 1.40
     else:
-        Ks = interp(pair.gearOne.m, a, b)
+        Ks = interp(pair.gear_one.m, a, b)
 
     return Ks
 
@@ -342,16 +336,16 @@ def __LoadDistribution__(pair):
     Cmc = [1, 0.8]
     Ce = [0.8, 1]
 
-    if pair.gearOne.bs <= 25:
-        Cpf = -0.025 + pair.gearOne.bs / (10 * pair.gearOne.d)
-    elif 25 < pair.gearOne.bs <= 432:
-        Cpf = (pair.gearOne.bs / (
-            10 * pair.gearOne.d)) - 0.0375 + 0.000492 * pair.gearOne.bs
+    if pair.gear_one.bs <= 25:
+        Cpf = -0.025 + pair.gear_one.bs / (10 * pair.gear_one.d)
+    elif 25 < pair.gear_one.bs <= 432:
+        Cpf = (pair.gear_one.bs / (
+            10 * pair.gear_one.d)) - 0.0375 + 0.000492 * pair.gear_one.bs
     else:
-        Cpf = (pair.gearOne.bs / (
-            10 * pair.gearOne.d)) - 0.1109 + 0.000815 * pair.gearOne.bs - 0.000000353 * pair.gearOne.bs ** 2
+        Cpf = (pair.gear_one.bs / (
+            10 * pair.gear_one.d)) - 0.1109 + 0.000815 * pair.gear_one.bs - 0.000000353 * pair.gear_one.bs ** 2
 
-    if pair.gearOne.s / pair.gearOne.l < 0.175:
+    if pair.gear_one.s / pair.gear_one.l < 0.175:
         Cpm = 1
     else:
         Cpm = 1.1
@@ -360,20 +354,18 @@ def __LoadDistribution__(pair):
     B = [0.657e-3, 0.622e-3, 0.504e-3, 0.402e-3]
     C = [-1.186e-7, -1.69e-7, -1.44e-7, -1.27e-7]
 
-    Cma = A[pair.gearBoxType - 1] + (B[pair.gearBoxType - 1] * pair.gearOne.bs) + (
-                                                                                      C[
-                                                                                          pair.gearBoxType - 1] * pair.gearOne.bs) ** 2
+    Cma = A[pair.gear_box_type - 1] + (B[pair.gear_box_type - 1] * pair.gear_one.bs) + (C[pair.gear_box_type - 1] * pair.gear_one.bs) ** 2
 
-    return 1. + Cmc[pair.gearCrown - 1] * (Cpf * Cpm + Cma * Ce[pair.gearCondition - 1])
+    return 1. + Cmc[pair.gear_one.gear_crown - 1] * (Cpf * Cpm + Cma * Ce[pair.gear_one.gear_condition - 1])
 
 
 def __RimThicknessFactor__(pair):
-    ht = pair.gearOne.h
+    ht = pair.gear_one.h
 
-    if pair.gearOne.sr == 0:
-        tr = pair.gearOne.df - pair.gearOne.shaftDiameter
+    if pair.gear_one.sr == 0:
+        tr = pair.gear_one.df - pair.gear_one.shaft_diameter
     else:
-        tr = pair.gearOne.sr
+        tr = pair.gear_one.sr
 
     mb = tr / ht
 

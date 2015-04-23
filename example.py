@@ -1,8 +1,7 @@
 from main.gearbox import *
-
 from standards.iso import Pitting as iso_pitting
 from standards.iso import Bending as iso_bending
-
+from standards.agma import Pitting, Bending
 
 lubricant = Lubricant(
     name='Kiruna',
@@ -72,7 +71,7 @@ gear = Gear(
 
 pair = [pinion, gear]
 
-transmision = Transmition(
+transmition = Transmition(
     gears=pair,
     lubricant=lubricant,
     rpm_in=1450.0,
@@ -85,10 +84,22 @@ transmision = Transmition(
     sf_min=1
 )
 
-# a = iso_pitting(transmition=transmision)
-# b = a.calculate()
-# print b
+print '========================================'
+print 'ISO Pitting'
+print iso_pitting(transmition=transmition).calculate()
+print '========================================'
 
-a = iso_bending(transmition=transmision)
-b = a.calculate()
-print b
+print '========================================'
+print 'ISO Bending'
+print iso_bending(transmition=transmition).calculate()
+print '========================================'
+
+print '========================================'
+print 'AGMA Pitting'
+print Pitting(transmition=transmition).calculate()
+print '========================================'
+
+print '========================================'
+print 'AGMA Bending'
+print Bending(transmition=transmition).calculate()
+print '========================================'
