@@ -1,10 +1,17 @@
 from math import pi, sqrt, log, ceil, sin, radians, degrees, asin, cos, atan, tan, acos
-from numpy import interp, max, abs
+
+from numpy import interp, max
+
 from main import arcinvolute
 
 
 # pitting from AGMA-2101 D04
 class Pitting(object):
+    """
+
+    :param transmition:
+    """
+
     def __init__(self, transmition):
         self.transmition = transmition
 
@@ -52,8 +59,13 @@ class Pitting(object):
             return sqrt(1 / (pi * (((1 - pOne) / eOne) + (1 - pTwo) / eTwo)))
 
 
-#Bending from AGMA-2101 D04
+# Bending from AGMA-2101 D04
 class Bending(object):
+    """
+
+    :param transmition:
+    """
+
     def __init__(self, transmition):
         self.transmition = transmition
 
@@ -86,7 +98,7 @@ class Bending(object):
         }
 
 
-#influence Factors from AGMA AGMA-2101 D04
+# influence Factors from AGMA AGMA-2101 D04
 def __GeometryFactor__(pair):
     n1 = pair.gear_one.z
     n2 = pair.gear_two.z
@@ -132,10 +144,10 @@ def __GeometryFactor__(pair):
     C6 = Cr * sin(fi_r)
     if n1 > 0:
         C1 = (C6 - sqrt(Ro2 ** 2 - Rb2 ** 2))
-        #C3 = C6 / (mG + 1)
+        # C3 = C6 / (mG + 1)
     else:
         C1 = -1 * (C6 - sqrt(Ro2 ** 2 - Rb2 ** 2))
-        #C3 = C6 / (mG - 1)
+        # C3 = C6 / (mG - 1)
 
     C4 = C1 + Pb
     C5 = sqrt(Ro1 ** 2. - Rb1 ** 2.)
@@ -164,7 +176,7 @@ def __GeometryFactor__(pair):
     psi_r = atan(tan(psi_b) / cos(fi_r))
     fi_nr = asin(cos(psi_b) * sin(fi_r))
 
-    #I FACTOR#
+    # I FACTOR#
     if n1 > 0:
         d = 2 * Cr / (mG + 1.)
         Rm1 = 0.5 * (Ro1 + (Cr - Ro2))
@@ -291,7 +303,7 @@ def __GeometryFactor__(pair):
     }
 
 
-#FIXME
+# FIXME
 def __DynamicFactor__(pair):
     fpt = pair.gear_one.f_pt
     dT1 = pair.gear_one.da - 2 * pair.gear_one.m
@@ -354,7 +366,8 @@ def __LoadDistribution__(pair):
     B = [0.657e-3, 0.622e-3, 0.504e-3, 0.402e-3]
     C = [-1.186e-7, -1.69e-7, -1.44e-7, -1.27e-7]
 
-    Cma = A[pair.gear_box_type - 1] + (B[pair.gear_box_type - 1] * pair.gear_one.bs) + (C[pair.gear_box_type - 1] * pair.gear_one.bs) ** 2
+    Cma = A[pair.gear_box_type - 1] + (B[pair.gear_box_type - 1] * pair.gear_one.bs) + (C[
+                                                                                            pair.gear_box_type - 1] * pair.gear_one.bs) ** 2
 
     return 1. + Cmc[pair.gear_one.gear_crown - 1] * (Cpf * Cpm + Cma * Ce[pair.gear_one.gear_condition - 1])
 
