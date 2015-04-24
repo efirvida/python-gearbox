@@ -40,8 +40,7 @@ class GearWheel(object):
     formcoords = None  # list of 2D-coordinates of points of half a tooth profile (TColgp_Array1OfPnt2d, pythonOCC)
     _formwire = None  # wire of half a tooth profile (TopoDS_Wire, pythonOCC)
 
-
-    def setResolution(self, curvename, value):
+    def set_resolution(self, curvename, value):
         """
         Set resolution for tooth form representation
 
@@ -64,8 +63,7 @@ class GearWheel(object):
         elif curvename == 'width':
             self.points_width = value
 
-
-    def getResolution(self, curvename):
+    def get_resolution(self, curvename):
         """
         Get resolution for tooth form representation
 
@@ -90,23 +88,7 @@ class GearWheel(object):
         elif curvename == 'width':
             return self.points_width
 
-
-    def setFormCoords(self, formcoords, formwire):
-        """
-        Set tooth form coordinates
-
-        INPUT parameters:
-        coords : list of 2d-coordinate points (TColgp_Array1OfPnt2d, pythonOCC)
-        wire   : wire describing the tooth form (TopoDS_Wire, pythonOCC)
-        """
-
-        # if formcoords.Length() < 2:
-        # raise TypeError, 'too few points for tooth form'
-
-        self.formcoords = formcoords
-        self._formwire = formwire
-
-    def _makeUnique(self, coords):
+    def _make_unique(self, coords):
         """
         Remove redundant entries from coordinate array
 
@@ -118,6 +100,7 @@ class GearWheel(object):
         """
 
         # tolerance for comparisons
+        index = None
         tol = self._tol_default * self.data.get('m_n')
 
         # upper and lower index of point-array
@@ -129,8 +112,7 @@ class GearWheel(object):
         for index in range(lower_index, upper_index):
             unique = True
             for unique_point in uniques:
-                if abs(coords[index][0] - unique_point[0]) < tol and \
-                                abs(coords[index][1] - unique_point[1]) < tol:
+                if abs(coords[index][0] - unique_point[0]) < tol and abs(coords[index][1] - unique_point[1]) < tol:
                     unique = False
             if unique:
                 uniques.append([coords[index][0], coords[index][1]])
@@ -152,7 +134,6 @@ class GearWheel(object):
 
         unique_coords.update({index + 1: [0.0, self.data['d_a'] / 2]})
         return unique_coords
-
 
     def __str__(self):
         """
@@ -181,13 +162,11 @@ class GearWheel(object):
             # upper and lower index of point-array
             outstr += '\ntooth form coordinates:\n'
             for coord in self.formcoords:
-                outstr += str(coord[0]) + '\t' + \
-                          str(coord[1]) + '\n'
+                outstr += str(coord[0]) + '\t' + str(coord[1]) + '\n'
 
         return outstr
 
-
-    def __init__(self, geardata, flankmods=None, formcoords=None):
+    def __init__(self, geardata, flankmods=None):
         """
         Initialization of GearWheel-object
         Should be overwritten in derived classes
@@ -200,10 +179,8 @@ class GearWheel(object):
 
         self.data = deepcopy(geardata)
         self.modifications = deepcopy(flankmods)
-        self.formcoords = self.setFormCoords(formcoords, None)
 
-
-    def getGearData(self):
+    def get_gear_data(self):
         """
         Return data-attribute of class
 
@@ -213,8 +190,7 @@ class GearWheel(object):
 
         return self.data
 
-
-    def setGearData(self, geardata):
+    def set_gear_data(self, geardata):
         """
         Set data-attribute of class, overwrite current value
 
@@ -223,10 +199,9 @@ class GearWheel(object):
                    for content, see method __init__
         """
 
-        self.__init__(geardata, self.modifications, self.formcoords)
+        self.__init__(geardata, self.modifications)
 
-
-    def updateGearData(self, geardata):
+    def update_gear_data(self, geardata):
         """
         Set data-attribute of class, update current value
 
@@ -237,10 +212,9 @@ class GearWheel(object):
 
         tempdata = self.data.copy()
         tempdata.update(geardata)
-        self.__init__(geardata, self.modifications, self.formcoords)
+        self.__init__(geardata, self.modifications)
 
-
-    def getFlankModifications(self):
+    def get_flank_modifications(self):
         """
         Return modifications-attribute of class
 
@@ -250,8 +224,7 @@ class GearWheel(object):
 
         return self.modifications
 
-
-    def setFlankModifications(self, flankmods):
+    def set_flank_modifications(self, flankmods):
         """
         Set modifications-attribute of class, overwrite current value
 
@@ -260,10 +233,9 @@ class GearWheel(object):
                     for content, see method __init__
         """
 
-        self.__init__(self.data, flankmods, self.formcoords)
+        self.__init__(self.data, flankmods)
 
-
-    def updateFlankModifications(self, flankmods):
+    def update_flank_modifications(self, flankmods):
         """
         Set modifications-attribute of class, update current value
 
@@ -274,7 +246,7 @@ class GearWheel(object):
 
         tempmods = self.modifications.copy()
         tempmods.update(flankmods)
-        self.__init__(self.data, tempmods, self.formcoords)
+        self.__init__(self.data, tempmods)
 
 
 class CylindricalGearWheel(GearWheel):
@@ -283,7 +255,7 @@ class CylindricalGearWheel(GearWheel):
     Derived from GearWheel-class
     """
 
-    def _toothThickness(self, d_y):
+    def _tooth_thickness(self, d_y):
         """
         Tooth thickness in transverse cross-section (chord-length)
 
@@ -300,17 +272,16 @@ class CylindricalGearWheel(GearWheel):
         if self.data.get('d') / d_y * cos(radians(self.data.get('alpha_t'))) > 1.0:
             alpha_yt = 0.0
         else:
-            alpha_yt = degrees(acos(self.data.get('d') / d_y * \
-                                    cos(radians(self.data.get('alpha_t')))))
-        s_yt = d_y * ((pi + 4 * self.data.get('x_E') * tan(radians(self.data.get('alpha_n')))) / \
-                      2 / self.data.get('z') + inv(self.data.get('alpha_t')) - inv(alpha_yt))
+            alpha_yt = degrees(acos(self.data.get('d') / d_y * cos(radians(self.data.get('alpha_t')))))
+        s_yt = d_y * (
+            (pi + 4 * self.data.get('x_E') * tan(radians(self.data.get('alpha_n')))) / 2 / self.data.get(
+                'z') + inv(self.data.get('alpha_t')) - inv(alpha_yt))
         s_y = d_y * (sin(s_yt / d_y))  # tooth thickness (chord-length)
         d_yc = d_y * (cos(s_yt / d_y))  # diameter at center of tooth (cut with chord)
 
         return s_y, d_yc
 
-
-    def _analyzeFormcoords(self):
+    def _analyze_formcoords(self):
         # ONLY FOR EXTERNAL GEARS SO FAR !!!
         """
         analyze tooth form coordinates in order to get necessary information for
@@ -325,12 +296,13 @@ class CylindricalGearWheel(GearWheel):
                     the dictionary contains at least the following keys:
                     d_f      : root circle diameter (numeric)
                     d_a      : tip diameter (numeric)
-                    d_Ff     : root form diameter (numeric)
-                    d_Fa     : tip form diameter (numeric)
+                    d_ff     : root form diameter (numeric)
+                    d_fa     : tip form diameter (numeric)
                     z        : number of teeth (numeric, integer)
         """
 
         # transform formcoords to NumPy-array
+        point = None
         half_tooth = self.formcoords
 
         # convert to polar coordinates
@@ -346,15 +318,14 @@ class CylindricalGearWheel(GearWheel):
 
         # for finding form diameters, it is checked if the points are part of the flank involute
         # the limiting points of the flank involute define the form diameters
-        if self.data.has_key('alpha_n') and self.data.has_key('alpha_t') and self.data.has_key('x_E'):
+        if 'alpha_n' in self.data and 'alpha_t' in self.data and 'x_E' in self.data:
             tol = self._tol_default * self.data.get('m_n')  # tolerance for comparisons
             point_on_flank = False
             first_limit_diameter = None
             second_limit_diameter = None
             for point in range(0, np.size(half_tooth_polar, 0)):
-                [x, y] = self._toothThickness(2 * half_tooth_polar[point, 0])
-                if abs(x + 2 * half_tooth[point + 1, 0]) < tol and abs(y - 2 * half_tooth[
-                            point + 1, 1]) < tol:  # numerical round off error may prevent this condition from becoming true!
+                [x, y] = self._tooth_thickness(2 * half_tooth_polar[point, 0])
+                if abs(x + 2 * half_tooth[point + 1, 0]) < tol and abs(y - 2 * half_tooth[point + 1, 1]) < tol:
                     if not point_on_flank:
                         first_limit_diameter = 2 * half_tooth_polar[point, 0]
                     point_on_flank = True
@@ -362,25 +333,24 @@ class CylindricalGearWheel(GearWheel):
                     if point_on_flank:
                         second_limit_diameter = 2 * half_tooth_polar[point, 0]
                     point_on_flank = False
-            if second_limit_diameter == None:
+            if second_limit_diameter is None:
                 second_limit_diameter = 2 * half_tooth_polar[point, 0]
             if first_limit_diameter == second_limit_diameter:
-                raise ValueError, 'tooth form coordinate analysis failed'
+                raise ValueError('tooth form coordinate analysis failed')
             if first_limit_diameter > second_limit_diameter:
-                d_Fa = first_limit_diameter
-                d_Ff = second_limit_diameter
+                d_fa = first_limit_diameter
+                d_ff = second_limit_diameter
             else:
-                d_Fa = second_limit_diameter
-                d_Ff = first_limit_diameter
-            if self.data.has_key('d_Ff'):  # use user-parameter if supplied
-                d_Ff = self.data.get('d_Ff')
-            if self.data.has_key('d_Fa'):
-                d_Ff = self.data.get('d_Fa')
-            return {'d_f': d_f, 'd_a': d_a, 'd_Ff': d_Ff, 'd_Fa': d_Fa, 'z': z}
+                d_fa = second_limit_diameter
+                d_ff = first_limit_diameter
+            if 'd_ff' in self.data:  # use user-parameter if supplied
+                d_ff = self.data.get('d_ff')
+            if 'd_fa' in self.data:
+                d_ff = self.data.get('d_fa')
+            return {'d_f': d_f, 'd_a': d_a, 'd_ff': d_ff, 'd_fa': d_fa, 'z': z}
 
         else:
             return {'d_f': d_f, 'd_a': d_a, 'z': z}
-
 
     def __init__(self, geardata, flankmods=None, formcoords=None):
         """
@@ -453,200 +423,180 @@ class CylindricalGearWheel(GearWheel):
         # form coordinates: value check (at least two points for defining a
         # tooth form (straight flanks) and two coordinates per point)
         if formcoords:
-            self.setFormCoords(formcoords, None)
-            self.data.update(self._analyzeFormcoords())
-
-
-
-        # number of teeth: value check
-        # if self.data.has_key('z') and not type(self.data.get('z')) == type(1):
-        # raise TypeError, 'number of teeth not integer'
+            self.data.update(self._analyze_formcoords())
 
         # module: value check
-        if self.data.has_key('m_n') and not self.data.get('m_n') >= 0:
-            raise ValueError, 'module non-positive'
+        if 'm_n' in self.data and not self.data.get('m_n') >= 0:
+            raise ValueError('module non-positive')
 
-        if not self.data.has_key('beta'):
+        if 'beta' not in self.data:
             self.data.update({'beta': self._beta_default})
-
-        self.data.update({'alpha_t': degrees(atan(tan(radians(self.data.get( \
-            'alpha_n'))) / cos(radians(self.data.get('beta')))))})
+        self.data.update({'alpha_t': degrees(
+            atan(tan(radians(self.data.get('alpha_n'))) / cos(radians(self.data.get('beta')))))})
         self.data.update({'s_p': (pi * self.data['m_n'] / 2) + 2 * self.data['m_n'] * self.data['x'] * tan(
             radians(self.data['alpha_n']))})
-        if self.data.has_key('tau') and not self.data.has_key('z'):
+        if 'tau' in self.data and 'z' not in self.data:
             self.data.update({'z': int(2 * pi / self.data.get('tau'))})
-        if self.data.has_key('z') and self.data.has_key('m_n'):
-            self.data.update({'d': self.data.get('m_n') * self.data.get('z') / \
-                                   cos(radians(self.data.get('beta')))})
-        elif self.data.has_key('z') and self.data.has_key('d'):
-            self.data.update({'m_n': self.data.get('d') * \
-                                     cos(radians(self.data.get('beta'))) /
-                                     self.data.get('z')})
-        elif self.data.has_key('m_n') and self.data.has_key('d'):
-            self.data.update({'z': int(self.data.get('d') * \
-                                       cos(radians(self.data.get('beta'))) /
-                                       self.data.get('m_n'))})
+        if 'z' in self.data and 'm_n' in self.data:
+            self.data.update(
+                {'d': self.data.get('m_n') * self.data.get('z') / cos(radians(self.data.get('beta')))})
+        elif 'z' in self.data and 'd' in self.data:
+            self.data.update(
+                {'m_n': self.data.get('d') * cos(radians(self.data.get('beta'))) / self.data.get('z')})
+        elif 'm_n' in self.data and 'd' in self.data:
+            self.data.update({
+                'z': int(self.data.get('d') * cos(radians(self.data.get('beta'))) / self.data.get('m_n'))})
         else:
-            raise AttributeError, 'insufficient data supplied'
+            raise AttributeError('insufficient data supplied')
 
-        if not self.data.has_key('tau'):
+        if 'tau' not in self.data:
             self.data.update({'tau': degrees(2 * pi / self.data.get('z'))})
 
         isexternal = sign(self.data.get('z'))
         if not sign(self.data.get('d')) == isexternal:
-            raise ValueError, 'sign of pitch diameter'
+            raise ValueError('sign of pitch diameter')
 
-        self.data.update({'m_t': self.data.get('m_n') / cos(radians( \
-            self.data.get('beta')))})
-        if self.data.has_key('alpha_n'):
+        self.data.update({'m_t': self.data.get('m_n') / cos(radians(self.data.get('beta')))})
+        if 'alpha_n' in self.data:
             if self.data.get('alpha_n') < 0:
-                raise ValueError, 'pitch angle non-positive'
+                raise ValueError('pitch angle non-positive')
         else:
             self.data.update({'alpha_n': self._alpha_n_default})
 
-        if not self.data.has_key('x'):
+        if 'x' not in self.data:
             self.data.update({'x': self._x_default})
 
-        if not self.data.has_key('A_s'):
+        if 'A_s' not in self.data:
             self.data.update({'A_s': self._A_s_default})
         # tooth thickness allowance: value check
         else:
             if not self.data.get('A_s') <= 0:
-                raise ValueError, 'tooth thickness allowance positive'
+                raise ValueError('tooth thickness allowance positive')
 
-        self.data.update({'x_E': self.data.get('x') + self.data.get('A_s') / \
-                                                      2 / tan(radians(self.data.get('alpha_n'))) / self.data.get(
-            'm_n')})
-        if self.data.has_key('d_w') and not self.data.has_key('alpha_wt'):
+        self.data.update({'x_E': self.data.get('x') + self.data.get('A_s') / 2 / tan(
+            radians(self.data.get('alpha_n'))) / self.data.get('m_n')})
+        if 'd_w' in self.data and 'alpha_wt' not in self.data:
             if not sign(self.data.get('d_w')) == isexternal:
-                raise ValueError, 'sign of service pitch diameter'
-            self.data.update({'alpha_wt': degrees(acos(self.data.get('d') / \
-                                                       self.data.get('d_w') * cos(radians( \
-                self.data.get('alpha_t')))))})
+                raise ValueError('sign of service pitch diameter')
+            self.data.update({'alpha_wt': degrees(acos(
+                self.data.get('d') / self.data.get('d_w') * cos(radians(self.data.get('alpha_t')))))})
 
-        if self.data.has_key('alpha_wt') and not self.data.has_key('d_w'):
-            self.data.update({'d_w': self.data.get('d') * \
-                                     cos(radians(self.data.get('alpha_t'))) /
-                                     cos(radians(self.data.get('alpha_wt')))})
+        if 'alpha_wt' in self.data and 'd_w' not in self.data:
+            self.data.update({'d_w': self.data.get('d') * cos(radians(self.data.get('alpha_t'))) / cos(
+                radians(self.data.get('alpha_wt')))})
 
-        self.data.update({'d_b': self.data.get('d') * cos(radians(self.data.get(
-            'alpha_t')))})
+        self.data.update({'d_b': self.data.get('d') * cos(radians(self.data.get('alpha_t')))})
         if formcoords:
-            self.data.update(self._analyzeFormcoords())
+            self.data.update(self._analyze_formcoords())
         if not formcoords:
             # tip clearance: value check, set to default if not supplied
-            if self.data.has_key('c'):
-                if self.data.get('c') < 0.1 * self.data.get('m_n') or \
-                                self.data.get('c') > 0.3 * self.data.get('m_n'):
-                    raise ValueError, 'tip clearance out of bounds'
+            if 'c' in self.data:
+                if self.data.get('c') < 0.1 * self.data.get('m_n') or self.data.get('c') > 0.3 * self.data.get(
+                        'm_n'):
+                    raise ValueError('tip clearance out of bounds')
             else:
                 self.data.update({'c': self._c_default * self.data.get('m_n')})
 
             # fillet radius: value check, set to default if not supplied
-            if not self.data.has_key('rho_f'):
+            if 'rho_f' not in self.data:
                 self.data.update({'rho_f': self._rho_f_default * self.data.get('m_n')})
             else:
                 if self.data.get('rho_f') < 0:
-                    raise ValueError, 'fillet radius negative'
+                    raise ValueError('fillet radius negative')
 
             # CAUTION: THE FOLLOWING SECTION OF CODE WILL BE REMOVED IN FUTURE RELEASES!
             # tool fillet radius: value check
-            if self.data.has_key('rho_fP'):
+            if 'rho_fP' in self.data:
                 if self.data.get('rho_fP') < 0:
-                    raise ValueError, 'tool fillet radius negative'
+                    raise ValueError('tool fillet radius negative')
                 if not self.data.get('beta') == 0:
-                    raise ValueError, 'fillet trochoid cannot be generated for helical gears'
+                    raise ValueError('fillet trochoid cannot be generated for helical gears')
             # END OF CODE SECTION TO BE REMOVED
 
             # calculate tip height modification factor if possible (else set to default)
             # various attempts are made
-            if self.data.has_key('a') and not self.data.has_key('k'):
-                self.data.update({'a_d': self.data.get('m_t') * (self.data.get('z') +
-                                                                 self.data.get('z_2')) / 2})
-                self.data.update({'k': (self.data.get('a') - self.data.get('a_d')) /
-                                       self.data.get('m_n') - (self.data.get('x') + self.data.get('x_2'))})
+            if 'a' in self.data and 'k' not in self.data:
+                self.data.update(
+                    {'a_d': self.data.get('m_t') * (self.data.get('z') + self.data.get('z_2')) / 2})
+                self.data.update({'k': (self.data.get('a') - self.data.get('a_d')) / self.data.get('m_n') - (
+                    self.data.get('x') + self.data.get('x_2'))})
             else:
                 self.data.update({'k': self._k_default})
 
             # root circle diameter: value check, calculate if not supplied
-            if self.data.has_key('d_f'):
-                if self.data.get('d_f') > self.data.get('d'):
-                    raise ValueError, 'root circle diameter greater than pitch diameter'
+            if 'd_f' in self.data:
+                if 'd_f' in self.data > 'd' in self.data:
+                    raise ValueError('root circle diameter greater than pitch diameter')
                 if not sign(self.data.get('d_f')) == isexternal:
-                    raise ValueError, 'sign of root circle diameter'
+                    raise ValueError('sign of root circle diameter')
             else:
-                self.data.update({'d_f': self.data.get('d') + 2 * self.data.get('x_E') * \
-                                                              self.data.get('m_n') - 2 * (self.data.get('m_n') +
-                                                                                          self.data.get('c'))})
+                self.data.update({
+                    'd_f': self.data.get('d') + 2 * self.data.get('x_E') * self.data.get('m_n') - 2 * (
+                        self.data.get('m_n') + self.data.get('c'))})
 
             # tip diameter: value check, calculate if not supplied
-            if self.data.has_key('d_a'):
+            if 'd_a' in self.data:
                 # if self.data.get('d_a')<self.data.get('d'):
                 # raise ValueError, 'tip diameter less than pitch diameter'
                 if not sign(self.data.get('d_a')) == isexternal:
-                    raise ValueError, 'sign of tip diameter'
+                    raise ValueError('sign of tip diameter')
             else:
-                self.data.update({'d_a': self.data.get('d') + 2 * self.data.get('x') * \
-                                                              self.data.get('m_n') + 2 * self.data.get('m_n') + 2 * \
-                                                                                                                self.data.get(
-                                                                                                                    'k') * self.data.get(
-                    'm_n')})
+                self.data.update({
+                    'd_a': self.data.get('d') + 2 * self.data.get('x') * self.data.get('m_n') + 2 * self.data.get(
+                        'm_n') + 2 * self.data.get('k') * self.data.get('m_n')})
 
             # radial value of tip chamfer: value check, calculate or set to default
             # if not supplied
-            if self.data.has_key('h_k'):
+            if 'h_k' in self.data.has_key:
                 if self.data.get('h_k') < 0:
-                    raise ValueError, 'value of tip chamfer negative'
-            elif self.data.has_key('d_Fa'):
+                    raise ValueError('value of tip chamfer negative')
+            elif 'd_Fa' in self.data:
                 self.data.update({'h_k': abs(self.data.get('d_a') - self.data.get('d_Fa')) / 2})
             else:
                 self.data.update({'h_k': self._h_k_default})
 
             # remaining tooth thickness: value check, set to default if not supplied
-            s_a, d_ac = self._toothThickness(self.data.get('d_a'))
-            if not self.data.has_key('s_aK'):
+            s_a, d_ac = self._tooth_thickness(self.data.get('d_a'))
+            if 's_aK' not in self.data:
                 self.data.update({'s_aK': s_a - 2 * self.data.get('h_k')})
             if self.data.get('s_aK') < 0:
-                raise ValueError, 'remaining tooth thickness at tip negative'
+                raise ValueError('remaining tooth thickness at tip negative')
             if self.data.get('s_aK') > s_a:
-                raise ValueError, 'remaining tip tooth thickness greater than tooth thickness'
+                raise ValueError('remaining tip tooth thickness greater than tooth thickness')
 
-
-            # root form diameter: value check
-            if self.data.has_key('d_Ff'):
+            if 'd_Ff' in self.data:
                 if self.data.get('d_Ff') > self.data.get('d'):
-                    raise ValueError, 'root form diameter greater than pitch diameter'
+                    raise ValueError('root form diameter greater than pitch diameter')
                 if self.data.get('d_Ff') < self.data.get('d_f'):
-                    raise ValueError, 'root form diameter less than root circle diameter'
+                    raise ValueError('root form diameter less than root circle diameter')
                 if not sign(self.data.get('d_Ff')) == isexternal:
-                    raise ValueError, 'sign of root form diameter'
+                    raise ValueError('sign of root form diameter')
 
             # tip form diameter: value check
-            if self.data.has_key('d_Fa'):
+            if 'd_Fa' in self.data:
                 if self.data.get('d_Fa') < self.data.get('d'):
-                    raise ValueError, 'tip form diameter less than pitch diameter'
+                    raise ValueError('tip form diameter less than pitch diameter')
                 if self.data.get('d_Fa') > self.data.get('d_a'):
-                    raise ValueError, 'tip form diameter greater than tip diameter'
+                    raise ValueError('tip form diameter greater than tip diameter')
                 if not sign(self.data.get('d_Fa')) == isexternal:
-                    raise ValueError, 'sign of tip form diameter'
+                    raise ValueError('sign of tip form diameter')
             else:
                 self.data.update({'d_Fa': self.data.get('d_a') - 2 * self.data.get('h_k')})
 
-        if not self.data.has_key('d_s'):
+        if 'd_s' not in self.data:
             self.data.update({'d_s': self._d_s_default})
         if abs(self.data.get('d_s')) > self._tol_default:
             if not sign(self.data.get('d_s')) == isexternal:
-                raise ValueError, 'sign of shaft diameter'
+                raise ValueError('sign of shaft diameter')
             if not self.data.get('d_s') < self.data.get('d_f'):
-                raise ValueError, 'shaft diameter greater than root circle diameter'
+                raise ValueError('shaft diameter greater than root circle diameter')
 
         if not self.formcoords:
-            self._makeFormCoords()
+            self._make_form_coords()
         else:
-            self.formcoords = self._makeUnique(self.formcoords)
+            self.formcoords = self._make_unique(self.formcoords)
 
-
-    def _makeFormCoords(self):
+    def _make_form_coords(self):
         """
         Tooth form coordinates in transverse cross-section (half tooth and half gap)
         points returned in 2D-cartesian coordinates, origin on wheel axis
@@ -668,10 +618,9 @@ class CylindricalGearWheel(GearWheel):
 
         # delete old form coordinates if existend
         if self.formcoords:
-            del (self.formcoords)
+            del self.formcoords
         if self._formwire:
-            del (self._formwire)
-
+            del self._formwire
 
         # indicator whether gear is external (number of teeth positive) or internal
         isexternal = sign(self.data.get('z'))
@@ -691,36 +640,33 @@ class CylindricalGearWheel(GearWheel):
         end_tipcirc_index = start_tipcirc_index + self.points_tip - 1
         upper_index = end_tipcirc_index
 
-
         # determine boundary of half tooth segment on root circle
-        rootcirc_start_point = self.data.get('d_f') / 2 * np.array([-sin(radians(self.data.get('tau') / 2)),
-                                                                    cos(radians(self.data.get('tau') / 2))])
+        rootcirc_start_point = self.data.get('d_f') / 2 * np.array(
+            [-sin(radians(self.data.get('tau') / 2)), cos(radians(self.data.get('tau') / 2))])
 
         # determine how the root shape is defined and calculate significant points
         # root shape is circular in transverse cross-section
         if isexternal > 0:  # for external gears
-            if not self.data.has_key('d_Ff'):
+            if 'd_Ff' not in self.data:
                 # root circle is tangent to involute
-                if (self.data.get('d_f') ** 2 + 4 * self.data.get('rho_f') * self.data.get('d_f') >= self.data.get(
-                        'd_b') ** 2):
-                    self.data.update(
-                        {'d_Ff': isexternal * sqrt((sqrt((self.data.get('d_f') + 2 * self.data.get('rho_f')) ** 2 -
-                                                         self.data.get('d_b') ** 2) - 2 * self.data.get(
-                            'rho_f')) ** 2 + self.data.get('d_b') ** 2)})
-                    s_yt, d_yc = self._toothThickness(self.data.get('d_Ff'))
+                if (self.data.get('d_f') ** 2 + 4 * self.data.get('rho_f') * self.data.get(
+                        'd_f') >= self.data.get('d_b') ** 2):
+                    self.data.update({'d_Ff': isexternal * sqrt((sqrt(
+                        (self.data.get('d_f') + 2 * self.data.get('rho_f')) ** 2 - self.data.get(
+                            'd_b') ** 2) - 2 * self.data.get('rho_f')) ** 2 + self.data.get('d_b') ** 2)})
+                    s_yt, d_yc = self._tooth_thickness(self.data.get('d_Ff'))
                     fil_end_point = np.array([-s_yt / 2, d_yc / 2])
                 # no tangency possible: undercut
-                elif (self.data.get('d_f') + 4 * self.data.get('rho_f') >= self.data.get('d_b')):
+                elif self.data.get('d_f') + 4 * self.data.get('rho_f') >= self.data.get('d_b'):
                     self.data.update({'d_Ff': self.data.get('d_b')})
-                    s_yt, d_yc = self._toothThickness(self.data.get('d_b'))
+                    s_yt, d_yc = self._tooth_thickness(self.data.get('d_b'))
                     fil_end_point = np.array([-s_yt / 2, d_yc / 2])  # end of involute at base circle
                     print 'Warning: undercutting occurs!'
-                # in case all prior attempts to construct root fillet failed, the involute has to be extended with a straight tangential line
                 else:
                     self.data.update({'d_Ff': self.data.get('d_b')})
                     d_tangent = sqrt(self.data.get('d_f') ** 2 + 4 * self.data.get('rho_f') * self.data.get(
                         'd_f'))  # diameter around gear center on that tangency point of fillet curve is located
-                    s_yt, d_yc = self._toothThickness(self.data.get('d_b'))
+                    s_yt, d_yc = self._tooth_thickness(self.data.get('d_b'))
                     nu = atan(s_yt / d_yc)
                     fil_end_point = np.array([-d_tangent / 2 * sin(nu), d_tangent / 2 * cos(
                         nu)])  # tangential extension of involute beyond base circle
@@ -730,59 +676,61 @@ class CylindricalGearWheel(GearWheel):
                 # if root form circle diameter is supplied, it is forced strictly if possible
                 if (self.data.get('d_Ff') - self.data.get('d_f')) / 2 > 2 * self.data.get(
                         'rho_f'):  # check if root fillet circle fits beetween root form circle and root circle
-                    raise ValueError, 'root fillet radius too small: root shape cannot be determined'
-                s_yt, d_yc = self._toothThickness(self.data.get('d_Ff'))
+                    raise ValueError('root fillet radius too small: root shape cannot be determined')
+                s_yt, d_yc = self._tooth_thickness(self.data.get('d_Ff'))
                 if abs(self.data.get('d_Ff')) >= abs(self.data.get('d_b')):  # fillet ends at root form circle
                     fil_end_point = np.array([-s_yt / 2, d_yc / 2])
                 else:  # base circle diameter greater than root form diameter: tangential extension of involute
                     nu = atan(s_yt / d_yc)
-                    fil_end_point = np.array([-self.data.get('d_Ff') * sin(nu),
-                                              self.data.get('d_Ff') * cos(nu)])
+                    fil_end_point = np.array(
+                        [-self.data.get('d_Ff') * sin(nu), self.data.get('d_Ff') * cos(nu)])
                     print 'Warning: involute had to be extended below base cicle to enforce root form circle diameter!'
                     inv_extension = True
 
         else:  # for internal gears
-            if not self.data.has_key('d_Ff'):
+            if 'd_Ff' not in self.data:
                 # root circle is tangent to involute
-                t_b = sqrt((self.data.get('d_f') / 2 + self.data.get('rho_f')) ** 2 - (self.data.get('d_b') / 2) ** 2)
+                t_b = sqrt(
+                    (self.data.get('d_f') / 2 + self.data.get('rho_f')) ** 2 - (self.data.get('d_b') / 2) ** 2)
                 self.data.update(
                     {'d_Ff': -2 * sqrt((t_b + self.data.get('rho_f')) ** 2 + (self.data.get('d_b') / 2) ** 2)})
             else:
                 # if root form circle diameter is supplied, it is forced strictly if possible
                 if (self.data.get('d_Ff') - self.data.get('d_f')) / 2 > 2 * self.data.get(
                         'rho_f'):  # check if root fillet circle fits beetween root form circle and root circle
-                    raise ValueError, 'root fillet radius too small: root shape cannot be determined'
-            s_yt, d_yc = self._toothThickness(self.data.get('d_Ff'))
+                    raise ValueError('root fillet radius too small: root shape cannot be determined')
+            s_yt, d_yc = self._tooth_thickness(self.data.get('d_Ff'))
             fil_end_point = np.array([-s_yt / 2, d_yc / 2])
 
         # find center of root fillet circle by cutting circle around fillet end point with radius rho_f
         # with circle around center of gear wheel with radius d_f/2+rho_f
         def root_circle_center_func(phi):
-            return fil_end_point + self.data.get('rho_f') * np.array([sin(phi[0]), cos(phi[0])]) - \
-                   (self.data.get('d_f') / 2 + self.data.get('rho_f')) * np.array([sin(phi[1]), cos(phi[1])])
+            return fil_end_point + self.data.get('rho_f') * np.array([sin(phi[0]), cos(phi[0])]) - (self.data.get(
+                'd_f') / 2 + self.data.get('rho_f')) * np.array([sin(phi[1]), cos(phi[1])])
 
         phi_fil_center = fsolve(root_circle_center_func, [-pi / 2, 0.0])
         fil_center_point = (self.data.get('d_f') / 2 + self.data.get('rho_f')) * np.array(
             [sin(phi_fil_center[1]), cos(phi_fil_center[1])])
 
         # boundary point of root fillet and root circle
-        fil_start_point = fil_center_point * self.data.get('d_f') / (self.data.get('d_f') + 2 * self.data.get('rho_f'))
+        fil_start_point = fil_center_point * self.data.get('d_f') / (
+            self.data.get('d_f') + 2 * self.data.get('rho_f'))
 
         # if boundary point and fillet center are outside half tooth segment the shape of the root fillet
         # cannot be determined (root fillet curve is not continously differentiable and d_f is not matched)
         if abs(atan(fil_start_point[0] / fil_start_point[1])) > abs(radians(self.data.get('tau') / 2)):
-            raise ValueError, 'root fillet radius too large: root shape cannot be determined'
+            raise ValueError('root fillet radius too large: root shape cannot be determined')
 
         # determine boundary points of involute
-        s_yt, d_yc = self._toothThickness(self.data.get('d_Ff'))
+        s_yt, d_yc = self._tooth_thickness(self.data.get('d_Ff'))
         inv_start_point = np.array([-s_yt / 2, d_yc / 2])  # involute starts at root form circle
-        s_yt, d_yc = self._toothThickness(self.data.get('d_Fa'))
+        s_yt, d_yc = self._tooth_thickness(self.data.get('d_Fa'))
         inv_end_point = np.array([-s_yt / 2, d_yc / 2])  # involute ends at tip form circle
 
         # determine boundary points of tip circle
         nu = self.data.get('s_aK') / self.data.get('d_a')
-        tipcirc_start_point = np.array([-self.data.get('d_a') / 2 * sin(nu), \
-                                        self.data.get('d_a') / 2 * cos(nu)])  # tip circle starts at end of tip chamfer
+        tipcirc_start_point = np.array([-self.data.get('d_a') / 2 * sin(nu), self.data.get('d_a') / 2 * cos(
+            nu)])  # tip circle starts at end of tip chamfer
         tipcirc_end_point = np.array([0.0, self.data.get('d_a') / 2])  # tip circle ends at symmetry line
 
         # create array for tooth form coordinates
@@ -790,7 +738,8 @@ class CylindricalGearWheel(GearWheel):
 
         # compute points on root circle
         phi_start = -asin(2 * rootcirc_start_point[0] / self.data.get('d_f'))  # starting angle of root circle
-        if abs(phi_start - acos(2 * rootcirc_start_point[1] / self.data.get('d_f'))) > tol:  # computation is not unique
+        if abs(phi_start - acos(2 * rootcirc_start_point[1] / self.data.get(
+                'd_f'))) > tol:  # computation is not unique
             phi_start = pi - phi_start
         phi_end = -asin(2 * fil_start_point[0] / self.data.get('d_f'))  # end angle of root circle
         if abs(phi_end - acos(2 * fil_start_point[1] / self.data.get('d_f'))) > tol:  # computation is not unique
@@ -810,7 +759,8 @@ class CylindricalGearWheel(GearWheel):
         if abs(phi_start - acos(-(fil_start_point[1] - fil_center_point[1]) / self.data.get(
                 'rho_f'))) > tol:  # computation is not unique
             phi_start = pi - phi_start
-        phi_end = asin((fil_end_point[0] - fil_center_point[0]) / self.data.get('rho_f'))  # end angle of root fillet
+        phi_end = asin(
+            (fil_end_point[0] - fil_center_point[0]) / self.data.get('rho_f'))  # end angle of root fillet
         if abs(phi_end - acos(-(fil_end_point[1] - fil_center_point[1]) / self.data.get(
                 'rho_f'))) > tol:  # computation is not unique
             phi_end = pi - phi_end
@@ -830,12 +780,12 @@ class CylindricalGearWheel(GearWheel):
         delta_d = (d_end - d_start) / (self.points_flank - 1)
         n = 0
         for index in range(start_involute_index, end_involute_index + 1):
-            s_yt, d_yc = self._toothThickness(d_start + n * delta_d)
+            s_yt, d_yc = self._tooth_thickness(d_start + n * delta_d)
             formcoord_array[index] = np.array([-s_yt / 2, d_yc / 2])
             n += 1
 
         # compute points on tip chamfer
-        if self.data.has_key('h_k') and (self.data.get('h_k') > 0):
+        if 'h_k' in self.data and (self.data.get('h_k') > 0):
             print 'Warning: straight tip chamfer assumed!'
             delta_k = 1 / (self.points_chamfer - 1)
             n = 0
@@ -845,10 +795,12 @@ class CylindricalGearWheel(GearWheel):
 
         # compute points on tip circle
         phi_start = -asin(2 * tipcirc_start_point[0] / self.data.get('d_a'))  # starting angle of tip circle
-        if abs(phi_start - acos(2 * tipcirc_start_point[1] / self.data.get('d_a'))) > tol:  # computation is not unique
+        if abs(phi_start - acos(2 * tipcirc_start_point[1] / self.data.get(
+                'd_a'))) > tol:  # computation is not unique
             phi_start = pi - phi_start
         phi_end = -asin(2 * tipcirc_end_point[0] / self.data.get('d_a'))  # end angle of tip circle
-        if abs(phi_end - acos(2 * tipcirc_end_point[1] / self.data.get('d_a'))) > tol:  # computation is not unique
+        if abs(phi_end - acos(2 * tipcirc_end_point[1] / self.data.get(
+                'd_a'))) > tol:  # computation is not unique
             phi_end = pi - phi_end
         if isexternal < 0:
             phi_end = phi_end + pi
@@ -867,15 +819,11 @@ class CylindricalGearWheel(GearWheel):
                 formcoord_array = insert(formcoord_array, start_involute_index,
                                          inv_start_point + (fil_end_point - inv_start_point) * n * delta_k, axis=0)
 
+        self.formcoords = self._make_unique(formcoord_array)
 
-        # remove redundant entries and set class attributes
-        self.formcoords = self._makeUnique(formcoord_array)
-
-
-#
 
 class GearExport(object):
-    def __init__(self, pairdata, Pinion=None, Gear=None):
+    def __init__(self, pairdata):
         """
         Initialization of GearPair-object
         Should be overwritten in derived classes
@@ -888,16 +836,8 @@ class GearExport(object):
         """
 
         self.data = deepcopy(pairdata)
-        gear = {
-            'z': self.data['z'],
-            'x': self.data['x'],
-            'alpha_n': self.data['alpha_n'],
-            'beta': self.data['beta'],
-            'm_n': self.data['m_n'],
-            'rho_f': self.data['rho_f'],
-            'd_s': self.data['d_s'],
-            'c': self.data['c']
-        }
+        gear = {'z': self.data['z'], 'x': self.data['x'], 'alpha_n': self.data['alpha_n'], 'beta': self.data['beta'],
+                'm_n': self.data['m_n'], 'rho_f': self.data['rho_f'], 'd_s': self.data['d_s'], 'c': self.data['c']}
 
         self.gear = self.__set_gear(gear)
 
@@ -921,30 +861,3 @@ class GearExport(object):
         gear.rotateang = -ang / 2
 
         return gear
-
-
-        # def setGear(self, geardata):
-        # """
-        # Set gear attribute
-        #
-        # INPUT parameter:
-        # Gear     : gear (Gear Pair data)
-        # """
-        #     Gear = CylindricalGearWheel(geardata)
-        #
-        #     pd_s = Gear.data['d'] * pi
-        #     ang = Gear.data['s_p'] * 360 / pd_s
-        #
-        #     shaft = [[0, (Gear.data['d_s'] / 2)], rotate([[0, Gear.data['d_s'] / 2]], 0.5 * (
-        #         (Gear.data['d_s'] / Gear.data['z']) * 360 / Gear.data['d_s']))[0]]
-        #
-        #     coords = rotate(Gear.formcoords.values(), 180)
-        #
-        #     Gear.shaftcoords = [[coord[0], coord[1] + Gear.data['a']] for coord in rotate(shaft, 180)]
-        #     Gear.formcoords = [[coord[0], coord[1] + Gear.data['a']] for coord in coords]
-        #     Gear.rotateang = - ang / 2
-        #     # Gear.data.pop('a')
-        #     Gear.data.pop('a_d')
-        #     Gear.data.pop('z_2')
-        #     Gear.data.pop('x_2')
-        #     return Gear

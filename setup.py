@@ -8,5 +8,5 @@ setup(
     license='GPL 3.0',
     author='efirvida',
     author_email='efirvida@gmail.com',
-    description='Python library for gear transmission design'
+    description='Python library for gear transmission design', requires=['numpy', 'scipy']
 )
