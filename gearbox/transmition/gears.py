@@ -1,7 +1,6 @@
 from math import pi, atan, tan, radians, cos, sin, degrees, sqrt, floor, ceil
 
-from libs.maths import involute, arcinvolute
-
+from gearbox.libs.maths import involute, arcinvolute
 
 class Tool(object):
     """

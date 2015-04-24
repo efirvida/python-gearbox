@@ -3,8 +3,8 @@ from math import tan, radians, atan, pi, sin, cos, degrees, acos, asin, sqrt
 
 import numpy as np
 
-from libs.maths import involute as inv
-from libs.maths import rotate, CartesianCoordinatesToPolarCoordinates, sign
+from gearbox.libs.maths import involute as inv
+from gearbox.libs.maths import rotate, CartesianCoordinatesToPolarCoordinates, sign
 
 
 class GearWheel(object):
@@ -547,7 +547,7 @@ class CylindricalGearWheel(GearWheel):
 
             # radial value of tip chamfer: value check, calculate or set to default
             # if not supplied
-            if 'h_k' in self.data.has_key:
+            if 'h_k' in self.data:
                 if self.data.get('h_k') < 0:
                     raise ValueError('value of tip chamfer negative')
             elif 'd_Fa' in self.data:

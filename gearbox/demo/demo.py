@@ -1,7 +1,11 @@
-from os import mkdir
+import os
 
-from transmition.gearbox import *
-from export.export import *
+from gearbox.transmition.gears import *
+from gearbox.standards.iso import Pitting as iso_pitting
+from gearbox.standards.iso import Bending as iso_bending
+from gearbox.standards.agma import Pitting as agma_pitting
+from gearbox.standards.agma import Bending as agma_bending
+from gearbox.export.export import *
 
 
 lubricant = Lubricant(
@@ -85,27 +89,27 @@ transmition = Transmition(
     sf_min=1
 )
 
-# print '========================================'
-# print 'ISO Pitting'
-# print iso_pitting(transmition=transmition).calculate()
-# print '========================================'
-#
-# print '========================================'
-# print 'ISO Bending'
-# print iso_bending(transmition=transmition).calculate()
-# print '========================================'
-#
-# print '========================================'
-# print 'AGMA Pitting'
-# print Pitting(transmition=transmition).calculate()
-# print '========================================'
-#
-# print '========================================'
-# print 'AGMA Bending'
-# print Bending(transmition=transmition).calculate()
-# print '========================================'
+print '========================================'
+print 'ISO Pitting'
+print iso_pitting(transmition=transmition).calculate()
+print '========================================'
 
-mkdir('comsol_output')
+print '========================================'
+print 'ISO Bending'
+print iso_bending(transmition=transmition).calculate()
+print '========================================'
+
+print '========================================'
+print 'AGMA Pitting'
+print agma_pitting(transmition=transmition).calculate()
+print '========================================'
+
+print '========================================'
+print 'AGMA Bending'
+print agma_bending(transmition=transmition).calculate()
+print '========================================'
+
+os.mkdir('comsol_output')
 
 ExportGear(pinion).comsol(output_file='comsol_output/pinion.m')
 ExportGear(gear).comsol(output_file='comsol_output/gear.m')

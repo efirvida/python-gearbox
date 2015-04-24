@@ -8,5 +8,8 @@ setup(
     license='GPL 3.0',
     author='efirvida',
     author_email='efirvida@gmail.com',
-    description='Python library for gear transmission design', requires=['numpy', 'scipy']
+    description='Python library for gear transmission design', requires=['numpy', 'scipy'],
+    url='https://github.com/efirvida/python-gearbox',
+    download_url='https://github.com/efirvida/python-gearbox/archive/master.zip',
+    keywords=['gearbox', 'gear', 'agma', 'iso', 'gear transmission', 'engineering'],
 )

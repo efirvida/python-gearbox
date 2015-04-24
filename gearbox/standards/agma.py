@@ -2,7 +2,7 @@ from math import pi, sqrt, log, ceil, sin, radians, degrees, asin, cos, atan, ta
 
 from numpy import interp, max
 
-from libs.maths import arcinvolute
+from gearbox.libs.maths import arcinvolute
 
 
 

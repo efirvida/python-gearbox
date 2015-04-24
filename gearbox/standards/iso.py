@@ -2,7 +2,7 @@ from math import acos, log, exp
 
 from numpy import interp
 
-from transmition.gearbox import *
+from gearbox.transmition.gears import *
 
 
 def __c__(pair):

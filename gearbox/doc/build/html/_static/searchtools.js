@@ -190,7 +190,7 @@ var Stemmer = function() {
       w = firstch.toLowerCase() + w.substr(1);
     return w;
   }
-}
+};
 
 
 

@@ -4,8 +4,8 @@ from math import pi, radians, tan, cos
 
 from jinja2 import Environment, FileSystemLoader
 
-from libs.gearprofile import GearExport
-from libs.maths import rotate, involute, arcinvolute
+from gearbox.libs.gearprofile import GearExport
+from gearbox.libs.maths import rotate, involute, arcinvolute
 
 
 class ExportGear(object):
