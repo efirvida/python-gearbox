@@ -1,0 +1,3 @@
+include Makefile CHANGES LICENSE AUTHORS README gearbox/doc/source/_static gearbox/doc/source/_templates
+recursive-include gearbox *
+recursive-exclude *.pyc

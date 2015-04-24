@@ -1,3 +1,6 @@
 .idea/*
 *.fuse*
 *.pyc
+dist
+python_gearbox*
+.gitignore
