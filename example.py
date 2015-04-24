@@ -1,7 +1,5 @@
-from main.gearbox import *
-from standards.iso import Pitting as iso_pitting
-from standards.iso import Bending as iso_bending
-from standards.agma import Pitting, Bending
+from transmition.gearbox import *
+from export.export import *
 
 lubricant = Lubricant(
     name='Kiruna',
@@ -84,22 +82,26 @@ transmition = Transmition(
     sf_min=1
 )
 
-print '========================================'
-print 'ISO Pitting'
-print iso_pitting(transmition=transmition).calculate()
-print '========================================'
+# print '========================================'
+# print 'ISO Pitting'
+# print iso_pitting(transmition=transmition).calculate()
+# print '========================================'
+#
+# print '========================================'
+# print 'ISO Bending'
+# print iso_bending(transmition=transmition).calculate()
+# print '========================================'
+#
+# print '========================================'
+# print 'AGMA Pitting'
+# print Pitting(transmition=transmition).calculate()
+# print '========================================'
+#
+# print '========================================'
+# print 'AGMA Bending'
+# print Bending(transmition=transmition).calculate()
+# print '========================================'
 
-print '========================================'
-print 'ISO Bending'
-print iso_bending(transmition=transmition).calculate()
-print '========================================'
 
-print '========================================'
-print 'AGMA Pitting'
-print Pitting(transmition=transmition).calculate()
-print '========================================'
-
-print '========================================'
-print 'AGMA Bending'
-print Bending(transmition=transmition).calculate()
-print '========================================'
+ExportGear(gear=pinion).comsol(output_file='./pepe.m', function_name='elmio')
+ExportPair(pair=pair).comsol(output_file='./pepe2.m', function_name='elmio')

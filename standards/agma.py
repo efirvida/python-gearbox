@@ -2,7 +2,8 @@ from math import pi, sqrt, log, ceil, sin, radians, degrees, asin, cos, atan, ta
 
 from numpy import interp, max
 
-from main import arcinvolute
+from libs.maths import arcinvolute
+
 
 
 # pitting from AGMA-2101 D04

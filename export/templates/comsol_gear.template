@@ -1,0 +1,35 @@
+function out = {{function_name}}
+
+import com.comsol.model.*
+import com.comsol.model.util.*
+
+{{function_name}} = ModelUtil.create('Model');
+
+{{function_name}}.modelPath('{{ model_path }});
+
+{{function_name}}.modelNode.create('comp1');
+
+{{function_name}}.geom.create('geom1', 2);
+
+{{function_name}}.mesh.create('mesh1', 'geom1');
+
+{{function_name}}.physics.create('solid', 'SolidMechanics', 'geom1');
+
+%PINION
+{{function_name}}.geom('geom1').feature.create('pinion_thooth_profile', 'InterpolationCurve');
+{{function_name}}.geom('geom1').feature('pinion_thooth_profile').set('table', {{ '{' }} {% for coord in gear.formcoords -%}'{{ coord[0] }}' '{{ coord[1] }}';{%- endfor %}{{ '}' }});
+{{function_name}}.geom('geom1').feature.create('pinion_thooth_body', 'BezierPolygon');
+{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('type', 'solid');
+{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('p', {'{{gear.formcoords[0][0]}}' '{{gear.shaftcoords[1][0]}}' '{{ gear.shaftcoords[0][0] }}' '{{gear.formcoords[-1][0]}}'; '{{gear.formcoords[0][1]}}' '{{gear.shaftcoords[1][1]}}' '{{ gear.shaftcoords[0][1] }}' '{{gear.formcoords[-1][1]}}'});
+{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('w', {'1' '1' '1' '1' '1' '1'});
+{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('degree', [1 1 1]);
+{{function_name}}.geom('geom1').run('pinion_thooth_body');
+{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('type', 'open');
+{{function_name}}.geom('geom1').feature.create('pinion_tooth', 'ConvertToSolid');
+{{function_name}}.geom('geom1').feature('pinion_tooth').selection('input').set({'pinion_thooth_body' 'pinion_thooth_profile'});
+{{function_name}}.geom('geom1').run('pinion_tooth');
+
+%SHOW GEOMETRY
+mphgeom({{function_name}});
+
+out = model;

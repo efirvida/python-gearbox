@@ -1,0 +1,88 @@
+from libs.gearprofile import *
+from abaqus import *
+from abaqusConstants import *
+
+backwardCompatibility.setValues(includeDeprecated=True, reportDeprecated=False)
+
+myModel = mdb.Model(name='Gear Pair')
+#mySteel = myModel.Material(name='Steel')
+
+
+xp, yp, xg, yg = [], [], [], []
+gear = {'m_n': 2.5, 'z': 22, 'beta': 0.0, 'alpha_n': 20.0, 'x': 0.0, 'x_2': 0.0, 'z_2': 22, 'h_k': 0.0,
+        'rho_f': 0.38, 'd_s': 30.0, 'c': 0.25, 'b': 34}
+geardata = gear
+mygear = GearPair(geardata)
+
+myPinionSketch = myModel.ConstrainedSketch(name='Pinion sketch', sheetSize=400.0)
+pinion_profile = myPinionSketch.Spline(points=mygear.Pinion.formcoords)
+pinion_tooth1 = myPinionSketch.ConstructionLine(point1=mygear.Pinion.shaftcoords[0],point2=mygear.Pinion.formcoords[-1])
+pinion_tooth2 = myPinionSketch.Line(point1=mygear.Pinion.shaftcoords[-1], point2=mygear.Pinion.formcoords[0])
+pinion_shaft = myPinionSketch.ArcByCenterEnds(center=(0.0, 0.0), point1=mygear.Pinion.shaftcoords[0],point2=mygear.Pinion.shaftcoords[-1])
+myPinionSketch.rotate(centerPoint=(0.0, 0.0,), angle=mygear.Pinion.rotateang,objectList=(pinion_profile, pinion_tooth2, pinion_tooth1, pinion_shaft,))
+myPinionSketch.copyMirror(mirrorLine=pinion_tooth1, objectList=(pinion_profile, pinion_tooth2, pinion_shaft,))
+pinion_tooth_part = myModel.Part(name='Pinion', dimensionality=THREE_D, type=DEFORMABLE_BODY)
+pinion_tooth_part.BaseSolidExtrude(sketch=myPinionSketch, depth=gear['b'])
+
+myGearSketch = myModel.ConstrainedSketch(name='Gear sketch', sheetSize=400.0)
+gear_profile = myGearSketch.Spline(points=mygear.Gear.formcoords)
+gear_tooth1 = myGearSketch.ConstructionLine(point1=mygear.Gear.shaftcoords[0], point2=mygear.Gear.formcoords[-1])
+gear_tooth2 = myGearSketch.Line(point1=mygear.Gear.shaftcoords[-1], point2=mygear.Gear.formcoords[0])
+gear_shaft = myGearSketch.ArcByCenterEnds(center=(0.0, mygear.Gear.data['a']), point1=mygear.Gear.shaftcoords[0],point2=mygear.Gear.shaftcoords[-1])
+myGearSketch.rotate(centerPoint=(0.0, mygear.Gear.data['a']), angle=mygear.Gear.rotateang,objectList=(gear_profile, gear_tooth2, gear_tooth1,gear_shaft))
+myGearSketch.copyMirror(mirrorLine=gear_tooth1, objectList=(gear_profile, gear_tooth2, gear_shaft,))
+gear_tooth_part = myModel.Part(name='Gear', dimensionality=THREE_D, type=DEFORMABLE_BODY)
+gear_tooth_part.BaseSolidExtrude(sketch=myGearSketch, depth=gear['b'])
+
+
+
+# myAssembly = myModel.rootAssembly
+# doorInstance = myAssembly.Instance(name='Gear Pair', part=gear_tooth_part)
+
+#
+# #
+# myViewport = session.Viewport(name='Viewport for Model A', origin=(10, 10), width=150, height=100)
+# myViewport.setValues(displayedObject=myPart)
+# myViewport.partDisplay.setValues(renderStyle=SHADED)
+
+# xp, yp, xg, yg = [], [], [], []
+# gear = {'m_n': 2.5, 'z': 22, 'beta': 0.0, 'alpha_n': 20.0, 'x': 0.0, 'x_2': 0.0, 'z_2': 40, 'h_k': 0.0,
+# 'rho_f': 0.38, 'd_s': 30.0, 'c': 0.25}
+# geardata = gear
+# mygear = GearPair(geardata)
+# print mygear.Pinion
+
+
+
+
+
+
+
+# p = file('Pinon.csv', 'w')
+# for coord in mygear.Pinion.formcoords:
+# xp.append(coord[0])
+#     yp.append(coord[1])
+#     p.write(str(coord[0]) + ',' + str(coord[1]) +'\n')
+# p.close()
+#
+# g = file('Gear.csv', 'w')
+# for coord in mygear.Gear.formcoords:
+#     xg.append(coord[0])
+#     yg.append(coord[1])
+#     g.write(str(coord[0]) + ',' + str(coord[1]) +'\n')
+# g.close()
+
+
+# print mygear.Pinion
+#
+# Beta = acos(-(((gear['d_s']*pi/gear['z'])**2)/(2*(gear['d_s']/2)**2))+1)
+#
+# x_, y_ = PolarCoordinatesToCartesianCoordinates(gear['d_s']/2,Beta+radians(90))
+#
+# print(x_, y_)
+# os.environ['DISPLAY'] = ':0'
+
+# plt.rcdefaults()
+# plt.plot(x,y)
+# plt.show()
+

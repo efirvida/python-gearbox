@@ -1,6 +1,6 @@
 from math import pi, atan, tan, radians, cos, sin, degrees, sqrt, floor, ceil
 
-from main import involute, arcinvolute
+from libs.maths import involute, arcinvolute
 
 
 class Tool(object):
@@ -15,11 +15,11 @@ class Tool(object):
     :param nc:
     """
 
-    def __init__(self, ha_p, hf_p, rho_fp, x, rho_ao, delta_ao, nc):
+    def __init__(self, ha_p, hf_p, rho_fp, x, rho_ao, delta_ao, nc, c=0.25):
         self.ha_p = ha_p
         self.hf_p = hf_p
         self.rho_fp = rho_fp
-        self.c = 0.25
+        self.c = c
         self.nc = nc
         self.x = x
         self.rho_ao = rho_ao
@@ -84,7 +84,7 @@ class Gear(object):
     :param backlash:
     :param gear_crown:
     :param gear_condition:
-    :param helix_modiffication:
+    :param helix_modification:
     :param favorable_contact:
     """
 
