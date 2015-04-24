@@ -1,5 +1,8 @@
+from os import mkdir
+
 from transmition.gearbox import *
 from export.export import *
+
 
 lubricant = Lubricant(
     name='Kiruna',
@@ -102,6 +105,7 @@ transmition = Transmition(
 # print Bending(transmition=transmition).calculate()
 # print '========================================'
 
-
-ExportGear(gear=pinion).comsol(output_file='./pepe.m', function_name='elmio')
-ExportPair(pair=pair).comsol(output_file='./pepe2.m', function_name='elmio')
+mkdir('comsol_output')
+ExportGear(pinion).comsol(output_file='comsol/pinion.m')
+ExportGear(gear).comsol(output_file='comsol/gear.m')
+ExportPair(pair).comsol(output_file='comsol/pair.m')
