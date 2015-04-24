@@ -106,6 +106,7 @@ transmition = Transmition(
 # print '========================================'
 
 mkdir('comsol_output')
-ExportGear(pinion).comsol(output_file='comsol/pinion.m')
-ExportGear(gear).comsol(output_file='comsol/gear.m')
-ExportPair(pair).comsol(output_file='comsol/pair.m')
+
+ExportGear(pinion).comsol(output_file='comsol_output/pinion.m')
+ExportGear(gear).comsol(output_file='comsol_output/gear.m')
+ExportPair(pair).comsol(output_file='comsol_output/pair.m')
