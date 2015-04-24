@@ -2,8 +2,8 @@ from distutils.core import setup
 
 setup(
     name='python_gearbox',
-    version='0.1',
-    packages=['', 'demo', 'libs', 'export', 'standards', 'transmition'],
+    version='unstable',
+    packages=['', 'gearbox'],
     license='MIT',
     author='efirvida',
     author_email='efirvida@gmail.com',
