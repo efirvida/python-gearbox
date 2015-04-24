@@ -4,6 +4,7 @@ from math import pi, radians, tan, cos
 
 from jinja2 import Environment, FileSystemLoader
 
+import gearbox
 from gearbox.libs.gearprofile import GearExport
 from gearbox.libs.maths import rotate, involute, arcinvolute
 
@@ -15,7 +16,7 @@ class ExportGear(object):
     """
 
     def __init__(self, gear):
-        self.template_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
+        self.template_path = os.path.join(gearbox.__path__[0], 'export', 'templates')
         self.gear = gear
         z = gear.z
         m = gear.m
@@ -61,7 +62,7 @@ class ExportPair(object):
     """
 
     def __init__(self, pair):
-        self.template_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'templates'))
+        self.template_path = os.path.join(gearbox.__path__[0], 'export', 'templates')
         self.pinion = ExportGear(pair[0]).gear.export_data.gear
         self.wheel = ExportGear(pair[1]).gear.export_data.gear
 
