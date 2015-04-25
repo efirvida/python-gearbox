@@ -7,7 +7,7 @@ setup(
     version=version,
     author='Eduardo M. Firvida Donestevez',
     packages=find_packages(),
-    include_data_package=True,
+    include_package_data=True,
     author_email='efirvida@gmail.com',
     description='Python library for gear transmission design',
     requires=['numpy', 'scipy', 'jinja2'],
