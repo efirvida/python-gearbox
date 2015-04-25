@@ -108,6 +108,6 @@ print agma_bending(transmition=transmition).calculate()
 print '========================================'
 
 os.mkdir('comsol_output')
-ExportGear(pinion).comsol(output_file='comsol_output/pinion.m')
-ExportGear(gear).comsol(output_file='comsol_output/gear.m')
-ExportPair(pair).comsol(output_file='comsol_output/pair.m')
+ExportGear(pinion).matlab_comsol_script(output_file='comsol_output/pinion.m')
+ExportGear(gear).matlab_comsol_script(output_file='comsol_output/gear.m')
+ExportPair(pair).matlab_comsol_script(output_file='comsol_output/pair.m')

@@ -29,7 +29,7 @@ class ExportGear(object):
         gear_data = {'m_n': m, 'z': z, 'beta': beta, 'alpha_n': alpha, 'x': x, 'rho_f': rho_f, 'd_s': d_s, 'c': c}
         self.gear.export_data = GearExport(gear_data)
 
-    def comsol(self, output_file, function_name='model', model_path=''):
+    def matlab_comsol_script(self, output_file, function_name='model', model_path=''):
         """
 
         :param output_file:
@@ -78,7 +78,7 @@ class ExportPair(object):
         self.wheel.formcoords = [[coord[0], coord[1] + aw] for coord in coords]
         self.wheel.rotateang = - ang / 2
 
-    def comsol(self, output_file, function_name='model', model_path=''):
+    def matlab_comsol_script(self, output_file, function_name='model', model_path=''):
         """
 
         :param output_file:
