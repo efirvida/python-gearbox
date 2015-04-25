@@ -30,4 +30,3 @@ setup(
                  'Topic :: Software Development :: Libraries :: Application Frameworks'
                  ]
 )
-

@@ -46,10 +46,8 @@ class ExportGear(object):
         with open(output_file, "wb") as fh:
             fh.write(output_from_parsed_template)
 
-
     def abaqus(self):
         pass
-
 
     def ansys(self):
         pass
@@ -79,7 +77,6 @@ class ExportPair(object):
         self.wheel.shaftcoords = [[coord[0], coord[1] + aw] for coord in rotate(shaft, 180)]
         self.wheel.formcoords = [[coord[0], coord[1] + aw] for coord in coords]
         self.wheel.rotateang = - ang / 2
-
 
     def comsol(self, output_file, function_name='model', model_path=''):
         """
