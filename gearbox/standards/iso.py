@@ -7,10 +7,9 @@ from gearbox.transmition.gears import *
 
 def __c__(pair):
     x = [0, 0.04723, 0.15551, 0.25791, -0.00635, -0.11654, -0.00193, -0.24188, 0.00529, 0.00182]
-    qp = x[1] + (x[2] / pair.gear_one.zn) + (x[3] / pair.gear_two.zn) + (
-        x[4] * pair.gear_one.x) + (x[5] * pair.gear_one.x / pair.gear_one.zn) + (
-             x[6] * pair.gear_two.x) + (x[7] * pair.gear_two.x / pair.gear_two.zn) + (
-             x[8] * pair.gear_one.x ** 2) + (x[9] * pair.gear_two.x ** 2)
+    qp = x[1] + (x[2] / pair.gear_one.zn) + (x[3] / pair.gear_two.zn) + (x[4] * pair.gear_one.x) + (
+        x[5] * pair.gear_one.x / pair.gear_one.zn) + (x[6] * pair.gear_two.x) + (
+             x[7] * pair.gear_two.x / pair.gear_two.zn) + (x[8] * pair.gear_one.x ** 2) + (x[9] * pair.gear_two.x ** 2)
 
     beq = pair.gear_one.bs / pair.gear_one.b
     if beq < 0.2:
@@ -32,23 +31,23 @@ def __c__(pair):
     if pair.epsilon_alpha < 1.2:
         cgammaalpha *= 0.9
 
-    cGammaBeta = 0.85 * cgammaalpha
+    cgammabeta = 0.85 * cgammaalpha
 
-    return cgammaalpha, cGammaBeta, cp
+    return cgammaalpha, cgammabeta, cp
 
 
 def __yb__(gear, pair, fbx):
     material = gear.material.classification
-    sigmaHLimit = gear.material.sh_limit
+    sigmahlimit = gear.material.sh_limit
     v = pair.v
     yb = 0
 
     if material == 'V' or material == 'St' or material == 'GGG(perl)' or material == 'GTS':
-        yb = (320. / sigmaHLimit) * fbx
-        if 5 < v <= 10 and yb > 25600. / sigmaHLimit:
-            yb = 25600. / sigmaHLimit
-        elif v > 10 and yb > 12800. / sigmaHLimit:
-            yb = 12800. / sigmaHLimit
+        yb = (320. / sigmahlimit) * fbx
+        if 5 < v <= 10 and yb > 25600. / sigmahlimit:
+            yb = 25600. / sigmahlimit
+        elif v > 10 and yb > 12800. / sigmahlimit:
+            yb = 12800. / sigmahlimit
 
     elif material == 'GG' or material == 'GGG(ferr)':
         yb = 0.55 * fbx
@@ -220,46 +219,46 @@ def __kv__(pair):
 def __khb__(pair):
     fmt = pair.fmt
     b = pair.gear_one.b
-    helixModiffication = pair.gear_one.helix_modification
+    helixmodiffication = pair.gear_one.helix_modification
     d = pair.gear_one.d
-    shaftDiameter = pair.gear_one.shaft_diameter
+    shaftdiameter = pair.gear_one.shaft_diameter
     schema = pair.gear_one.schema
     l = pair.gear_one.l
     s = pair.gear_one.s
-    FhbOne = pair.gear_one.f_h_beta
-    FhbTwo = pair.gear_two.f_h_beta
-    FhBeta5One = pair.gear_one.f_h_beta5
-    FhBeta5Two = pair.gear_two.f_h_beta5
+    fhbone = pair.gear_one.f_h_beta
+    fhbtwo = pair.gear_two.f_h_beta
+    fhbeta5one = pair.gear_one.f_h_beta5
+    fhbeta5two = pair.gear_two.f_h_beta5
     fav = pair.gear_one.favorable_contact
     kp = 0
-    B1 = 0
-    B2 = 0
+    b1 = 0
+    b2 = 0
 
     kv = __kv__(pair)
-    cGammaBeta = __c__(pair)[1]
+    cgammabeta = __c__(pair)[1]
 
     if kv * fmt < 100:
         fm_b = 100
     else:
         fm_b = kv * fmt
 
-    if helixModiffication == 1:
-        B1 = 1.
-        B2 = 1.
-    if helixModiffication == 2:
-        B1 = 1.
-        B2 = 0.5
-    if helixModiffication == 3:
-        B1 = 0.1
-        B2 = 1.
-    if helixModiffication == 4:
-        B1 = 0.1
-        B2 = 0.5
-    if helixModiffication == 5:
-        B1 = 0.7
-        B2 = 0.7
+    if helixmodiffication == 1:
+        b1 = 1.
+        b2 = 1.
+    if helixmodiffication == 2:
+        b1 = 1.
+        b2 = 0.5
+    if helixmodiffication == 3:
+        b1 = 0.1
+        b2 = 1.
+    if helixmodiffication == 4:
+        b1 = 0.1
+        b2 = 0.5
+    if helixmodiffication == 5:
+        b1 = 0.7
+        b2 = 0.7
 
-    stiff = d / shaftDiameter
+    stiff = d / shaftdiameter
 
     if stiff < 1.15:
         if schema == 1:
@@ -284,42 +283,42 @@ def __khb__(pair):
         if schema == 5:
             kp = -0.6
 
-    facTemp = (stiff ** 4) * ((l * s) / (d ** 2))
-    fsh = fm_b * 0.023 * (abs(1 + kp * facTemp - 0.3) + 0.3) * ((b / d) ** 2)
-    fma = sqrt(FhbOne ** 2 + FhbTwo ** 2)
+    factemp = (stiff ** 4) * ((l * s) / (d ** 2))
+    fsh = fm_b * 0.023 * (abs(1 + kp * factemp - 0.3) + 0.3) * ((b / d) ** 2)
+    fma = sqrt(fhbone ** 2 + fhbtwo ** 2)
 
-    if FhBeta5One > FhBeta5Two:
-        fhb5 = FhBeta5One
+    if fhbeta5one > fhbeta5two:
+        fhb5 = fhbeta5one
     else:
-        fhb5 = FhBeta5Two
+        fhb5 = fhbeta5two
 
     if fav == 1:
-        fbX = abs(1.33 * B1 * fsh - fhb5)
+        fbx = abs(1.33 * b1 * fsh - fhb5)
     else:
-        fbX = 1.33 * B1 * fsh + B2 * fma
+        fbx = 1.33 * b1 * fsh + b2 * fma
 
-    ybOne = __yb__(pair.gear_one, pair, fbX)
-    ybTwo = __yb__(pair.gear_two, pair, fbX)
-    yb = round(0.5 * (ybOne + ybTwo), 1)
-    fbY = fbX - yb
+    ybone = __yb__(pair.gear_one, pair, fbx)
+    ybtwo = __yb__(pair.gear_two, pair, fbx)
+    yb = round(0.5 * (ybone + ybtwo), 1)
+    fby = fbx - yb
 
-    if fbY * cGammaBeta / (2 * fm_b) >= 1:
-        khb = sqrt((2. * fbY * cGammaBeta) / fm_b)
+    if fby * cgammabeta / (2 * fm_b) >= 1:
+        khb = sqrt((2. * fby * cgammabeta) / fm_b)
     else:
-        khb = 1 + (fbY * cGammaBeta) / (2 * fm_b)
+        khb = 1 + (fby * cgammabeta) / (2 * fm_b)
 
     return khb
 
 
 def __kfb__(pair):
     khb = __khb__(pair)
-    bhOne = pair.gear_one.b / pair.gear_one.h
-    bhTwo = pair.gear_two.b / pair.gear_two.h
+    bhone = pair.gear_one.b / pair.gear_one.h
+    bhtwo = pair.gear_two.b / pair.gear_two.h
 
-    if bhOne < bhTwo:
-        bh = bhOne
+    if bhone < bhtwo:
+        bh = bhone
     else:
-        bh = bhTwo
+        bh = bhtwo
     if bh < 3:
         bh = 3
 
@@ -329,25 +328,25 @@ def __kfb__(pair):
 
 
 def __var__(pair):
-    FfAlphaOne = pair.gear_one.f_f_alpha
-    FfAlphaTwo = pair.gear_two.f_f_alpha
-    materialOne = pair.gear_one.material
-    materialTwo = pair.gear_two.material
+    ffalphaone = pair.gear_one.f_f_alpha
+    ffalphatwo = pair.gear_two.f_f_alpha
+    materialone = pair.gear_one.material
+    materialtwo = pair.gear_two.material
     v = pair.v
 
-    if FfAlphaOne > FfAlphaTwo:
-        fpb = FfAlphaOne
+    if ffalphaone > ffalphatwo:
+        fpb = ffalphaone
     else:
-        fpb = FfAlphaTwo
+        fpb = ffalphatwo
 
     khb = __khb__(pair)
     kv = __kv__(pair)
-    cGammaAlpha = __c__(pair)[0]
+    cgammaalpha = __c__(pair)[0]
     fmt = pair.fmt
 
-    yaOne = __ya__(materialOne, pair.gear_one.material.sh_limit, v, FfAlphaOne, FfAlphaTwo)
-    yaTwo = __ya__(materialTwo, pair.gear_two.material.sh_limit, v, FfAlphaOne, FfAlphaTwo)
-    ya = 0.5 * (yaTwo + yaOne)
+    yaone = __ya__(materialone, pair.gear_one.material.sh_limit, v, ffalphaone, ffalphatwo)
+    yatwo = __ya__(materialtwo, pair.gear_two.material.sh_limit, v, ffalphaone, ffalphatwo)
+    ya = 0.5 * (yatwo + yaone)
 
     if kv * fmt < 100:
         fm_b = 100
@@ -356,34 +355,33 @@ def __var__(pair):
 
     fthb = fm_b * khb
 
-    return (cGammaAlpha * (fpb - ya)) / fthb
+    return (cgammaalpha * (fpb - ya)) / fthb
 
 
 def __kha__(pair):
-    fmt = pair.fmt
-    epsilonAlpha = pair.epsilon_alpha
-    epsilonGama = pair.epsilon_gama
-    epsilonBeta = pair.epsilon_beta
+    epsilonalpha = pair.epsilon_alpha
+    epsilongama = pair.epsilon_gama
+    epsilonbeta = pair.epsilon_beta
 
     var = __var__(pair)
 
-    if epsilonBeta is 0:
-        zEpsilon = sqrt((4 - epsilonAlpha) / 3)
-    elif 1 > epsilonBeta > 0:
-        zEpsilon = sqrt(((4 - epsilonAlpha) / 3) * (1 - epsilonBeta) + (epsilonBeta / epsilonAlpha))
+    if epsilonbeta is 0:
+        zepsilon = sqrt((4 - epsilonalpha) / 3)
+    elif 1 > epsilonbeta > 0:
+        zepsilon = sqrt(((4 - epsilonalpha) / 3) * (1 - epsilonbeta) + (epsilonbeta / epsilonalpha))
     else:
-        zEpsilon = sqrt(1 / epsilonAlpha)
+        zepsilon = sqrt(1 / epsilonalpha)
 
-    if epsilonGama <= 2:
-        kha = (epsilonGama / 2) * (0.9 + 0.4 * var)
-        if kha > epsilonGama / (epsilonAlpha * zEpsilon ** 2):
-            kha = epsilonGama / (epsilonAlpha * zEpsilon ** 2)
+    if epsilongama <= 2:
+        kha = (epsilongama / 2) * (0.9 + 0.4 * var)
+        if kha > epsilongama / (epsilonalpha * zepsilon ** 2):
+            kha = epsilongama / (epsilonalpha * zepsilon ** 2)
         elif kha < 1:
             kha = 1
     else:
-        kha = 0.9 + 0.4 * var * sqrt(2 * (epsilonGama - 1) / epsilonGama)
-        if kha > epsilonGama / (epsilonAlpha * zEpsilon ** 2):
-            kha = epsilonGama / (epsilonAlpha * zEpsilon ** 2)
+        kha = 0.9 + 0.4 * var * sqrt(2 * (epsilongama - 1) / epsilongama)
+        if kha > epsilongama / (epsilonalpha * zepsilon ** 2):
+            kha = epsilongama / (epsilonalpha * zepsilon ** 2)
         elif kha < 1:
             kha = 1
 
@@ -391,21 +389,21 @@ def __kha__(pair):
 
 
 def __kfa__(pair):
-    epsilonAlpha = pair.epsilon_alpha
-    epsilonGama = pair.epsilon_gama
+    epsilonalpha = pair.epsilon_alpha
+    epsilongama = pair.epsilon_gama
 
     var = __var__(pair)
 
-    if epsilonGama <= 2:
-        kfa = (epsilonGama / 2) * (0.9 + 0.4 * var)
-        if kfa > epsilonGama / (0.25 * epsilonAlpha + 0.75):
-            kfa = epsilonGama / (0.25 * epsilonAlpha + 0.75)
+    if epsilongama <= 2:
+        kfa = (epsilongama / 2) * (0.9 + 0.4 * var)
+        if kfa > epsilongama / (0.25 * epsilonalpha + 0.75):
+            kfa = epsilongama / (0.25 * epsilonalpha + 0.75)
         elif kfa < 1:
             kfa = 1
     else:
-        kfa = 0.9 + 0.4 * var * sqrt(2 * (epsilonGama - 1) / epsilonGama)
-        if kfa > epsilonGama / (0.25 * epsilonAlpha + 0.75):
-            kfa = epsilonGama / (0.25 * epsilonAlpha + 0.75)
+        kfa = 0.9 + 0.4 * var * sqrt(2 * (epsilongama - 1) / epsilongama)
+        if kfa > epsilongama / (0.25 * epsilonalpha + 0.75):
+            kfa = epsilongama / (0.25 * epsilonalpha + 0.75)
         elif kfa < 1:
             kfa = 1
 
@@ -420,7 +418,6 @@ class Pitting(object):
 
     def __init__(self, transmition):
         self.transmition = transmition
-
 
     def calculate(self):
         """
@@ -453,21 +450,21 @@ class Pitting(object):
         khb = __khb__(pair)
         kha = __kha__(pair)
 
-        sigmaH0 = zh * ze * z_epsilon * z_beta * sqrt((pair.ft * (u + 1)) / (pair.gear_one.d * pair.gear_one.b * u))
-        sigmaHOne = zb * sigmaH0 * sqrt(pair.ka * kv * khb * kha)
-        sigmaHTwo = zd * sigmaH0 * sqrt(pair.ka * kv * khb * kha)
+        sigmah0 = zh * ze * z_epsilon * z_beta * sqrt((pair.ft * (u + 1)) / (pair.gear_one.d * pair.gear_one.b * u))
+        sigmahone = zb * sigmah0 * sqrt(pair.ka * kv * khb * kha)
+        sigmahtwo = zd * sigmah0 * sqrt(pair.ka * kv * khb * kha)
 
-        sigmaHPOne = pair.gear_one.material.sh_limit * znt_one * zl * zv * zr * zw_one * zx / pair.sh_min
-        sigmaHPTwo = pair.gear_two.material.sh_limit * znt_two * zl * zv * zr * zw_two * zx / pair.sh_min
+        sigmahpone = pair.gear_one.material.sh_limit * znt_one * zl * zv * zr * zw_one * zx / pair.sh_min
+        sigmahptwo = pair.gear_two.material.sh_limit * znt_two * zl * zv * zr * zw_two * zx / pair.sh_min
 
-        sHOne = znt_one * zl * zv * zr * zw_one * zx / sigmaHOne
-        sHTwo = znt_two * zl * zv * zr * zw_two * zx / sigmaHTwo
+        shone = znt_one * zl * zv * zr * zw_one * zx / sigmahone
+        shtwo = znt_two * zl * zv * zr * zw_two * zx / sigmahtwo
 
         return {
-            'sigmaHOne': sigmaHOne,
-            'sigmaHTwo': sigmaHTwo,
-            'sigmaHPOne': sigmaHPOne,
-            'sigmaHPTwo': sigmaHPTwo,
+            'sigmaHOne': sigmahone,
+            'sigmaHTwo': sigmahtwo,
+            'sigmaHPOne': sigmahpone,
+            'sigmaHPTwo': sigmahptwo,
             'zh': zh,
             'zb': zb,
             'zd': zd,
@@ -487,13 +484,15 @@ class Pitting(object):
             'kha': kha
         }
 
-    def __zh(self, pair):
+    @staticmethod
+    def __zh(pair):
         beta_b = radians(pair.gear_one.beta_b)
         alpha_wt = radians(pair.alpha_wt)
         alpha_t = radians(pair.gear_one.alpha_t)
         return sqrt((2. * cos(beta_b) * cos(alpha_wt)) / (cos(alpha_t) ** 2. * sin(alpha_wt)))
 
-    def __zb(self, pair):
+    @staticmethod
+    def __zb(pair):
         da_one = pair.gear_one.da
         db_one = pair.gear_one.db
         z_one = pair.gear_one.z
@@ -504,43 +503,44 @@ class Pitting(object):
         alpha_wt = radians(pair.alpha_wt)
         epsilon_alpha = pair.epsilon_alpha
         epsilon_beta = pair.epsilon_beta
-        Zb = 0
-        Zd = 0
+        zb = 0
+        zd = 0
 
-        M1 = tan(alpha_wt) / sqrt((sqrt((da_one ** 2 / db_one ** 2) - 1) - (2 * pi) / z_one) * (
+        m1 = tan(alpha_wt) / sqrt((sqrt((da_one ** 2 / db_one ** 2) - 1) - (2 * pi) / z_one) * (
             sqrt((da_two ** 2 / db_two ** 2) - 1) - (epsilon_alpha - 1) * (2 * pi) / z_two))
-        M2 = tan(alpha_wt) / sqrt((sqrt((da_two ** 2 / db_two ** 2) - 1) - (2 * pi) / z_two) * (
+        m2 = tan(alpha_wt) / sqrt((sqrt((da_two ** 2 / db_two ** 2) - 1) - (2 * pi) / z_two) * (
             sqrt((da_one ** 2 / db_one ** 2) - 1) - (epsilon_alpha - 1) * (2 * pi) / z_one))
 
         if beta is 0:
             if epsilon_alpha > 1:
-                if M1 <= 1:
-                    Zb = 1
+                if m1 <= 1:
+                    zb = 1
                 else:
-                    Zb = M1
-                if M2 <= 1:
-                    Zd = 1
+                    zb = m1
+                if m2 <= 1:
+                    zd = 1
                 else:
-                    Zd = M2
+                    zd = m2
             if (z_one / z_two) > 1.5:
-                Zd = 1
+                zd = 1
         else:
             if epsilon_alpha > 1 and epsilon_beta >= 1:
-                Zb = 1
-                Zd = Zb
+                zb = 1
+                zd = zb
             elif epsilon_alpha > 1 > epsilon_beta:
-                if M1 - epsilon_beta * (M1 - 1) < 1:
-                    Zb = 1
+                if m1 - epsilon_beta * (m1 - 1) < 1:
+                    zb = 1
                 else:
-                    Zb = M1 - epsilon_beta * (M1 - 1)
-                if M2 - epsilon_beta * (M2 - 1) < 1:
-                    Zd = 1
+                    zb = m1 - epsilon_beta * (m1 - 1)
+                if m2 - epsilon_beta * (m2 - 1) < 1:
+                    zd = 1
                 else:
-                    Zd = M2 - epsilon_beta * (M2 - 1)
+                    zd = m2 - epsilon_beta * (m2 - 1)
 
-        return Zb, Zd
+        return zb, zd
 
-    def __ze(self, pair):
+    @staticmethod
+    def __ze(pair):
         e_one = pair.gear_one.material.e
         e_two = pair.gear_two.material.e
         poisson_one = pair.gear_one.material.poisson
@@ -551,7 +551,8 @@ class Pitting(object):
         else:
             return sqrt(1 / (pi * (((1 - poisson_one) / e_one) + (1 - poisson_two) / e_two)))
 
-    def __z_epsilon(self, pair):
+    @staticmethod
+    def __z_epsilon(pair):
         epsilon_alpha = pair.epsilon_alpha
         epsilon_beta = pair.epsilon_beta
 
@@ -567,16 +568,17 @@ class Pitting(object):
         nl = self.transmition.l * 60 * rpm
 
         if material == 'NV(nitrocar)':
-            Y = [1.1, 1.1, 1.02, 1, 0.97, 0.93, 0.89, 0.85]
+            y = [1.1, 1.1, 1.02, 1, 0.97, 0.93, 0.89, 0.85]
         elif material == 'GG' or material == 'GGG(ferr)' or material == 'NT' or material == 'NV(nitr)':
-            Y = [1.3, 1.3, 1.07, 1, 0.97, 0.93, 0.89, 0.85]
+            y = [1.3, 1.3, 1.07, 1, 0.97, 0.93, 0.89, 0.85]
         else:
-            Y = [1.6, 1.6, 1.36, 1.14, 1, 0.98, 0.915, 0.85]
-        X = [1e4, 1e5, 1e6, 2e6, 1e7, 1e8, 1e9, 1e10]
+            y = [1.6, 1.6, 1.36, 1.14, 1, 0.98, 0.915, 0.85]
+        x = [1e4, 1e5, 1e6, 2e6, 1e7, 1e8, 1e9, 1e10]
 
-        return interp(nl, X, Y)
+        return interp(nl, x, y)
 
-    def __r_red(self, pair):
+    @staticmethod
+    def __r_red(pair):
         db_one = pair.gear_one.db
         db_two = pair.gear_two.db
         alpha_wt = radians(pair.alpha_wt)
@@ -585,7 +587,8 @@ class Pitting(object):
 
         return (r1 * r2) / (r1 + r2)
 
-    def __czl(self, pair):
+    @staticmethod
+    def __czl(pair):
         sh_limit_1 = pair.gear_one.material.sh_limit
         sh_limit_2 = pair.gear_two.material.sh_limit
         if sh_limit_1 < sh_limit_2:
@@ -625,7 +628,7 @@ class Pitting(object):
 
         rz = (rz_one + rz_two) / 2.
 
-        Rz10 = rz * ((10.0 / self.__r_red(pair)) ** (1. / 3.))
+        rz10 = rz * ((10.0 / self.__r_red(pair)) ** (1. / 3.))
 
         if 850 <= sh_min <= 1200:
             czr = 0.32 - 0.0002 * sh_min
@@ -634,7 +637,7 @@ class Pitting(object):
         if 1200 < sh_min:
             czr = 0.08
 
-        return (3.0 / Rz10) ** czr
+        return (3.0 / rz10) ** czr
 
     def __zw(self, pair):
         rz_one = pair.gear_one.rz
@@ -644,24 +647,24 @@ class Pitting(object):
         v40 = self.transmition.v40
         v = pair.v
 
-        rzH = ((rz_one * (10 / self.__r_red(pair)) ** 0.33) * (rz_one / rz_two) ** 0.66) / ((v40 * v / 1500) ** 0.33)
+        rzh = ((rz_one * (10 / self.__r_red(pair)) ** 0.33) * (rz_one / rz_two) ** 0.66) / ((v40 * v / 1500) ** 0.33)
 
-        if rzH > 16:
-            rzH = 16
-        if rzH < 3:
-            rzH = 3
+        if rzh > 16:
+            rzh = 16
+        if rzh < 3:
+            rzh = 3
 
         if hb_1 < 130:
-            return 1.2 * (3 / rzH) ** 0.15
+            return 1.2 * (3 / rzh) ** 0.15
         elif hb_1 > 470:
-            return (3 / rzH) ** 0.15
+            return (3 / rzh) ** 0.15
 
         if hb_2 < 130:
-            return 1.2 * (3 / rzH) ** 0.15
+            return 1.2 * (3 / rzh) ** 0.15
         elif hb_2 > 470:
-            return (3 / rzH) ** 0.15
+            return (3 / rzh) ** 0.15
 
-        return (1.2 - (hb_1 - 130) / 1700) * (3 / rzH) ** 0.15, (1.2 - (hb_2 - 130) / 1700) * (3 / rzH) ** 0.15
+        return (1.2 - (hb_1 - 130) / 1700) * (3 / rzh) ** 0.15, (1.2 - (hb_2 - 130) / 1700) * (3 / rzh) ** 0.15
 
 
 # iso 6336-3
@@ -674,7 +677,7 @@ class Bending(object):
     def __init__(self, transmition):
         self.transmition = transmition
 
-
+    @property
     def calculate(self):
         """
 
@@ -683,74 +686,75 @@ class Bending(object):
         """
         pair = self.transmition
         # ka = pair.ka
-        sFMin = pair.sf_min
+        sfmin = pair.sf_min
         gear_one = pair.gear_one
         gear_two = pair.gear_two
         pair.gear_one.b = gear_one.b
-        bTwo = gear_two.b
+        btwo = gear_two.b
         m = gear_one.m
-        sigmaFLimitOne = gear_one.material.sf_limit
-        sigmaFLimitTwo = gear_two.material.sf_limit
+        sigmaflimitone = gear_one.material.sf_limit
+        sigmaflimittwo = gear_two.material.sf_limit
 
-        Yst = self.__yst()
-        YxOne = self.__yx(gear_one)
-        YxTwo = self.__yx(gear_two)
-        YfOne, YfTwo = self.__yf(pair)
-        YsOne, YsTwo = self.__ys(pair)
-        Ybeta = self.__ybeta(pair)
-        YbOne = self.__yb(gear_one)
-        YbTwo = self.__yb(gear_two)
+        yst = self.__yst()
+        yxone = self.__yx(gear_one)
+        yxtwo = self.__yx(gear_two)
+        yfone, yftwo = self.__yf(pair)
+        ysone, ystwo = self.__ys(pair)
+        ybeta = self.__ybeta(pair)
+        ybone = self.__yb(gear_one)
+        ybtwo = self.__yb(gear_two)
 
-        YdeltaOne, YdeltaTwo = self.__ydelta(pair)
-        Ydt = self.__ydt(pair)
-        YntOne, YntTwo = self.__ynt(pair)
-        YRelOne = self.__yrel(gear_one)
-        YRelTwo = self.__yrel(gear_two)
+        ydeltaone, ydeltatwo = self.__ydelta(pair)
+        ydt = self.__ydt(pair)
+        yntone, ynttwo = self.__ynt(pair)
+        yrelone = self.__yrel(gear_one)
+        yreltwo = self.__yrel(gear_two)
 
         kv = __kv__(pair)
         kfa = __kfa__(pair)
         kfb = __kfb__(pair)
 
-        sigmaF0One = pair.ft / (pair.gear_one.b * m) * YfOne * YsOne * Ybeta * YbOne * Ydt
-        sigmaF0Two = pair.ft / (bTwo * m) * YfTwo * YsTwo * Ybeta * YbTwo * Ydt
+        sigmaf0one = pair.ft / (pair.gear_one.b * m) * yfone * ysone * ybeta * ybone * ydt
+        sigmaf0two = pair.ft / (btwo * m) * yftwo * ystwo * ybeta * ybtwo * ydt
 
-        sigmaFOne = sigmaF0One * pair.ka * kv * kfb * kfa
-        sigmaFTwo = sigmaF0Two * pair.ka * kv * kfb * kfa
+        sigmafone = sigmaf0one * pair.ka * kv * kfb * kfa
+        sigmaftwo = sigmaf0two * pair.ka * kv * kfb * kfa
 
-        sigmaFPOne = sigmaFLimitOne * Yst * YntOne * YdeltaOne * YRelOne * YxOne / sFMin
-        sigmaFPTwo = sigmaFLimitTwo * Yst * YntTwo * YdeltaTwo * YRelTwo * YxTwo / sFMin
+        sigmafpone = sigmaflimitone * yst * yntone * ydeltaone * yrelone * yxone / sfmin
+        sigmafptwo = sigmaflimittwo * yst * ynttwo * ydeltatwo * yreltwo * yxtwo / sfmin
 
-        sFOne = sigmaFLimitOne * YsOne * YntOne * YdeltaOne * YRelOne / sigmaFOne
-        sFTwo = sigmaFLimitTwo * YsTwo * YntTwo * YdeltaTwo * YRelTwo / sigmaFTwo
+        sfone = sigmaflimitone * ysone * yntone * ydeltaone * yrelone / sigmafone
+        sftwo = sigmaflimittwo * ystwo * ynttwo * ydeltatwo * yreltwo / sigmaftwo
 
         return {
-            'sigmaFOne': sigmaFOne,
-            'sigmaFTwo': sigmaFTwo,
-            'sigmaFPOne': sigmaFPOne,
-            'sigmaFPTwo': sigmaFPTwo,
-            'Yst': Yst,
-            'YxOne': YxOne,
-            'YxTwo': YxTwo,
-            'YfOne': YfOne,
-            'YfTwo': YfTwo,
-            'YsOne': YsOne,
-            'YsTwo': YsTwo,
-            'Ybeta': Ybeta,
-            'YbOne': YbOne,
-            'YbTwo': YbTwo,
-            'YdeltaOne': YdeltaOne,
-            'YdeltaTwo': YdeltaTwo,
-            'Ydt': Ydt,
-            'YntOne': YntOne,
-            'YntTwo': YntTwo,
-            'YRelOne': YRelOne,
-            'YRelTwo': YRelTwo,
+            'sigmafone': sigmafone,
+            'sigmaftwo': sigmaftwo,
+            'sigmafpone': sigmafpone,
+            'sigmafptwo': sigmafptwo,
+            'yst': yst,
+            'yxone': yxone,
+            'yxtwo': yxtwo,
+            'yfone': yfone,
+            'yftwo': yftwo,
+            'ysone': ysone,
+            'ystwo': ystwo,
+            'ybeta': ybeta,
+            'ybone': ybone,
+            'ybtwo': ybtwo,
+            'ydeltaone': ydeltaone,
+            'ydeltatwo': ydeltatwo,
+            'ydt': ydt,
+            'yntone': yntone,
+            'ynttwo': ynttwo,
+            'yrelone': yrelone,
+            'yreltwo': yreltwo,
             'kv': kv,
             'kfa': kfa,
             'kfb': kfb
         }
 
-    def __yrel(self, gear):
+    @staticmethod
+    def __yrel(gear):
         rz = gear.rz
         material = gear.material.classification
         if rz < 1:
@@ -770,34 +774,38 @@ class Bending(object):
 
     @staticmethod
     def __ynt(pair):
-        materialOne = pair.gear_one.material.classification
-        materialTwo = pair.gear_two.material.classification
-        rpmOne = pair.rpm_in
-        rpmTwo = pair.rpm_out
-        L = pair.l
-        Y = 0
+        """
 
-        nlOne = L * 60 * rpmOne
-        nlTwo = L * 60 * rpmTwo
+        :rtype : object
+        """
+        materialone = pair.gear_one.material.classification
+        materialtwo = pair.gear_two.material.classification
+        rpmone = pair.rpm_in
+        rpmtwo = pair.rpm_out
+        l = pair.l
+        y = 0
+
+        nlone = l * 60 * rpmone
+        nltwo = l * 60 * rpmtwo
 
         result = []
 
-        for material, nl in [materialOne, nlOne], [materialTwo, nlTwo]:
+        for material, nl in [materialone, nlone], [materialtwo, nltwo]:
 
             if material == 'V' or material == 'GGG(perl)' or material == 'GTS' or material == 'St':
-                Y = [2.5, 2.5, 2.5, 1.79, 1.2, 1, 0.98, 0.94, 0.895, 0.85]
+                y = [2.5, 2.5, 2.5, 1.79, 1.2, 1, 0.98, 0.94, 0.895, 0.85]
 
             elif material == 'Eh' or material == 'IF':
-                Y = [2.5, 2.5, 1.97, 1.53, 1.15, 1, 0.98, 0.94, 0.895, 0.85]
+                y = [2.5, 2.5, 1.97, 1.53, 1.15, 1, 0.98, 0.94, 0.895, 0.85]
 
             elif material == 'GG' or material == 'GGG(ferr)' or material == 'NT' or material == 'NV(nitr)':
-                Y = [1.6, 1.6, 1.4, 1.21, 1.07, 1, 0.98, 0.94, 0.895, 0.85]
+                y = [1.6, 1.6, 1.4, 1.21, 1.07, 1, 0.98, 0.94, 0.895, 0.85]
 
             elif material == 'NV(nitrocar)':
-                Y = [1.1, 1.1, 1.07, 1.05, 1.01, 1, 0.98, 0.94, 0.895, 0.85]
+                y = [1.1, 1.1, 1.07, 1.05, 1.01, 1, 0.98, 0.94, 0.895, 0.85]
 
-            X = [1e2, 1e3, 1e4, 1e5, 1e6, 3e6, 1e7, 1e8, 1e9, 1e10]
-            result.append(interp(nl, X, Y))
+            x = [1e2, 1e3, 1e4, 1e5, 1e6, 3e6, 1e7, 1e8, 1e9, 1e10]
+            result.append(interp(nl, x, y))
 
         return result
 
@@ -805,53 +813,53 @@ class Bending(object):
         gear_one = pair.gear_one
         gear_two = pair.gear_two
 
-        alphaFenOne, alphaFenTwo, sFnOne, sFnTwo, rhoFOne, rhoFTwo, hFeOne, hFeTwo = self.__aux(pair)
-        rhoOne = self.__rho(gear_one)
-        rhoTwo = self.__rho(gear_two)
+        alphafenone, alphafentwo, sfnone, sfntwo, rhofone, rhoftwo, hfeone, hfetwo = self.__aux(pair)
+        rhoone = self.__rho(gear_one)
+        rhotwo = self.__rho(gear_two)
 
-        qsOne = sFnOne / (2 * rhoFOne)
-        qsTwo = sFnTwo / (2 * rhoFTwo)
-        xpOne = (1 / 5.) * (1 + 2 * qsOne)
-        xpTwo = (1 / 5.) * (1 + 2 * qsTwo)
+        qsone = sfnone / (2 * rhofone)
+        qstwo = sfntwo / (2 * rhoftwo)
+        xpone = (1 / 5.) * (1 + 2 * qsone)
+        xptwo = (1 / 5.) * (1 + 2 * qstwo)
         xt = (1 / 5.) * (1 + 2 * 2.5)
 
-        ydeltaOne = (1 + sqrt(rhoOne * xpOne)) / (1 + sqrt(rhoOne * xt))
-        ydeltaTwo = (1 + sqrt(rhoTwo * xpTwo)) / (1 + sqrt(rhoTwo * xt))
+        ydeltaone = (1 + sqrt(rhoone * xpone)) / (1 + sqrt(rhoone * xt))
+        ydeltatwo = (1 + sqrt(rhotwo * xptwo)) / (1 + sqrt(rhotwo * xt))
 
-        return ydeltaOne, ydeltaTwo
+        return ydeltaone, ydeltatwo
 
     @staticmethod
     def __rho(gear):
-        sigmaFLimit = gear.material.sf_limit
+        sigmaflimit = gear.material.sf_limit
         material = gear.material.classification
         rho = 0
 
         if material == 'GG' or material == 'GGG(ferr)':
-            if sigmaFLimit <= 150:
+            if sigmaflimit <= 150:
                 rho = 0.3124
-            elif sigmaFLimit >= 300:
+            elif sigmaflimit >= 300:
                 rho = 0.3095
             else:
-                rho = interp(sigmaFLimit, [150, 300], [0.3124, 0.3095])
+                rho = interp(sigmaflimit, [150, 300], [0.3124, 0.3095])
 
         elif material == 'GGG(perl)' or material == 'V' or material == 'GTS':
-            if sigmaFLimit <= 500:
+            if sigmaflimit <= 500:
                 rho = 0.0281
-            elif sigmaFLimit >= 1000:
+            elif sigmaflimit >= 1000:
                 rho = 0.0014
             else:
-                rho = interp(sigmaFLimit, [500, 600, 800, 1000], [0.0281, 0.0194, 0.0064, 0.0014])
+                rho = interp(sigmaflimit, [500, 600, 800, 1000], [0.0281, 0.0194, 0.0064, 0.0014])
 
         elif material == 'NT' or material == 'NV(nitrocar)' or material == 'NV(nitr)':
             rho = 0.1005
 
         elif material == 'St':
-            if sigmaFLimit <= 300:
+            if sigmaflimit <= 300:
                 rho = 0.0833
-            elif sigmaFLimit >= 400:
+            elif sigmaflimit >= 400:
                 rho = 0.0445
             else:
-                rho = interp(sigmaFLimit, [300, 400], [0.0833, 0.445])
+                rho = interp(sigmaflimit, [300, 400], [0.0833, 0.445])
 
         elif material == 'Eh' or material == 'IF':
             rho = 0.003
@@ -860,39 +868,39 @@ class Bending(object):
 
     @staticmethod
     def __ydt(pair):
-        epsilonAlpha = pair.epsilon_alpha
-        betaB = radians(pair.gear_one.beta_b)
-        gPrecision = pair.gear_one.precision_grade
-        epsilonAlphaN = epsilonAlpha / (cos(betaB) ** 2)
+        epsilonalpha = pair.epsilon_alpha
+        betab = radians(pair.gear_one.beta_b)
+        gprecision = pair.gear_one.precision_grade
+        epsilonalphan = epsilonalpha / (cos(betab) ** 2)
 
-        if epsilonAlphaN <= 2.05 or epsilonAlphaN > 2.05 and gPrecision > 4:
+        if epsilonalphan <= 2.05 or epsilonalphan > 2.05 and gprecision > 4:
             return 1
-        elif 2.05 < epsilonAlphaN <= 2.5 and gPrecision <= 4:
-            return -0.666 * epsilonAlphaN + 2.366
-        elif epsilonAlphaN > 2.5 and gPrecision <= 4:
+        elif 2.05 < epsilonalphan <= 2.5 and gprecision <= 4:
+            return -0.666 * epsilonalphan + 2.366
+        elif epsilonalphan > 2.5 and gprecision <= 4:
             return 0.9
 
     @staticmethod
     def __yb(gear):
         sr = gear.sr
         h = gear.h
-        srH = sr / h
+        srh = sr / h
         m = gear.m
 
-        if srH >= 1.2 or sr / m <= 1.75:
+        if srh >= 1.2 or sr / m <= 1.75:
             return 1
-        elif 0.5 < srH < 1.2:
-            return 1.6 * log(2.242 * 1 / srH)
+        elif 0.5 < srh < 1.2:
+            return 1.6 * log(2.242 * 1 / srh)
 
     @staticmethod
     def __ybeta(pair):
-        epsilonBeta = pair.epsilon_beta
+        epsilonbeta = pair.epsilon_beta
         beta = pair.gear_one.beta
 
-        if epsilonBeta > 1:
+        if epsilonbeta > 1:
             eb = 1
         else:
-            eb = epsilonBeta
+            eb = epsilonbeta
 
         if beta > 30:
             be = 30
@@ -902,118 +910,120 @@ class Bending(object):
         return 1 - eb * (be / 120)
 
     def __ys(self, pair):
-        alphaFenOne, alphaFenTwo, sFnOne, sFnTwo, rhoFOne, rhoFTwo, hFeOne, hFeTwo = self.__aux(pair)
-        LOne = sFnOne / hFeOne
-        LTwo = sFnTwo / hFeTwo
-        qsOne = sFnOne / (2 * rhoFOne)
-        qsTwo = sFnTwo / (2 * rhoFTwo)
-        ysOne = (1.2 + 0.13 * LOne) * (qsOne ** (1 / (1.21 + (2.3 / LOne))))
-        ysTwo = (1.2 + 0.13 * LTwo) * (qsTwo ** (1 / (1.21 + (2.3 / LTwo))))
+        alphafenone, alphafentwo, sfnone, sfntwo, rhofone, rhoftwo, hfeone, hfetwo = self.__aux(pair)
+        lone = sfnone / hfeone
+        ltwo = sfntwo / hfetwo
+        qsone = sfnone / (2 * rhofone)
+        qstwo = sfntwo / (2 * rhoftwo)
+        ysone = (1.2 + 0.13 * lone) * (qsone ** (1 / (1.21 + (2.3 / lone))))
+        ystwo = (1.2 + 0.13 * ltwo) * (qstwo ** (1 / (1.21 + (2.3 / ltwo))))
 
-        return ysOne, ysTwo
+        return ysone, ystwo
 
-    def __aux(self, pair):
+    @staticmethod
+    def __aux(pair):
         m = pair.gear_one.m
-        epsilonAlpha = pair.epsilon_alpha
-        znOne = pair.gear_one.zn
-        znTwo = pair.gear_two.zn
-        zTwo = pair.gear_two.z
-        xOne = pair.gear_one.x
-        xTwo = pair.gear_two.x
-        zOne = pair.gear_one.z
+        epsilonalpha = pair.epsilon_alpha
+        znone = pair.gear_one.zn
+        zntwo = pair.gear_two.zn
+        ztwo = pair.gear_two.z
+        xone = pair.gear_one.x
+        xtwo = pair.gear_two.x
+        zone = pair.gear_one.z
         beta = radians(pair.gear_one.beta)
-        betaB = radians(pair.gear_one.beta_b)
+        betab = radians(pair.gear_one.beta_b)
         alpha = radians(pair.gear_one.alpha)
-        hfP = pair.gear_one.profile.hf_p * m
-        haP = pair.gear_one.profile.ha_p
-        rhoFP = pair.gear_one.profile.rho_fp * m
-        thetaOne = 0
-        thetaTwo = 0
+        hfp = pair.gear_one.profile.hf_p * m
+        hap = pair.gear_one.profile.ha_p
+        rhofp = pair.gear_one.profile.rho_fp * m
+        thetaone = 0
+        thetatwo = 0
 
-        e = ((pi / 4) * m) - hfP * tan(alpha) - (1 - sin(alpha)) * (rhoFP / cos(alpha))
-        gOne = (rhoFP / m) - (hfP / m) + xOne
-        gTwo = (rhoFP / m) - (hfP / m) + xTwo
-        hOne = (2 / znOne) * ((pi / 2) - (e / m)) - (pi / 3)
-        hTwo = (2 / znTwo) * ((pi / 2) - (e / m)) - (pi / 3)
+        e = ((pi / 4) * m) - hfp * tan(alpha) - (1 - sin(alpha)) * (rhofp / cos(alpha))
+        gone = (rhofp / m) - (hfp / m) + xone
+        gtwo = (rhofp / m) - (hfp / m) + xtwo
+        hone = (2 / znone) * ((pi / 2) - (e / m)) - (pi / 3)
+        htwo = (2 / zntwo) * ((pi / 2) - (e / m)) - (pi / 3)
 
-        thetaTOne = pi / 6
-        thetaTTwo = pi / 6
+        thetatone = pi / 6
+        thetattwo = pi / 6
         for i in range(1, 10):
-            thetaOne = ((2 * gOne) / znOne) * tan(thetaTOne) - hOne
-            thetaTwo = ((2 * gTwo) / znTwo) * tan(thetaTTwo) - hTwo
-            thetaTOne = thetaOne
-            thetaTTwo = thetaTwo
+            thetaone = ((2 * gone) / znone) * tan(thetatone) - hone
+            thetatwo = ((2 * gtwo) / zntwo) * tan(thetattwo) - htwo
+            thetatone = thetaone
+            thetattwo = thetatwo
 
-        pair.gear_one.d = m * zOne / cos(beta)
-        dTwo = m * zTwo / cos(beta)
-        daOne = m * (zOne / cos(beta) + 2. * (haP + xOne))
-        daTwo = m * (zTwo / cos(beta) + 2. * (haP + xTwo))
+        pair.gear_one.d = m * zone / cos(beta)
+        dtwo = m * ztwo / cos(beta)
+        daone = m * (zone / cos(beta) + 2. * (hap + xone))
+        datwo = m * (ztwo / cos(beta) + 2. * (hap + xtwo))
 
-        epsilonAlphaN = epsilonAlpha / (cos(betaB) ** 2)
-        dnOne = pair.gear_one.d / (cos(betaB) ** 2)
-        dnTwo = dTwo / (cos(betaB) ** 2)
-        dbnOne = dnOne * cos(alpha)
-        dbnTwo = dnTwo * cos(alpha)
-        danOne = dnOne + daOne - pair.gear_one.d
-        danTwo = dnTwo + daTwo - dTwo
-        denOne = 2. * sqrt((sqrt((danOne / 2.) ** 2 - (dbnOne / 2.) ** 2) - (
-            (pi * pair.gear_one.d * cos(beta) * cos(alpha)) / zOne) * (epsilonAlphaN - 1)) ** 2 + (dbnOne / 2) ** 2)
-        denTwo = 2. * sqrt((sqrt((danTwo / 2.) ** 2 - (dbnTwo / 2.) ** 2) - (
-            (pi * dTwo * cos(beta) * cos(alpha)) / zTwo) * (epsilonAlphaN - 1)) ** 2 + (dbnTwo / 2) ** 2)
-        alphaEnOne = acos(dbnOne / denOne)
-        alphaEnTwo = acos(dbnTwo / denTwo)
-        gamaEOne = ((0.5 * pi + 2. * tan(alpha) * xOne) / znOne) + degrees(involute(alpha)) - degrees(involute(
-            alphaEnOne))
-        gamaETwo = ((0.5 * pi + 2. * tan(alpha) * xTwo) / znTwo) + degrees(involute(alpha)) - degrees(involute(
-            alphaEnTwo))
+        epsilonalphan = epsilonalpha / (cos(betab) ** 2)
+        dnone = pair.gear_one.d / (cos(betab) ** 2)
+        dntwo = dtwo / (cos(betab) ** 2)
+        dbnone = dnone * cos(alpha)
+        dbntwo = dntwo * cos(alpha)
+        danone = dnone + daone - pair.gear_one.d
+        dantwo = dntwo + datwo - dtwo
+        denone = 2. * sqrt((sqrt((danone / 2.) ** 2 - (dbnone / 2.) ** 2) - (
+            (pi * pair.gear_one.d * cos(beta) * cos(alpha)) / zone) * (epsilonalphan - 1)) ** 2 + (dbnone / 2) ** 2)
+        dentwo = 2. * sqrt((sqrt((dantwo / 2.) ** 2 - (dbntwo / 2.) ** 2) - (
+            (pi * dtwo * cos(beta) * cos(alpha)) / ztwo) * (epsilonalphan - 1)) ** 2 + (dbntwo / 2) ** 2)
+        alphaenone = acos(dbnone / denone)
+        alphaentwo = acos(dbntwo / dentwo)
+        gamaeone = ((0.5 * pi + 2. * tan(alpha) * xone) / znone) + degrees(involute(alpha)) - degrees(involute(
+            alphaenone))
+        gamaetwo = ((0.5 * pi + 2. * tan(alpha) * xtwo) / zntwo) + degrees(involute(alpha)) - degrees(involute(
+            alphaentwo))
 
-        alphaFenOne = alphaEnOne - gamaEOne
-        alphaFenTwo = alphaEnTwo - gamaETwo
+        alphafenone = alphaenone - gamaeone
+        alphafentwo = alphaentwo - gamaetwo
 
-        sFnOne = m * (znOne * sin((pi / 3) - thetaOne) + sqrt(3) * ((gOne / cos(thetaOne)) - (rhoFP / m)))
-        sFnTwo = m * (znTwo * sin((pi / 3) - thetaTwo) + sqrt(3) * ((gTwo / cos(thetaTwo)) - (rhoFP / m)))
+        sfnone = m * (znone * sin((pi / 3) - thetaone) + sqrt(3) * ((gone / cos(thetaone)) - (rhofp / m)))
+        sfntwo = m * (zntwo * sin((pi / 3) - thetatwo) + sqrt(3) * ((gtwo / cos(thetatwo)) - (rhofp / m)))
 
-        rhoFOne = m * (
-            rhoFP / m + ((2 * gOne ** 2) / (cos(thetaOne) * (znOne * cos(thetaOne) ** 2 - 2 * gOne))))
-        rhoFTwo = m * (
-            rhoFP / m + ((2 * gTwo ** 2) / (cos(thetaTwo) * (znTwo * cos(thetaTwo) ** 2 - 2 * gTwo))))
+        rhofone = m * (
+            rhofp / m + ((2 * gone ** 2) / (cos(thetaone) * (znone * cos(thetaone) ** 2 - 2 * gone))))
+        rhoftwo = m * (
+            rhofp / m + ((2 * gtwo ** 2) / (cos(thetatwo) * (zntwo * cos(thetatwo) ** 2 - 2 * gtwo))))
 
-        hFeOne = 0.5 * m * (
-            (cos(gamaEOne) - sin(gamaEOne) * tan(alphaFenOne)) * denOne / m - znOne * cos(pi / 3 - thetaOne) - (
-                gOne / cos(thetaOne) - rhoFP / m))
-        hFeTwo = 0.5 * m * (
-            (cos(gamaETwo) - sin(gamaETwo) * tan(alphaFenTwo)) * denTwo / m - znTwo * cos(pi / 3 - thetaTwo) - (
-                gTwo / cos(thetaTwo) - rhoFP / m))
+        hfeone = 0.5 * m * (
+            (cos(gamaeone) - sin(gamaeone) * tan(alphafenone)) * denone / m - znone * cos(pi / 3 - thetaone) - (
+                gone / cos(thetaone) - rhofp / m))
+        hfetwo = 0.5 * m * (
+            (cos(gamaetwo) - sin(gamaetwo) * tan(alphafentwo)) * dentwo / m - zntwo * cos(pi / 3 - thetatwo) - (
+                gtwo / cos(thetatwo) - rhofp / m))
 
-        return alphaFenOne, alphaFenTwo, sFnOne, sFnTwo, rhoFOne, rhoFTwo, hFeOne, hFeTwo
+        return alphafenone, alphafentwo, sfnone, sfntwo, rhofone, rhoftwo, hfeone, hfetwo
 
     def __yf(self, pair):
         alpha = radians(pair.gear_one.alpha)
-        alphaFenOne, alphaFenTwo, sFnOne, sFnTwo, rhoFOne, rhoFTwo, hFeOne, hFeTwo = self.__aux(pair)
+        alphafenone, alphafentwo, sfnone, sfntwo, rhofone, rhoftwo, hfeone, hfetwo = self.__aux(pair)
         m = pair.gear_one.m
 
-        yfOne = ((6 * hFeOne / m) * cos(alphaFenOne)) / (((sFnOne / m) ** 2) * cos(alpha))
-        yfTwo = ((6 * hFeTwo / m) * cos(alphaFenTwo)) / (((sFnTwo / m) ** 2) * cos(alpha))
+        yfone = ((6 * hfeone / m) * cos(alphafenone)) / (((sfnone / m) ** 2) * cos(alpha))
+        yftwo = ((6 * hfetwo / m) * cos(alphafentwo)) / (((sfntwo / m) ** 2) * cos(alpha))
 
-        return yfOne, yfTwo
+        return yfone, yftwo
 
-    def __yx(self, gear):
+    @staticmethod
+    def __yx(gear):
         material = gear.material.classification
         m = gear.m
-        X = 0
-        Y = 0
+        x = 0
+        y = 0
 
         if material == 'St' or material == 'V' or material == 'GGG(perl)' or material == 'GTS':
-            Y = [1, 1, 0.85, 0.85]
-            X = [0, 5, 30, 60]
+            y = [1, 1, 0.85, 0.85]
+            x = [0, 5, 30, 60]
         elif material == 'GG' or material == 'GGG(ferr)':
-            Y = [1, 1, 0.85, 0.7, 0.7]
-            X = [0, 5, 15, 25, 60]
+            y = [1, 1, 0.85, 0.7, 0.7]
+            x = [0, 5, 15, 25, 60]
         elif material == 'NV(nitrocar)' or material == 'NT' or material == 'NV(nitr)' or material == 'Eh' or material == 'IF':
-            Y = [1, 1, 0.95, 0.9, 0.85, 0.8, 0.8]
-            X = [0, 5, 10, 15, 20, 25, 60]
+            y = [1, 1, 0.95, 0.9, 0.85, 0.8, 0.8]
+            x = [0, 5, 10, 15, 20, 25, 60]
 
-        return interp(m, X, Y)
+        return interp(m, x, y)
 
     @staticmethod
     def __yst():
