@@ -1,3 +1,11 @@
+"""
+This file is a modification of the pygear project (https://sourceforge.net/projects/pygear/)
+and is distribuited under the same license of his parent
+
+license:
+This code is published under the terms of the GNU General Public License v3
+http://www.gnu.org/licenses/gpl-3.0.html
+"""
 from copy import deepcopy
 from math import tan, radians, atan, pi, sin, cos, degrees, acos, asin, sqrt
 
