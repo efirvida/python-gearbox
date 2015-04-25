@@ -1,5 +1,3 @@
-import os
-
 from gearbox.transmition.gears import *
 from gearbox.standards.iso import Pitting as iso_pitting
 from gearbox.standards.iso import Bending as iso_bending
@@ -96,7 +94,7 @@ print '========================================'
 
 print '========================================'
 print 'ISO Bending'
-print iso_bending(transmition=transmition).calculate()
+print iso_bending(transmition=transmition).calculate
 print '========================================'
 
 print '========================================'
@@ -110,7 +108,6 @@ print agma_bending(transmition=transmition).calculate()
 print '========================================'
 
 os.mkdir('comsol_output')
-
 ExportGear(pinion).comsol(output_file='comsol_output/pinion.m')
 ExportGear(gear).comsol(output_file='comsol_output/gear.m')
 ExportPair(pair).comsol(output_file='comsol_output/pair.m')
