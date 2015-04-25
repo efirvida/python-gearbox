@@ -10,7 +10,7 @@ setup(
     include_data_package=True,
     author_email='efirvida@gmail.com',
     description='Python library for gear transmission design',
-    requires=['numpy', 'scipy'],
+    requires=['numpy', 'scipy', 'jinja2'],
     url='https://github.com/efirvida/python-gearbox',
     download_url='https://github.com/efirvida/python-gearbox/archive/master.zip',
     keywords=['gearbox', 'gear', 'agma', 'iso', 'gear transmission', 'engineering'],
