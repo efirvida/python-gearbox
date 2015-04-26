@@ -1,4 +1,4 @@
-include Makefile CHANGES LICENSE AUTHORS README 
+include Makefile CHANGES LICENSE AUTHORS README.md
 recursive-include gearbox/doc/source *.rst
 recursive-include gearbox/export/templates *
 recursive-include demo *
