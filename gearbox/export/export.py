@@ -58,9 +58,30 @@ class ExportGear(object):
         with open(output_folder + '/' + model_name + '.m', "wb") as fh:
             fh.write(output_from_parsed_template)
 
+    def abaqus(self, output_folder='', model_name='model', type='2D'):
+        """
 
-    def abaqus(self):
-        pass
+        :param output_folder:
+        :param model_name:
+        :param type:
+        :raise ValueError:
+        """
+
+        if type is '2D':
+            template = self.env.get_template('abaqus_gear.template')
+        elif type is '3D':
+            template = self.env.get_template('abaqus_gear3D.template')
+        else:
+            raise ValueError('type must be \'2D\' or \'3D\' default Value is \'2D\'')
+
+        model_name = model_name.replace(' ', '_')
+        output_folder = output_folder.replace('/', '\\')
+
+        output_from_parsed_template = template.render(gear=self.gear.export_data.gear, model_name=model_name,
+                                                      model_path=output_folder)
+
+        with open(output_folder + '/' + model_name + '.py', "wb") as fh:
+            fh.write(output_from_parsed_template)
 
     def ansys(self):
         pass
@@ -117,6 +138,30 @@ class ExportPair(object):
         output_from_parsed_template = template.render(pair=pair, model_name=model_name, model_path=output_folder)
 
         with open(output_folder + '/' + model_name + '.m', "wb") as fh:
+            fh.write(output_from_parsed_template)
+
+    def abaqus(self, output_folder='', model_name='model', type='2D'):
+        """
+
+        :param output_folder:
+        :param model_name:
+        :param type:
+        """
+
+        if type is '2D':
+            template = self.env.get_template('abaqus_pair.template')
+        elif type is '3D':
+            template = self.env.get_template('abaqus_pair3D.template')
+        else:
+            raise ValueError('type must be \'2D\' or \'3D\' default Value is \'2D\'')
+
+        pair = [self.pinion, self.wheel]
+
+        model_name = model_name.replace(' ', '_')
+
+        output_from_parsed_template = template.render(pair=pair, model_name=model_name, model_path=output_folder)
+
+        with open(output_folder + '/' + model_name + '.py', "wb") as fh:
             fh.write(output_from_parsed_template)
 
     def __aw(self):

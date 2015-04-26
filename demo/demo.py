@@ -113,20 +113,43 @@ try:
 except:
     pass
 
+# ===============================================
+# EXPORT TO MATLAB/COMSOL SCRIPT 
+#===============================================
 # 2D model matlab-comsol model export
 # for 2D export type='2D' is optional because '2D' is the default output
-transmition_model_name2d = 'transmition2d'
-pinion_model_name2d = 'pinion2d'
-wheel_model_name2d = 'wheel2d'
-ExportGear(pinion).matlab_comsol(model_name=pinion_model_name2d, output_folder=output_folder, type='2D')
-ExportGear(gear).matlab_comsol(model_name=wheel_model_name2d, output_folder=output_folder, type='2D')
-ExportPair(pair).matlab_comsol(model_name=transmition_model_name2d, output_folder=output_folder, type='2D')
+comsol_transmition_model_name2d = 'transmition2d'
+comsol_pinion_model_name2d = 'pinion2d'
+comsol_wheel_model_name2d = 'wheel2d'
+ExportGear(pinion).matlab_comsol(model_name=comsol_pinion_model_name2d, output_folder=output_folder, type='2D')
+ExportGear(gear).matlab_comsol(model_name=comsol_wheel_model_name2d, output_folder=output_folder, type='2D')
+ExportPair(pair).matlab_comsol(model_name=comsol_transmition_model_name2d, output_folder=output_folder, type='2D')
 
 #3D model matlab-comsol model export
-transmition_model_name3d = 'transmition3d'
-pinion_model_name3d = 'pinion3d'
-wheel_model_name3d = 'wheel3d'
+comsol_transmition_model_name3d = 'transmition3d'
+comsol_pinion_model_name3d = 'pinion3d'
+comsol_wheel_model_name3d = 'wheel3d'
+ExportGear(pinion).matlab_comsol(model_name=comsol_pinion_model_name3d, output_folder=output_folder, type='3D')
+ExportGear(gear).matlab_comsol(model_name=comsol_wheel_model_name3d, output_folder=output_folder, type='3D')
+ExportPair(pair).matlab_comsol(model_name=comsol_transmition_model_name3d, output_folder=output_folder, type='3D')
 
-ExportGear(pinion).matlab_comsol(model_name=pinion_model_name3d, output_folder=output_folder, type='3D')
-ExportGear(gear).matlab_comsol(model_name=wheel_model_name3d, output_folder=output_folder, type='3D')
-ExportPair(pair).matlab_comsol(model_name=transmition_model_name3d, output_folder=output_folder, type='3D')
+# ===============================================
+# EXPORT TO ABAQUS PYTHON 
+#===============================================
+# 2D model matlab-comsol model export
+# for 2D export type='2D' is optional because '2D' is the default output
+abaqus_transmition_model_name2d = 'transmition2d'
+abaqus_pinion_model_name2d = 'pinion2d'
+abaqus_wheel_model_name2d = 'wheel2d'
+ExportGear(pinion).abaqus(model_name=abaqus_pinion_model_name2d, output_folder=output_folder, type='2D')
+ExportGear(gear).abaqus(model_name=abaqus_wheel_model_name2d, output_folder=output_folder, type='2D')
+ExportPair(pair).abaqus(model_name=abaqus_transmition_model_name2d, output_folder=output_folder, type='2D')
+
+#3D model matlab-abaqus model export
+abaqus_transmition_model_name3d = 'transmition3d'
+abaqus_pinion_model_name3d = 'pinion3d'
+abaqus_wheel_model_name3d = 'wheel3d'
+ExportGear(pinion).abaqus(model_name=abaqus_pinion_model_name3d, output_folder=output_folder, type='3D')
+ExportGear(gear).abaqus(model_name=abaqus_wheel_model_name3d, output_folder=output_folder, type='3D')
+ExportPair(pair).abaqus(model_name=abaqus_transmition_model_name3d, output_folder=output_folder, type='3D')
+
