@@ -845,7 +845,8 @@ class GearExport(object):
 
         self.data = deepcopy(pairdata)
         gear = {'z': self.data['z'], 'x': self.data['x'], 'alpha_n': self.data['alpha_n'], 'beta': self.data['beta'],
-                'm_n': self.data['m_n'], 'rho_f': self.data['rho_f'], 'd_s': self.data['d_s'], 'c': self.data['c']}
+                'm_n': self.data['m_n'], 'rho_f': self.data['rho_f'], 'd_s': self.data['d_s'], 'c': self.data['c'],
+                'b': self.data['b']}
 
         self.gear = self.__set_gear(gear)
 
@@ -866,6 +867,6 @@ class GearExport(object):
             (gear.data['d_s'] / gear.data['z']) * 360 / gear.data['d_s']))[0]]
         gear.shaftcoords = shaft
         gear.formcoords = gear.formcoords.values()
-        gear.rotateang = -ang / 2
+        gear.rotate_ang = -ang / 2
 
         return gear

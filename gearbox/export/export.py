@@ -1,6 +1,6 @@
 # coding=utf-8
 import os
-from math import pi, radians, tan, cos
+from math import radians, tan, cos
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -16,7 +16,9 @@ class ExportGear(object):
     """
 
     def __init__(self, gear):
-        self.template_path = os.path.join(gearbox.__path__[0], 'export', 'templates')
+        template_path = os.path.join(gearbox.__path__[0], 'export', 'templates')
+        self.env = Environment(loader=FileSystemLoader(template_path))
+
         self.gear = gear
         z = gear.z
         m = gear.m
@@ -26,25 +28,36 @@ class ExportGear(object):
         rho_f = gear.profile.rho_fp
         d_s = gear.shaft_diameter
         c = gear.profile.c
-        gear_data = {'m_n': m, 'z': z, 'beta': beta, 'alpha_n': alpha, 'x': x, 'rho_f': rho_f, 'd_s': d_s, 'c': c}
+        b = gear.b
+
+        gear_data = {'m_n': m, 'z': z, 'beta': beta, 'alpha_n': alpha, 'x': x, 'rho_f': rho_f, 'd_s': d_s, 'c': c,
+                     'b': b}
         self.gear.export_data = GearExport(gear_data)
 
-    def matlab_comsol_script(self, output_file, function_name='model', model_path=''):
+    def matlab_comsol(self, output_folder='', model_name='model', type='2D'):
         """
 
-        :param output_file:
-        :param function_name:
-        :param model_path:
+        :param model_name:
+        :param output_folder:
+        :param type:
         """
 
-        env = Environment(loader=FileSystemLoader(self.template_path))
-        template = env.get_template('comsol_gear.template')
+        if type is '2D':
+            template = self.env.get_template('comsol_gear.template')
+        elif type is '3D':
+            template = self.env.get_template('comsol_gear3D.template')
+        else:
+            raise ValueError('type must be \'2D\' or \'3D\' default Value is \'2D\'')
 
-        output_from_parsed_template = template.render(gear=self.gear.export_data.gear, function_name=function_name,
-                                                      model_path=model_path)
+        model_name = model_name.replace(' ', '_')
+        output_folder = output_folder.replace('/', '\\')
 
-        with open(output_file, "wb") as fh:
+        output_from_parsed_template = template.render(gear=self.gear.export_data.gear, model_name=model_name,
+                                                      model_path=output_folder)
+
+        with open(output_folder + '/' + model_name + '.m', "wb") as fh:
             fh.write(output_from_parsed_template)
+
 
     def abaqus(self):
         pass
@@ -60,12 +73,11 @@ class ExportPair(object):
     """
 
     def __init__(self, pair):
-        self.template_path = os.path.join(gearbox.__path__[0], 'export', 'templates')
+        template_path = os.path.join(gearbox.__path__[0], 'export', 'templates')
+        self.env = Environment(loader=FileSystemLoader(template_path))
+
         self.pinion = ExportGear(pair[0]).gear.export_data.gear
         self.wheel = ExportGear(pair[1]).gear.export_data.gear
-
-        pd_s = self.wheel.data['d'] * pi
-        ang = self.wheel.data['s_p'] * 360 / pd_s
 
         shaft = [[0, (self.wheel.data['d_s'] / 2)], rotate([[0, self.wheel.data['d_s'] / 2]], 0.5 * (
             (self.wheel.data['d_s'] / self.wheel.data['z']) * 360 / self.wheel.data['d_s']))[0]]
@@ -76,24 +88,35 @@ class ExportPair(object):
 
         self.wheel.shaftcoords = [[coord[0], coord[1] + aw] for coord in rotate(shaft, 180)]
         self.wheel.formcoords = [[coord[0], coord[1] + aw] for coord in coords]
-        self.wheel.rotateang = - ang / 2
 
-    def matlab_comsol_script(self, output_file, function_name='model', model_path=''):
+        self.pinion.rotate_x = 0
+        self.pinion.rotate_y = 0
+
+        self.wheel.rotate_x = 0
+        self.wheel.rotate_y = aw
+
+    def matlab_comsol(self, output_folder='', model_name='model', type='2D'):
         """
 
-        :param output_file:
-        :param function_name:
-        :param model_path:
+        :param output_folder:
+        :param model_name:
+        :param type:
         """
 
-        env = Environment(loader=FileSystemLoader(self.template_path))
-        template = env.get_template('comsol_pair.template')
+        if type is '2D':
+            template = self.env.get_template('comsol_pair.template')
+        elif type is '3D':
+            template = self.env.get_template('comsol_pair3D.template')
+        else:
+            raise ValueError('type must be \'2D\' or \'3D\' default Value is \'2D\'')
 
         pair = [self.pinion, self.wheel]
-        output_from_parsed_template = template.render(pair=pair, function_name=function_name,
-                                                      model_path=model_path)
 
-        with open(output_file, "wb") as fh:
+        model_name = model_name.replace(' ', '_')
+
+        output_from_parsed_template = template.render(pair=pair, model_name=model_name, model_path=output_folder)
+
+        with open(output_folder + '/' + model_name + '.m', "wb") as fh:
             fh.write(output_from_parsed_template)
 
     def __aw(self):

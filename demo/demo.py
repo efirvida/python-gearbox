@@ -55,7 +55,7 @@ pinion = Gear(
 gear = Gear(
     profile=tool,
     material=material,
-    z=131.,
+    z=40.,
     m=2.5,
     beta=16.0,
     alpha=20.0,
@@ -65,7 +65,7 @@ gear = Gear(
     sr=0.0,
     rz=3.67,
     precision_grade=6.0,
-    shaft_diameter=20.0,
+    shaft_diameter=50.0,
     schema=3.0,
     l=60.0,
     s=35.0,
@@ -107,7 +107,26 @@ print 'AGMA Bending'
 print agma_bending(transmition=transmition).calculate()
 print '========================================'
 
-os.mkdir('comsol_output')
-ExportGear(pinion).matlab_comsol_script(output_file='comsol_output/pinion.m')
-ExportGear(gear).matlab_comsol_script(output_file='comsol_output/gear.m')
-ExportPair(pair).matlab_comsol_script(output_file='comsol_output/pair.m')
+output_folder = os.path.join(os.path.dirname(__file__), 'comsol_output')
+try:
+    os.mkdir(output_folder)
+except:
+    pass
+
+# 2D model matlab-comsol model export
+# for 2D export type='2D' is optional because '2D' is the default output
+transmition_model_name2d = 'transmition2d'
+pinion_model_name2d = 'pinion2d'
+wheel_model_name2d = 'wheel2d'
+ExportGear(pinion).matlab_comsol(model_name=pinion_model_name2d, output_folder=output_folder, type='2D')
+ExportGear(gear).matlab_comsol(model_name=wheel_model_name2d, output_folder=output_folder, type='2D')
+ExportPair(pair).matlab_comsol(model_name=transmition_model_name2d, output_folder=output_folder, type='2D')
+
+#3D model matlab-comsol model export
+transmition_model_name3d = 'transmition3d'
+pinion_model_name3d = 'pinion3d'
+wheel_model_name3d = 'wheel3d'
+
+ExportGear(pinion).matlab_comsol(model_name=pinion_model_name3d, output_folder=output_folder, type='3D')
+ExportGear(gear).matlab_comsol(model_name=wheel_model_name3d, output_folder=output_folder, type='3D')
+ExportPair(pair).matlab_comsol(model_name=transmition_model_name3d, output_folder=output_folder, type='3D')

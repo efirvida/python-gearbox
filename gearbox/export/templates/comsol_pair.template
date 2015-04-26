@@ -1,49 +1,79 @@
-function out = {{function_name}}
+function out = {{model_name}}
 
 import com.comsol.model.*
 import com.comsol.model.util.*
 
-{{function_name}} = ModelUtil.create('Model');
+{{model_name}} = ModelUtil.create('{{ model_name }}');
 
-{{function_name}}.modelPath('{{ model_path }}');
+{{model_name}}.modelPath('{{ model_path }}');
 
-{{function_name}}.modelNode.create('comp1');
+{{model_name}}.modelNode.create('comp1');
 
-{{function_name}}.geom.create('geom1', 2);
+{{model_name}}.geom.create('geom1', 2);
 
-{{function_name}}.mesh.create('mesh1', 'geom1');
+{{model_name}}.mesh.create('mesh1', 'geom1');
 
-{{function_name}}.physics.create('solid', 'SolidMechanics', 'geom1');
+{{model_name}}.geom('geom1').lengthUnit('mm');
 
 %PINION
-{{function_name}}.geom('geom1').feature.create('pinion_thooth_profile', 'InterpolationCurve');
-{{function_name}}.geom('geom1').feature('pinion_thooth_profile').set('table', {{ '{' }} {% for coord in pair[0].formcoords -%}'{{ coord[0] }}' '{{ coord[1] }}';{%- endfor %}{{ '}' }});
-{{function_name}}.geom('geom1').feature.create('pinion_thooth_body', 'BezierPolygon');
-{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('type', 'solid');
-{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('p', {'{{pair[0].formcoords[0][0]}}' '{{pair[0].shaftcoords[1][0]}}' '{{ pair[0].shaftcoords[0][0] }}' '{{pair[0].formcoords[-1][0]}}'; '{{pair[0].formcoords[0][1]}}' '{{pair[0].shaftcoords[1][1]}}' '{{ pair[0].shaftcoords[0][1] }}' '{{pair[0].formcoords[-1][1]}}'});
-{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('w', {'1' '1' '1' '1' '1' '1'});
-{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('degree', [1 1 1]);
-{{function_name}}.geom('geom1').run('pinion_thooth_body');
-{{function_name}}.geom('geom1').feature('pinion_thooth_body').set('type', 'open');
-{{function_name}}.geom('geom1').feature.create('pinion_tooth', 'ConvertToSolid');
-{{function_name}}.geom('geom1').feature('pinion_tooth').selection('input').set({'pinion_thooth_body' 'pinion_thooth_profile'});
-{{function_name}}.geom('geom1').run('pinion_tooth');
+{{model_name}}.geom('geom1').feature.create('pinion_thooth_profile', 'InterpolationCurve');
+{{model_name}}.geom('geom1').feature('pinion_thooth_profile').set('table', {{ '{' }} {% for coord in pair[0].formcoords -%}'{{ coord[0] }}' '{{ coord[1] }}';{%- endfor %}{{ '}' }});
+{{model_name}}.geom('geom1').feature.create('pinion_thooth_body', 'BezierPolygon');
+{{model_name}}.geom('geom1').feature('pinion_thooth_body').set('type', 'solid');
+{{model_name}}.geom('geom1').feature('pinion_thooth_body').set('p', {'{{pair[0].formcoords[0][0]}}' '{{pair[0].shaftcoords[1][0]}}' '{{ pair[0].shaftcoords[0][0] }}' '{{pair[0].formcoords[-1][0]}}'; '{{pair[0].formcoords[0][1]}}' '{{pair[0].shaftcoords[1][1]}}' '{{ pair[0].shaftcoords[0][1] }}' '{{pair[0].formcoords[-1][1]}}'});
+{{model_name}}.geom('geom1').feature('pinion_thooth_body').set('w', {'1' '1' '1' '1' '1' '1'});
+{{model_name}}.geom('geom1').feature('pinion_thooth_body').set('degree', [1 1 1]);
+{{model_name}}.geom('geom1').run('pinion_thooth_body');
+{{model_name}}.geom('geom1').feature('pinion_thooth_body').set('type', 'open');
+{{model_name}}.geom('geom1').feature.create('pinion_tooth', 'ConvertToSolid');
+{{model_name}}.geom('geom1').feature('pinion_tooth').selection('input').set({'pinion_thooth_body' 'pinion_thooth_profile'});
+{{model_name}}.geom('geom1').run('pinion_tooth');
+
+{{model_name}}.geom('geom1').create('pinion_tooth_mirror', 'Mirror');
+{{model_name}}.geom('geom1').feature('pinion_tooth_mirror').set('keep', 'on');
+{{model_name}}.geom('geom1').feature('pinion_tooth_mirror').selection('input').set({'pinion_tooth'});
+{{model_name}}.geom('geom1').feature('pinion_tooth_mirror').set('pos', {'0' '1'});
+{{model_name}}.geom('geom1').runPre('fin');
+{{model_name}}.geom('geom1').create('pinion_tooth_union', 'Union');
+{{model_name}}.geom('geom1').feature('pinion_tooth_union').selection('input').set({'pinion_tooth_mirror' 'pinion_tooth'});
+{{model_name}}.geom('geom1').run('pinion_tooth_union');
+{{model_name}}.geom('geom1').create('rotate_pinion', 'Rotate');
+{{model_name}}.geom('geom1').feature('rotate_pinion').selection('input').set({'pinion_tooth_union'});
+{{model_name}}.geom('geom1').feature('rotate_pinion').set('pos', {'{{ pair[0].rotate_x }}' '{{ pair[0].rotate_y }}'});
+{{model_name}}.geom('geom1').feature('rotate_pinion').set('rot', '{{ pair[0].rotate_ang }}');
+{{model_name}}.geom('geom1').run('rotate_pinion');
+
 
 %GEAR
-{{function_name}}.geom('geom1').feature.create('wheel_thooth_profile', 'InterpolationCurve');
-{{function_name}}.geom('geom1').feature('wheel_thooth_profile').set('table', {{ '{' }} {% for coord in pair[1].formcoords -%}'{{ coord[0] }}' '{{ coord[1] }}';{%- endfor %}{{ '}' }});
-{{function_name}}.geom('geom1').feature.create('wheel_thooth_body', 'BezierPolygon');
-{{function_name}}.geom('geom1').feature('wheel_thooth_body').set('type', 'solid');
-{{function_name}}.geom('geom1').feature('wheel_thooth_body').set('p', {'{{pair[1].formcoords[0][0]}}' '{{pair[1].shaftcoords[1][0]}}' '{{ pair[1].shaftcoords[0][0] }}' '{{pair[1].formcoords[-1][0]}}'; '{{pair[1].formcoords[0][1]}}' '{{pair[1].shaftcoords[1][1]}}' '{{ pair[1].shaftcoords[0][1] }}' '{{pair[1].formcoords[-1][1]}}'});
-{{function_name}}.geom('geom1').feature('wheel_thooth_body').set('w', {'1' '1' '1' '1' '1' '1'});
-{{function_name}}.geom('geom1').feature('wheel_thooth_body').set('degree', [1 1 1]);
-{{function_name}}.geom('geom1').run('wheel_thooth_body');
-{{function_name}}.geom('geom1').feature('wheel_thooth_body').set('type', 'open');
-{{function_name}}.geom('geom1').feature.create('wheel_tooth', 'ConvertToSolid');
-{{function_name}}.geom('geom1').feature('wheel_tooth').selection('input').set({'wheel_thooth_body' 'wheel_thooth_profile'});
-{{function_name}}.geom('geom1').run('wheel_tooth');
+{{model_name}}.geom('geom1').feature.create('wheel_thooth_profile', 'InterpolationCurve');
+{{model_name}}.geom('geom1').feature('wheel_thooth_profile').set('table', {{ '{' }} {% for coord in pair[1].formcoords -%}'{{ coord[0] }}' '{{ coord[1] }}';{%- endfor %}{{ '}' }});
+{{model_name}}.geom('geom1').feature.create('wheel_thooth_body', 'BezierPolygon');
+{{model_name}}.geom('geom1').feature('wheel_thooth_body').set('type', 'solid');
+{{model_name}}.geom('geom1').feature('wheel_thooth_body').set('p', {'{{pair[1].formcoords[0][0]}}' '{{pair[1].shaftcoords[1][0]}}' '{{ pair[1].shaftcoords[0][0] }}' '{{pair[1].formcoords[-1][0]}}'; '{{pair[1].formcoords[0][1]}}' '{{pair[1].shaftcoords[1][1]}}' '{{ pair[1].shaftcoords[0][1] }}' '{{pair[1].formcoords[-1][1]}}'});
+{{model_name}}.geom('geom1').feature('wheel_thooth_body').set('w', {'1' '1' '1' '1' '1' '1'});
+{{model_name}}.geom('geom1').feature('wheel_thooth_body').set('degree', [1 1 1]);
+{{model_name}}.geom('geom1').run('wheel_thooth_body');
+{{model_name}}.geom('geom1').feature('wheel_thooth_body').set('type', 'open');
+{{model_name}}.geom('geom1').feature.create('wheel_tooth', 'ConvertToSolid');
+{{model_name}}.geom('geom1').feature('wheel_tooth').selection('input').set({'wheel_thooth_body' 'wheel_thooth_profile'});
+{{model_name}}.geom('geom1').run('wheel_tooth');
+
+{{model_name}}.geom('geom1').create('wheel_tooth_mirror', 'Mirror');
+{{model_name}}.geom('geom1').feature('wheel_tooth_mirror').set('keep', 'on');
+{{model_name}}.geom('geom1').feature('wheel_tooth_mirror').selection('input').set({'wheel_tooth'});
+{{model_name}}.geom('geom1').feature('wheel_tooth_mirror').set('pos', {'0' '1'});
+{{model_name}}.geom('geom1').runPre('fin');
+{{model_name}}.geom('geom1').create('wheel_tooth_union', 'Union');
+{{model_name}}.geom('geom1').feature('wheel_tooth_union').selection('input').set({'wheel_tooth_mirror' 'wheel_tooth'});
+{{model_name}}.geom('geom1').run('wheel_tooth_union');
+{{model_name}}.geom('geom1').create('rotate_wheel', 'Rotate');
+{{model_name}}.geom('geom1').feature('rotate_wheel').selection('input').set({'wheel_tooth_union'});
+{{model_name}}.geom('geom1').feature('rotate_wheel').set('pos', {'{{ pair[1].rotate_x }}' '{{ pair[1].rotate_y }}'});
+{{model_name}}.geom('geom1').feature('rotate_wheel').set('rot', '{{ pair[1].rotate_ang }}');
+{{model_name}}.geom('geom1').run('rotate_wheel');
+
 
 %SHOW GEOMETRY
-mphgeom({{function_name}});
+mphgeom({{model_name}});
 
-out = model;
+out = {{model_name}};

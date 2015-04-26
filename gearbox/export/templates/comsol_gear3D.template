@@ -41,8 +41,8 @@ import com.comsol.model.util.*
 {{model_name}}.geom('geom1').feature('wp1').geom.run('gear_tooth_union');
 {{model_name}}.geom('geom1').feature.create('ext1', 'Extrude');
 {{model_name}}.geom('geom1').feature('ext1').selection('input').set({'wp1'});
-{{model_name}}.geom('geom1').feature('ext1').setIndex('distance', '39', 0);
-{{model_name}}.geom('geom1').feature('ext1').setIndex('twist', '24', 0);
+{{model_name}}.geom('geom1').feature('ext1').setIndex('distance', '{{ gear.data.b }}', 0);
+{{model_name}}.geom('geom1').feature('ext1').setIndex('twist', '{{ gear.data.beta }}', 0);
 
 %SHOW GEOMETRY
 mphgeom({{model_name}});
