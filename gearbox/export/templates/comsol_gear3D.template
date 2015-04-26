@@ -1,0 +1,50 @@
+function out = {{model_name}}
+
+import com.comsol.model.*
+import com.comsol.model.util.*
+
+{{model_name}} = ModelUtil.create('{{ model_name }}');
+
+{{model_name}}.modelPath('{{ model_path }}');
+
+{{model_name}}.modelNode.create('comp1');
+
+{{model_name}}.geom.create('geom1', 3);
+
+{{model_name}}.mesh.create('mesh1', 'geom1');
+
+{{model_name}}.geom('geom1').lengthUnit('mm');
+
+
+{{model_name}}.geom('geom1').feature.create('wp1', 'WorkPlane');
+{{model_name}}.geom('geom1').feature('wp1').set('unite', true);
+{{model_name}}.geom('geom1').run('wp1');
+
+{{model_name}}.geom('geom1').feature('wp1').geom.feature.create('gear_thooth_profile', 'InterpolationCurve');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_thooth_profile').set('table', {{ '{' }} {% for coord in gear.formcoords -%}'{{ coord[0] }}' '{{ coord[1] }}';{%- endfor %}{{ '}' }});
+{{model_name}}.geom('geom1').feature('wp1').geom.feature.create('gear_thooth_body', 'BezierPolygon');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_thooth_body').set('type', 'solid');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_thooth_body').set('p', {'{{gear.formcoords[0][0]}}' '{{gear.shaftcoords[1][0]}}' '{{ gear.shaftcoords[0][0] }}' '{{gear.formcoords[-1][0]}}'; '{{gear.formcoords[0][1]}}' '{{gear.shaftcoords[1][1]}}' '{{ gear.shaftcoords[0][1] }}' '{{gear.formcoords[-1][1]}}'});
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_thooth_body').set('w', {'1' '1' '1' '1' '1' '1'});
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_thooth_body').set('degree', [1 1 1]);
+{{model_name}}.geom('geom1').feature('wp1').geom.run('gear_thooth_body');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_thooth_body').set('type', 'open');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature.create('gear_tooth', 'ConvertToSolid');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_tooth').selection('input').set({'gear_thooth_body' 'gear_thooth_profile'});
+{{model_name}}.geom('geom1').feature('wp1').geom.run('gear_tooth');
+{{model_name}}.geom('geom1').feature('wp1').geom.create('gear_tooth_mirror', 'Mirror');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_tooth_mirror').set('keep', 'on');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_tooth_mirror').selection('input').set({'gear_tooth'});
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_tooth_mirror').set('pos', {'0' '1'});
+{{model_name}}.geom('geom1').feature('wp1').geom.create('gear_tooth_union', 'Union');
+{{model_name}}.geom('geom1').feature('wp1').geom.feature('gear_tooth_union').selection('input').set({'gear_tooth_mirror' 'gear_tooth'});
+{{model_name}}.geom('geom1').feature('wp1').geom.run('gear_tooth_union');
+{{model_name}}.geom('geom1').feature.create('ext1', 'Extrude');
+{{model_name}}.geom('geom1').feature('ext1').selection('input').set({'wp1'});
+{{model_name}}.geom('geom1').feature('ext1').setIndex('distance', '39', 0);
+{{model_name}}.geom('geom1').feature('ext1').setIndex('twist', '24', 0);
+
+%SHOW GEOMETRY
+mphgeom({{model_name}});
+
+out = {{model_name}};
