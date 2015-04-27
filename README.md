@@ -8,6 +8,12 @@ the project is on *pypi* server for installation use:
 
 *`pip install python-gearbox`*
 
+for manual installation download from:
+
+https://pypi.python.org/pypi/python-gearbox
+
+make shure you have installed all dependencies `jinja2, numpy and scipy`
+
 Features
 ---------
 * Gear stresses calculation using AGMA-2101 D04 and ISO-6336 standards
