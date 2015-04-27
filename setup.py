@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.1.1a'
+version = '0.1.1c'
 
 setup(
     name='python-gearbox',
@@ -10,7 +10,7 @@ setup(
     include_package_data=True,
     author_email='efirvida@gmail.com',
     description='Python library for gear transmission design',
-    requires=['numpy', 'scipy', 'jinja2'],
+    install_requires=['numpy>=1.8.0', 'scipy>=0.10.0', 'jinja2>=2.7.0'],
     url='https://github.com/efirvida/python-gearbox',
     download_url='https://github.com/efirvida/python-gearbox/archive/master.zip',
     keywords=['gearbox', 'gear', 'agma', 'iso', 'gear transmission', 'engineering'],
@@ -27,6 +27,5 @@ setup(
                  'Topic :: Scientific/Engineering :: Human Machine Interfaces',
                  'Topic :: Software Development',
                  'Topic :: Software Development :: Libraries',
-                 'Topic :: Software Development :: Libraries :: Application Frameworks'
                  ]
 )
