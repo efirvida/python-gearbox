@@ -107,7 +107,7 @@ print 'AGMA Bending'
 print agma_bending(transmition=transmition).calculate()
 print '========================================'
 
-output_folder = os.path.join(os.path.dirname(__file__), 'comsol_output')
+output_folder = os.path.join(os.path.dirname(__file__), 'output')
 try:
     os.mkdir(output_folder)
 except:

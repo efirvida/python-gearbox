@@ -3,3 +3,4 @@ recursive-include gearbox/doc/source *.rst
 recursive-include gearbox/export/templates *
 recursive-include demo *
 recursive-exclude gearbox *.pyc
+recursive-exclude demo/output *.pyc

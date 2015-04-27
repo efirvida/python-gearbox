@@ -7,9 +7,11 @@ the project is on *pypi* server for installation use:
 
 *`pip install python-gearbox`*
 
-for manual installation download from:
+for manual installation download the last release from:
 
 https://pypi.python.org/pypi/python-gearbox
+
+`python setup.py install`
 
 make shure you have installed all dependencies `jinja2, numpy and scipy`
 
