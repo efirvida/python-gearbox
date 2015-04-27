@@ -152,4 +152,3 @@ abaqus_wheel_model_name3d = 'wheel3d'
 ExportGear(pinion).abaqus(model_name=abaqus_pinion_model_name3d, output_folder=output_folder, type='3D')
 ExportGear(gear).abaqus(model_name=abaqus_wheel_model_name3d, output_folder=output_folder, type='3D')
 ExportPair(pair).abaqus(model_name=abaqus_transmition_model_name3d, output_folder=output_folder, type='3D')
-
