@@ -1,6 +1,7 @@
-from libs.gearprofile import *
 from abaqus import *
 from abaqusConstants import *
+import assembly
+
 
 backwardCompatibility.setValues(includeDeprecated=True, reportDeprecated=False)
 
@@ -33,3 +34,10 @@ myGearSketch.rotate(centerPoint=({{ pair[1].rotate_x }}, {{ pair[1].rotate_y }})
 myGearSketch.copyMirror(mirrorLine=gear_tooth1, objectList=(gear_profile, gear_tooth2, gear_shaft,))
 gear_tooth_part = myModel.Part(name='Gear', dimensionality=THREE_D, type=DEFORMABLE_BODY)
 gear_tooth_part.BaseSolidExtrude(sketch=myGearSketch, depth={{ pair[1].data.b }})
+
+#ASSEMBLY
+a = myModel.rootAssembly
+p = myModel.parts['Gear']
+a.Instance(name='Gear-1', part=p, dependent=OFF)
+p = mdb.models['transmition2d'].parts['Pinion']
+a.Instance(name='Pinion-1', part=p, dependent=OFF)

@@ -1,4 +1,3 @@
-from libs.gearprofile import *
 from abaqus import *
 from abaqusConstants import *
 
@@ -14,8 +13,8 @@ myGearSketch = myModel.ConstrainedSketch(name='Gear sketch', sheetSize=400.0)
 gear_profile = myGearSketch.Spline(points=gear_formcoords)
 gear_tooth1 = myGearSketch.ConstructionLine(point1=gear_shaftcoords[0],point2=gear_formcoords[-1])
 gear_tooth2 = myGearSketch.Line(point1=gear_shaftcoords[-1], point2=gear_formcoords[0])
-gear_shaft = myGearSketch.ArcByCenterEnds(center=({{ gear.rotate_x }}, {{ gear.rotate_y }}), point1=gear_shaftcoords[0],point2=gear_shaftcoords[-1])
-myGearSketch.rotate(centerPoint=({{ gear.rotate_x }}, {{ gear.rotate_y }},), angle={{ gear.rotate_ang }},objectList=(gear_profile, gear_tooth2, gear_tooth1, gear_shaft,))
+gear_shaft = myGearSketch.ArcByCenterEnds(center=(0, 0), point1=gear_shaftcoords[0],point2=gear_shaftcoords[-1])
+myGearSketch.rotate(centerPoint=(0, 0), angle={{ gear.rotate_ang }},objectList=(gear_profile, gear_tooth2, gear_tooth1, gear_shaft,))
 myGearSketch.copyMirror(mirrorLine=gear_tooth1, objectList=(gear_profile, gear_tooth2, gear_shaft,))
 gear_tooth_part = myModel.Part(name='Gear', dimensionality=THREE_D, type=DEFORMABLE_BODY)
 gear_tooth_part.BaseSolidExtrude(sketch=myGearSketch, depth={{ gear.data.b }})

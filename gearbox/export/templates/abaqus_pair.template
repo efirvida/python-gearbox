@@ -1,6 +1,7 @@
-from libs.gearprofile import *
 from abaqus import *
 from abaqusConstants import *
+import assembly
+
 
 backwardCompatibility.setValues(includeDeprecated=True, reportDeprecated=False)
 
@@ -20,7 +21,9 @@ pinion_tooth2 = myPinionSketch.Line(point1=pinion_shaftcoords[-1], point2=pinion
 pinion_shaft = myPinionSketch.ArcByCenterEnds(center=({{ pair[0].rotate_x }}, {{ pair[0].rotate_y }}), point1=pinion_shaftcoords[0],point2=pinion_shaftcoords[-1])
 myPinionSketch.rotate(centerPoint=({{ pair[0].rotate_x }}, {{ pair[0].rotate_y }},), angle={{ pair[0].rotate_ang }},objectList=(pinion_profile, pinion_tooth2, pinion_tooth1, pinion_shaft,))
 myPinionSketch.copyMirror(mirrorLine=pinion_tooth1, objectList=(pinion_profile, pinion_tooth2, pinion_shaft,))
-pinion_tooth_part = myModel.Part(name='Pinion', dimensionality=TWO_D, type=DEFORMABLE_BODY)
+pinion_tooth_part = myModel.Part(name='Pinion', dimensionality=TWO_D_PLANAR, type=DEFORMABLE_BODY)
+pinion_tooth_part.BaseShell(sketch=myPinionSketch)
+
 
 #WHEEL
 myGearSketch = myModel.ConstrainedSketch(name='Gear sketch', sheetSize=400.0)
@@ -28,6 +31,15 @@ gear_profile = myGearSketch.Spline(points=wheel_formcoords)
 gear_tooth1 = myGearSketch.ConstructionLine(point1=wheel_shaftcoords[0], point2=wheel_formcoords[-1])
 gear_tooth2 = myGearSketch.Line(point1=wheel_shaftcoords[-1], point2=wheel_formcoords[0])
 gear_shaft = myGearSketch.ArcByCenterEnds(center=({{ pair[1].rotate_x }}, {{ pair[1].rotate_y }}), point1=wheel_shaftcoords[0],point2=wheel_shaftcoords[-1])
-myGearSketch.rotate(centerPoint=({{ pair[1].rotate_x }}, {{ pair[1].rotate_y }}), angle={{ pair[0].rotate_ang }},objectList=(gear_profile, gear_tooth2, gear_tooth1,gear_shaft))
+myGearSketch.rotate(centerPoint=({{ pair[1].rotate_x }}, {{ pair[1].rotate_y }}), angle={{ pair[1].rotate_ang }},objectList=(gear_profile, gear_tooth2, gear_tooth1,gear_shaft))
 myGearSketch.copyMirror(mirrorLine=gear_tooth1, objectList=(gear_profile, gear_tooth2, gear_shaft,))
-gear_tooth_part = myModel.Part(name='Gear', dimensionality=TWO_D, type=DEFORMABLE_BODY)
+gear_tooth_part = myModel.Part(name='Gear', dimensionality=TWO_D_PLANAR, type=DEFORMABLE_BODY)
+gear_tooth_part.BaseShell(sketch=myGearSketch)
+
+
+#ASSEMBLY
+a = myModel.rootAssembly
+p = myModel.parts['Gear']
+a.Instance(name='Gear-1', part=p, dependent=OFF)
+p = mdb.models['transmition2d'].parts['Pinion']
+a.Instance(name='Pinion-1', part=p, dependent=OFF)
