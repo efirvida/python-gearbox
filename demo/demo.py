@@ -152,3 +152,23 @@ abaqus_wheel_model_name3d = 'wheel3d'
 ExportGear(pinion).abaqus(model_name=abaqus_pinion_model_name3d, output_folder=output_folder, type='3D')
 ExportGear(gear).abaqus(model_name=abaqus_wheel_model_name3d, output_folder=output_folder, type='3D')
 ExportPair(pair).abaqus(model_name=abaqus_transmition_model_name3d, output_folder=output_folder, type='3D')
+
+# ===============================================
+# EXPORT TO ANSYS/WOKRBENCH Script
+# ===============================================
+# 2D model abaqus export
+# for 2D export type='2D' is optional because '2D' is the default output
+ansys_transmition_model_name2d = 'transmition2d'
+ansys_pinion_model_name2d = 'pinion2d'
+ansys_wheel_model_name2d = 'wheel2d'
+ExportGear(pinion).ansys(model_name=ansys_pinion_model_name2d, output_folder=output_folder, type='2D')
+# ExportGear(gear).ansys(model_name=ansys_wheel_model_name2d, output_folder=output_folder, type='2D')
+# ExportPair(pair).ansys(model_name=ansys_transmition_model_name2d, output_folder=output_folder, type='2D')
+#
+# 3D model ansys export
+# ansys_transmition_model_name3d = 'transmition3d'
+# ansys_pinion_model_name3d = 'pinion3d'
+# ansys_wheel_model_name3d = 'wheel3d'
+# ExportGear(pinion).ansys(model_name=ansys_pinion_model_name3d, output_folder=output_folder, type='3D')
+# ExportGear(gear).ansys(model_name=ansys_wheel_model_name3d, output_folder=output_folder, type='3D')
+# ExportPair(pair).ansys(model_name=ansys_transmition_model_name3d, output_folder=output_folder, type='3D')

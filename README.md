@@ -17,7 +17,7 @@ make shure you have installed all dependencies `jinja2, numpy and scipy`
 
 ###Features
 - Gear stresses calculation using AGMA-2101 D04 and ISO-6336 standards
-- Export 2D and 3D one tooth geometrical models, to MATLAB/COMSOL and ABAQUS-CAE software
+- Export 2D and 3D one tooth geometrical models, to *MATLAB/COMSOL* and *ABAQUS-CAE* software scripts
 
 ###Next Releases
 - Add export to ANSYS software

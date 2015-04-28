@@ -83,8 +83,30 @@ class ExportGear(object):
         with open(output_folder + '/' + model_name + '.py', "wb") as fh:
             fh.write(output_from_parsed_template)
 
-    def ansys(self):
-        pass
+    def ansys(self, output_folder='', model_name='model', type='2D'):
+        """
+
+        :param output_folder:
+        :param model_name:
+        :param type:
+        :raise ValueError:
+        """
+
+        if type is '2D':
+            template = self.env.get_template('ansys_gear.template')
+        elif type is '3D':
+            template = self.env.get_template('ansys_gear3D.template')
+        else:
+            raise ValueError('type must be \'2D\' or \'3D\' default Value is \'2D\'')
+
+        model_name = model_name.replace(' ', '_')
+        output_folder = output_folder.replace('/', '\\')
+
+        output_from_parsed_template = template.render(gear=self.gear.export_data.gear, model_name=model_name,
+                                                      model_path=output_folder)
+
+        with open(output_folder + '/' + model_name + '.js', "wb") as fh:
+            fh.write(output_from_parsed_template)
 
 
 class ExportPair(object):
