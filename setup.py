@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.1.1c'
+version = '0.1.2'
 
 setup(
     name='python-gearbox',
