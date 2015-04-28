@@ -1,0 +1,51 @@
+function planeSketchesOnly (p)
+{
+
+//Plane
+p.Plane  = agb.GetActivePlane();
+p.Origin = p.Plane.GetOrigin();
+p.XAxis  = p.Plane.GetXAxis();
+p.YAxis  = p.Plane.GetYAxis();
+
+//Sketch
+p.Sk1 = p.Plane.NewSketch();
+p.Sk1.Name = "Sketch1";
+
+//Edges
+with (p.Sk1)
+{
+  p.Sp7 = SplineBegin();
+  with(p.Sp7)
+  {
+    SplineFlexibility = agc.Yes;
+    {% for coord in gear.formcoords -%}
+        SplineXY({{ coord[0] }}, {{ coord[1] }});
+    {% endfor %}
+    SplineFitPtEnd();
+  }
+  p.Ln8 = Line({{gear.formcoords[0][0]}}, {{gear.formcoords[0][1]}}, {{gear.shaftcoords[1][0]}},{{gear.shaftcoords[1][1]}});
+
+  p.Ln9 = Line({{gear.shaftcoords[0][0]}}, {{ gear.shaftcoords[0][1] }}, {{gear.formcoords[-1][0]}}, {{gear.formcoords[-1][1]}});
+  p.Cr10 = ArcCtrEdge(
+              0, 0,
+              {{gear.shaftcoords[0][0]}}, {{gear.shaftcoords[0][1]}},
+              {{gear.shaftcoords[-1][0]}}, {{gear.shaftcoords[-1][1]}});
+}
+
+//Dimensions and/or constraints
+with (p.Plane)
+{
+  //Constraints
+}
+
+p.Plane.EvalDimCons(); //Final evaluate of all dimensions and constraints in plane
+
+return p;
+} //End Plane JScript function: planeSketchesOnly
+
+//Call Plane JScript function
+var ps1 = planeSketchesOnly (new Object());
+
+//Finish
+agb.Regen(); //To insure model validity
+//End DM JScript
