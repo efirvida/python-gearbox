@@ -1,5 +1,8 @@
 python-gearbox
 ==============
+.. ![alt tag](https://img.shields.io/pypi/dm/python-gearbox.svg) 
+.. ![alt tag](https://img.shields.io/pypi/v/python-gearbox.svg)
+
 Python library for design of spur and helical gears transmissions
 
 ###Install
@@ -30,6 +33,3 @@ The documentation isn't ready yet, see the demo.py file for uses example
 if you want to contribute with the project
 
 **e-mail**: efirvida@gmail.com
-
-.. ![alt tag](https://img.shields.io/pypi/dm/python-gearbox.svg) 
-.. ![alt tag](https://img.shields.io/pypi/v/python-gearbox.svg)
