@@ -31,10 +31,5 @@ if you want to contribute with the project
 
 **e-mail**: efirvida@gmail.com
 
-.. |pypi_downloads| image:: https://img.shields.io/pypi/dm/python-gearbox.svg
-    :target: https://pypi.python.org/pypi/python-gearbox
-    :alt: PyPi downloads per month
-
-.. |pypi_version| image:: https://img.shields.io/pypi/v/python-gearbox.svg
-    :target: https://pypi.python.org/pypi/python-gearbox
-    :alt: PyPi latest version
+.. ![alt tag](https://img.shields.io/pypi/dm/python-gearbox.svg) 
+.. ![alt tag](https://img.shields.io/pypi/v/python-gearbox.svg)
