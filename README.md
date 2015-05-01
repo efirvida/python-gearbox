@@ -30,3 +30,11 @@ The documentation isn't ready yet, see the demo.py file for uses example
 if you want to contribute with the project
 
 **e-mail**: efirvida@gmail.com
+
+.. |pypi_downloads| image:: https://img.shields.io/pypi/dm/python-gearbox.svg
+    :target: https://pypi.python.org/pypi/python-gearbox
+    :alt: PyPi downloads per month
+
+.. |pypi_version| image:: https://img.shields.io/pypi/v/python-gearbox.svg
+    :target: https://pypi.python.org/pypi/python-gearbox
+    :alt: PyPi latest version
