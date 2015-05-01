@@ -30,6 +30,7 @@ with (p.Sk1)
               0, 0,
               {{gear.shaftcoords[0][0]}}, {{gear.shaftcoords[0][1]}},
               {{gear.shaftcoords[-1][0]}}, {{gear.shaftcoords[-1][1]}});
+  p.Ext11 = agb.Extrude(agc.Add, p.Sk1, agc.DirNorma, agc.ExtentFixe, {{ gear.data.b }}, agc.ExtentFixed, 0.0, agc.No, 0.0, 0.0);
 }
 
 //Dimensions and/or constraints
