@@ -110,11 +110,6 @@ def rotate(coords, angle, center=(0, 0,)):
     :param center:
     :return:
     """
-
-    # polar_coord = [CartesianCoordinatesToPolarCoordinates(coord[0], coord[1]) for coord in coords]
-    # rotated = [[coord[0], coord[1] + radians(angle)] for coord in polar_coord]
-    # return [PolarCoordinatesToCartesianCoordinates(coord[0], coord[1]) for coord in rotated]
-
     rotated = [[cos(radians(angle)) * (coord[0] - center[0]) - sin(radians(angle)) * (coord[1] - center[1]) + center[0],
                 sin(radians(angle)) * (coord[0] - center[0]) + cos(radians(angle)) * (coord[1] - center[1]) + center[1]]
                for coord in coords]
