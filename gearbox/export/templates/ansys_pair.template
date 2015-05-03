@@ -1,0 +1,87 @@
+//ag.gui.NewFile();
+ag.m.ClearAllErrors();
+//ag.m.NewSession (true);
+ag.gui.setUnits(ag.c.UnitMillimeter, ag.c.UnitDegree, ag.c.No);
+
+function planeSketchesOnly (p)
+{
+
+//Plane
+p.Plane  = agb.GetActivePlane();
+p.Origin = p.Plane.GetOrigin();
+p.XAxis  = p.Plane.GetXAxis();
+p.YAxis  = p.Plane.GetYAxis();
+
+p.Sk1 = p.Plane.NewSketch();
+p.Sk1.Name = "Pinion";
+p.Sk2 = p.Plane.NewSketch();
+p.Sk2.Name = "Wheel";
+
+//Edges
+with (p.Sk1)
+{
+  p.Sp1 = SplineBegin();
+  with(p.Sp1)
+  {
+    SplineFlexibility = agc.Yes;
+    {% for coord in pair[0].formcoords -%}
+        SplineXY({{ coord[0] }}, {{ coord[1] }});
+    {% endfor %}
+    SplineFitPtEnd();
+  }
+  p.Ln2 = Line({{pair[0].formcoords[0][0]}}, {{pair[0].formcoords[0][1]}}, {{pair[0].shaftcoords[1][0]}},{{pair[0].shaftcoords[1][1]}});
+  p.Ln3 = Line({{pair[0].shaftcoords[0][0]}}, {{ pair[0].shaftcoords[0][1] }}, {{pair[0].formcoords[-1][0]}}, {{pair[0].formcoords[-1][1]}});
+  p.Cr4 = ArcCtrEdge(
+              0, 0,
+              {{pair[0].shaftcoords[0][0]}}, {{pair[0].shaftcoords[0][1]}},
+              {{pair[0].shaftcoords[-1][0]}}, {{pair[0].shaftcoords[-1][1]}});
+}
+ag.selectedFeature = ag.gui.TreeviewFeature(p.Sk1.Name, 0);
+var SSk1=ag.gui.CreateSurfSk();  // IAnsFSurfSk
+SSk1.Name="PinionSurf";
+SSk1.Operation=ag.c.Frozen;
+SSk1.WithPlaneNormal=ag.c.Yes;
+
+
+with (p.Sk2)
+{
+  p.Sp1 = SplineBegin();
+  with(p.Sp1)
+  {
+    SplineFlexibility = agc.Yes;
+    {% for coord in pair[1].formcoords -%}
+        SplineXY({{ coord[0] }}, {{ coord[1] }});
+    {% endfor %}
+    SplineFitPtEnd();
+  }
+  p.Ln2 = Line({{pair[1].formcoords[0][0]}}, {{pair[1].formcoords[0][1]}}, {{pair[1].shaftcoords[1][0]}},{{pair[1].shaftcoords[1][1]}});
+  p.Ln3 = Line({{pair[1].shaftcoords[0][0]}}, {{ pair[1].shaftcoords[0][1] }}, {{pair[1].formcoords[-1][0]}}, {{pair[1].formcoords[-1][1]}});
+  p.Cr4 = ArcCtrEdge(
+              {{ pair[1].rotate_x }}, {{ pair[1].rotate_y }},
+              {{ pair[1].shaftcoords[0][0] }}, {{ pair[1].shaftcoords[0][1] }},
+              {{ pair[1].shaftcoords[-1][0] }}, {{ pair[1].shaftcoords[-1][1] }});
+}
+
+ag.selectedFeature = ag.gui.TreeviewFeature(p.Sk2.Name, 0);
+var SSk2=ag.gui.CreateSurfSk();
+SSk2.Name="WheelSurf";
+SSk2.Operation=ag.c.Frozen;
+SSk2.WithPlaneNormal=ag.c.Yes;
+
+//Dimensions and/or constraints
+with (p.Plane)
+{
+  //Constraints
+}
+
+p.Plane.EvalDimCons(); //Final evaluate of all dimensions and constraints in plane
+
+return p;
+} //End Plane JScript function: planeSketchesOnly
+
+//Call Plane JScript function
+var ps1 = planeSketchesOnly (new Object());
+
+//Finish
+agb.Regen(); //To insure model validity
+//End DM JScript

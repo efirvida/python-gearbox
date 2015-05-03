@@ -102,6 +102,15 @@ class ExportGear(object):
         model_name = model_name.replace(' ', '_')
         output_folder = output_folder.replace('/', '\\')
 
+        final = []
+        for i in self.gear.export_data.gear.formcoords:
+            final.append([-i[0], i[1]])
+        final.reverse()
+        self.gear.export_data.gear.formcoords = self.gear.export_data.gear.formcoords + final
+
+        self.gear.export_data.gear.shaftcoords[0] = [-self.gear.export_data.gear.shaftcoords[1][0],
+                                                     self.gear.export_data.gear.shaftcoords[1][1]]
+
         output_from_parsed_template = template.render(gear=self.gear.export_data.gear, model_name=model_name,
                                                       model_path=output_folder)
 
@@ -185,6 +194,46 @@ class ExportPair(object):
 
         with open(output_folder + '/' + model_name + '.py', "wb") as fh:
             fh.write(output_from_parsed_template)
+
+    def ansys(self, output_folder='', model_name='model', type='2D'):
+        """
+
+        :param output_folder:
+        :param model_name:
+        :param type:
+        """
+        if type is '2D':
+            template = self.env.get_template('ansys_pair.template')
+        elif type is '3D':
+            template = self.env.get_template('ansys_pair3D.template')
+        else:
+            raise ValueError('type must be \'2D\' or \'3D\' default Value is \'2D\'')
+
+        pinion = []
+        for i in self.pinion.formcoords:
+            pinion.append([-i[0], i[1]])
+        pinion.reverse()
+        self.pinion.formcoords = rotate(self.pinion.formcoords + pinion, self.pinion.rotate_ang)
+        self.pinion.shaftcoords[0] = [-self.pinion.shaftcoords[1][0], self.pinion.shaftcoords[1][1]]
+        self.pinion.shaftcoords = rotate(self.pinion.shaftcoords, self.pinion.rotate_ang)
+
+        wheel = []
+        for i in self.wheel.formcoords:
+            wheel.append([-i[0], i[1]])
+        wheel.reverse()
+        self.wheel.formcoords = self.wheel.formcoords + wheel
+        self.wheel.shaftcoords[0] = [-self.wheel.shaftcoords[1][0], self.wheel.shaftcoords[1][1]]
+
+        self.wheel.formcoords = rotate(self.wheel.formcoords, self.wheel.rotate_ang, (0, self.__aw()))
+        self.wheel.shaftcoords = rotate(self.wheel.shaftcoords, self.wheel.rotate_ang, (0, self.__aw()))
+
+        pair = [self.pinion, self.wheel]
+        model_name = model_name.replace(' ', '_')
+        output_from_parsed_template = template.render(pair=pair, model_name=model_name, model_path=output_folder)
+
+        with open(output_folder + '/' + model_name + '.js', "wb") as fh:
+            fh.write(output_from_parsed_template)
+
 
     def __aw(self):
         inv = involute(self.pinion.data['alpha_t']) + 2 * (self.pinion.data['x'] + self.wheel.data['x']) / (

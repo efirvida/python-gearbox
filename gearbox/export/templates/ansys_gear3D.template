@@ -1,8 +1,3 @@
-//ag.gui.NewFile();
-ag.m.ClearAllErrors();
-//ag.m.NewSession (true);
-ag.gui.setUnits(ag.c.UnitMillimeter, ag.c.UnitDegree, ag.c.No);
-
 function planeSketchesOnly (p)
 {
 
@@ -35,13 +30,8 @@ with (p.Sk1)
               0, 0,
               {{gear.shaftcoords[0][0]}}, {{gear.shaftcoords[0][1]}},
               {{gear.shaftcoords[-1][0]}}, {{gear.shaftcoords[-1][1]}});
+  p.Ext11 = agb.Extrude(agc.Add, p.Sk1, agc.DirNormal, agc.ExtentFixe, {{ gear.data.b }}, agc.ExtentFixed, 0.0, agc.No, 0.0, 0.0);
 }
-
-ag.selectedFeature = ag.gui.TreeviewFeature(p.Sk1.Name, 0);
-var SSk1=ag.gui.CreateSurfSk();  // IAnsFSurfSk
-SSk1.Name="GearSurf";
-SSk1.Operation=ag.c.Frozen;
-SSk1.WithPlaneNormal=ag.c.Yes;
 
 //Dimensions and/or constraints
 with (p.Plane)

@@ -162,13 +162,13 @@ ansys_transmition_model_name2d = 'transmition2d'
 ansys_pinion_model_name2d = 'pinion2d'
 ansys_wheel_model_name2d = 'wheel2d'
 ExportGear(pinion).ansys(model_name=ansys_pinion_model_name2d, output_folder=output_folder, type='2D')
-# ExportGear(gear).ansys(model_name=ansys_wheel_model_name2d, output_folder=output_folder, type='2D')
-# ExportPair(pair).ansys(model_name=ansys_transmition_model_name2d, output_folder=output_folder, type='2D')
+ExportGear(gear).ansys(model_name=ansys_wheel_model_name2d, output_folder=output_folder, type='2D')
+ExportPair(pair).ansys(model_name=ansys_transmition_model_name2d, output_folder=output_folder, type='2D')
 #
 # 3D model ansys export
-# ansys_transmition_model_name3d = 'transmition3d'
-# ansys_pinion_model_name3d = 'pinion3d'
-# ansys_wheel_model_name3d = 'wheel3d'
-# ExportGear(pinion).ansys(model_name=ansys_pinion_model_name3d, output_folder=output_folder, type='3D')
-# ExportGear(gear).ansys(model_name=ansys_wheel_model_name3d, output_folder=output_folder, type='3D')
-# ExportPair(pair).ansys(model_name=ansys_transmition_model_name3d, output_folder=output_folder, type='3D')
+ansys_transmition_model_name3d = 'transmition3d'
+ansys_pinion_model_name3d = 'pinion3d'
+ansys_wheel_model_name3d = 'wheel3d'
+ExportGear(pinion).ansys(model_name=ansys_pinion_model_name3d, output_folder=output_folder, type='3D')
+ExportGear(gear).ansys(model_name=ansys_wheel_model_name3d, output_folder=output_folder, type='3D')
+ExportPair(pair).ansys(model_name=ansys_transmition_model_name3d, output_folder=output_folder, type='3D')
