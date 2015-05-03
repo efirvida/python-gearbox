@@ -20,10 +20,12 @@ make shure you have installed all dependencies `jinja2, numpy and scipy`
 
 ###Features
 - Gear stresses calculation using AGMA-2101 D04 and ISO-6336 standards
-- Export 2D and 3D one tooth geometrical models, to *MATLAB/COMSOL* and *ABAQUS-CAE* software scripts
+- Export 2D and 3D one tooth geometrical models, to *MATLAB/COMSOL* for spur and helical gears
+- Export 2D and 3D one tooth geometrical models, to *ABAQUS-CAE* only for spur gears
+- Export 2D and 3D one tooth geometrical models, to *ANSYS* only for spur gears
 
 ###Next Releases
-- Add export to ANSYS software
+- Add the export capabilities for helical gears in ANSYS and ABAQUS-CAE softwares
 - Optimization of the profile shift modification
 
 ###Help and Documentation
