@@ -234,7 +234,6 @@ class ExportPair(object):
         with open(output_folder + '/' + model_name + '.js', "wb") as fh:
             fh.write(output_from_parsed_template)
 
-
     def __aw(self):
         inv = involute(self.pinion.data['alpha_t']) + 2 * (self.pinion.data['x'] + self.wheel.data['x']) / (
             self.pinion.data['z'] + self.wheel.data['z']) * tan(

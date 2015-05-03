@@ -16,18 +16,18 @@ def arcinvolute(inv):
     :param inv:
     :return:
     """
-    angleZero = 0
-    angleOne = pi / 2
-    invDiff = inv
-    angleCal = 0
-    while abs(invDiff) > 1e-15:
-        angleCal = (angleZero + angleOne) / 2
-        invDiff = tan(angleCal) - angleCal - inv
-        if invDiff > 0:
-            angleOne = angleCal
+    anglezero = 0
+    angleone = pi / 2
+    invdiff = inv
+    anglecal = 0
+    while abs(invdiff) > 1e-15:
+        anglecal = (anglezero + angleone) / 2
+        invdiff = tan(anglecal) - anglecal - inv
+        if invdiff > 0:
+            angleone = anglecal
         else:
-            angleZero = angleCal
-    return degrees(angleCal)
+            anglezero = anglecal
+    return degrees(anglecal)
 
 
 def sign(number):

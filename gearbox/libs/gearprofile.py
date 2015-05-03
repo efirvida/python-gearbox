@@ -185,6 +185,7 @@ class GearWheel(object):
         formcoords : list of 2d-coordinate points (list, list(len=2), numeric)
         """
 
+        self.points_shaft = None
         self.data = deepcopy(geardata)
         self.modifications = deepcopy(flankmods)
 

@@ -2,6 +2,7 @@ from math import pi, atan, tan, radians, cos, sin, degrees, sqrt, floor, ceil
 
 from gearbox.libs.maths import involute, arcinvolute
 
+
 class Tool(object):
     """
 
@@ -228,9 +229,9 @@ class Transmition(object):
         self.a = ((gear_one.z + gear_two.z) * gear_one.m) / (2 * cos(radians(gear_one.beta)))
         self.aw = self.a * cos(radians(gear_one.alpha)) / cos(radians(self.alpha_wt))
         self.epsilon_alpha = (0.5 * (
-            sqrt(gear_one.da ** 2 - gear_one.db ** 2) + sqrt(gear_two.da ** 2 - gear_two.db ** 2)) - self.a * sin(
+        sqrt(gear_one.da ** 2 - gear_one.db ** 2) + sqrt(gear_two.da ** 2 - gear_two.db ** 2)) - self.a * sin(
             radians(self.alpha_wt))) / (
-                                 pi * gear_one.m * cos(radians(gear_one.alpha_t)) / (cos(radians(gear_one.beta))))
+                             pi * gear_one.m * cos(radians(gear_one.alpha_t)) / (cos(radians(gear_one.beta))))
         self.epsilon_beta = gear_one.b * sin(radians(gear_one.beta)) / (gear_one.m * pi)
         self.epsilon_gama = self.epsilon_alpha + self.epsilon_beta
         self.v = rpm_in * gear_one.d * pi / 60000

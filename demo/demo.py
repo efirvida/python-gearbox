@@ -1,8 +1,8 @@
 from gearbox.transmition.gears import *
-from gearbox.standards.iso import Pitting as iso_pitting
-from gearbox.standards.iso import Bending as iso_bending
-from gearbox.standards.agma import Pitting as agma_pitting
-from gearbox.standards.agma import Bending as agma_bending
+from gearbox.standards.iso import Pitting as isoPitting
+from gearbox.standards.iso import Bending as isoBending
+from gearbox.standards.agma import Pitting as agmaPitting
+from gearbox.standards.agma import Bending as agmaBending
 from gearbox.export.export import *
 
 
@@ -89,22 +89,22 @@ transmition = Transmition(
 
 print '========================================'
 print 'ISO Pitting'
-print iso_pitting(transmition=transmition).calculate()
+print isoPitting(transmition=transmition).calculate()
 print '========================================'
 
 print '========================================'
 print 'ISO Bending'
-print iso_bending(transmition=transmition).calculate
+print isoBending(transmition=transmition).calculate
 print '========================================'
 
 print '========================================'
 print 'AGMA Pitting'
-print agma_pitting(transmition=transmition).calculate()
+print agmaPitting(transmition=transmition).calculate()
 print '========================================'
 
 print '========================================'
 print 'AGMA Bending'
-print agma_bending(transmition=transmition).calculate()
+print agmaBending(transmition=transmition).calculate()
 print '========================================'
 
 output_folder = os.path.join(os.path.dirname(__file__), 'output')
@@ -115,7 +115,7 @@ except:
 
 # ===============================================
 # EXPORT TO MATLAB/COMSOL SCRIPT 
-#===============================================
+# ===============================================
 # 2D model matlab-comsol export
 # for 2D export type='2D' is optional because '2D' is the default output
 comsol_transmition_model_name2d = 'transmition2d'
@@ -135,7 +135,7 @@ ExportPair(pair).matlab_comsol(model_name=comsol_transmition_model_name3d, outpu
 
 # ===============================================
 # EXPORT TO ABAQUS PYTHON 
-#===============================================
+# ===============================================
 # 2D model abaqus export
 # for 2D export type='2D' is optional because '2D' is the default output
 abaqus_transmition_model_name2d = 'transmition2d'
@@ -145,7 +145,7 @@ ExportGear(pinion).abaqus(model_name=abaqus_pinion_model_name2d, output_folder=o
 ExportGear(gear).abaqus(model_name=abaqus_wheel_model_name2d, output_folder=output_folder, type='2D')
 ExportPair(pair).abaqus(model_name=abaqus_transmition_model_name2d, output_folder=output_folder, type='2D')
 
-#3D model abaqus export
+# 3D model abaqus export
 abaqus_transmition_model_name3d = 'transmition3d'
 abaqus_pinion_model_name3d = 'pinion3d'
 abaqus_wheel_model_name3d = 'wheel3d'

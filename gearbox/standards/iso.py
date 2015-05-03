@@ -9,7 +9,7 @@ def __c__(pair):
     x = [0, 0.04723, 0.15551, 0.25791, -0.00635, -0.11654, -0.00193, -0.24188, 0.00529, 0.00182]
     qp = x[1] + (x[2] / pair.gear_one.zn) + (x[3] / pair.gear_two.zn) + (x[4] * pair.gear_one.x) + (
         x[5] * pair.gear_one.x / pair.gear_one.zn) + (x[6] * pair.gear_two.x) + (
-             x[7] * pair.gear_two.x / pair.gear_two.zn) + (x[8] * pair.gear_one.x ** 2) + (x[9] * pair.gear_two.x ** 2)
+        x[7] * pair.gear_two.x / pair.gear_two.zn) + (x[8] * pair.gear_one.x ** 2) + (x[9] * pair.gear_two.x ** 2)
 
     beq = pair.gear_one.bs / pair.gear_one.b
     if beq < 0.2:

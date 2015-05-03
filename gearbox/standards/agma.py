@@ -5,7 +5,6 @@ from numpy import interp, max
 from gearbox.libs.maths import arcinvolute
 
 
-
 # pitting from AGMA-2101 D04
 class Pitting(object):
     """
@@ -16,48 +15,47 @@ class Pitting(object):
     def __init__(self, transmition):
         self.transmition = transmition
 
-
     def calculate(self):
         pair = self.transmition
         d = pair.gear_one.d
         b = pair.gear_two.bs
 
-        Cp = self.__ElasticCoefficient__(pair)
-        Ft = pair.ft
-        Ka = pair.ka
-        Ks = __SizeFactor__(pair)
-        Kh = __LoadDistribution__(pair)
-        Cf = 1
+        cp = self.__ElasticCoefficient__(pair)
+        ft = pair.ft
+        ka = pair.ka
+        ks = __sizefactor__(pair)
+        kh = __loaddistribution__(pair)
+        cf = 1
 
-        Kv = __DynamicFactor__(pair)
-        I = __GeometryFactor__(pair)['I']
+        kv = __dynamicfactor__(pair)
+        I = __geometryfactor__(pair)['I']
 
         # Ko = OverloadFactor(pair)
-        SigmaH = Cp * sqrt(
-            Ft * Ka * Kv * Ks * (Kh / (d * b)) * Cf / I)
+        sigmah = cp * sqrt(
+            ft * ka * kv * ks * (kh / (d * b)) * cf / I)
         return {
-            'sigmaH': SigmaH,
-            'Cp': Cp,
-            'Wt': Ft,
-            'Ka': Ka,
-            'Kv': Kv,
-            'Ks': Ks,
-            'Kh': Kh,
-            'Cf': Cf,
+            'sigmaH': sigmah,
+            'cp': cp,
+            'Wt': ft,
+            'ka': ka,
+            'kv': kv,
+            'ks': ks,
+            'kh': kh,
+            'cf': cf,
             'I': I
         }
 
     @staticmethod
     def __ElasticCoefficient__(pair):
-        eOne = pair.gear_one.material.e
-        eTwo = pair.gear_two.material.e
-        pOne = pair.gear_one.material.poisson
-        pTwo = pair.gear_two.material.poisson
+        eone = pair.gear_one.material.e
+        etwo = pair.gear_two.material.e
+        pone = pair.gear_one.material.poisson
+        ptwo = pair.gear_two.material.poisson
 
-        if eOne == eTwo:
-            return sqrt(eOne / (2 * pi * (1 - pOne ** 2)))
+        if eone == etwo:
+            return sqrt(eone / (2 * pi * (1 - pone ** 2)))
         else:
-            return sqrt(1 / (pi * (((1 - pOne) / eOne) + (1 - pTwo) / eTwo)))
+            return sqrt(1 / (pi * (((1 - pone) / eone) + (1 - ptwo) / etwo)))
 
 
 # Bending from AGMA-2101 D04
@@ -70,37 +68,36 @@ class Bending(object):
     def __init__(self, transmition):
         self.transmition = transmition
 
-
     def calculate(self):
         pair = self.transmition
-        Ft = pair.ft
-        Ka = pair.ka
+        ft = pair.ft
+        ka = pair.ka
 
         b = pair.gear_one.bs
         mt = pair.gear_one.m / cos(radians(pair.gear_one.beta))
 
-        Kv = __DynamicFactor__(pair)
-        Ks = __SizeFactor__(pair)
-        J = __GeometryFactor__(pair)['J']
-        Kh = __LoadDistribution__(pair)
-        Kb = __RimThicknessFactor__(pair)
+        kv = __dynamicfactor__(pair)
+        ks = __sizefactor__(pair)
+        J = __geometryfactor__(pair)['J']
+        kh = __loaddistribution__(pair)
+        kb = __rimthicknessfactor__(pair)
 
-        sigmaFOne = Ft * Ka * Kv * Ks * (1. / (b * mt)) * (Kh * Kb / J[0])
-        sigmaFTwo = Ft * Ka * Kv * Ks * (1. / (b * mt)) * (Kh * Kb / J[1])
+        sigmafone = ft * ka * kv * ks * (1. / (b * mt)) * (kh * kb / J[0])
+        sigmaftwo = ft * ka * kv * ks * (1. / (b * mt)) * (kh * kb / J[1])
 
         return {
-            'sigmaFOne': sigmaFOne,
-            'sigmaFTwo': sigmaFTwo,
-            'Wt': Ft,
-            'Ka': Ka,
-            'Kv': Kv,
+            'sigmafone': sigmafone,
+            'sigmaftwo': sigmaftwo,
+            'Wt': ft,
+            'ka': ka,
+            'kv': kv,
             'JOne': J[0],
             'JTwo': J[1]
         }
 
 
 # influence Factors from AGMA AGMA-2101 D04
-def __GeometryFactor__(pair):
+def __geometryfactor__(pair):
     n1 = pair.gear_one.z
     n2 = pair.gear_two.z
     nc1 = pair.gear_one.profile.nc
@@ -109,7 +106,7 @@ def __GeometryFactor__(pair):
     mn = pair.gear_one.m
     fi_n = radians(pair.gear_one.alpha)
     psi = radians(pair.gear_one.beta)
-    F = pair.gear_one.b / mn
+    f = pair.gear_one.b / mn
 
     x1 = pair.gear_one.x
     x2 = pair.gear_two.x
@@ -123,119 +120,119 @@ def __GeometryFactor__(pair):
     delta_ao2 = pair.gear_two.profile.delta_ao
     delta_sn1 = pair.gear_one.backlash
     delta_sn2 = pair.gear_two.backlash
-    Ro1 = (pair.gear_one.da / 2) / mn
-    Ro2 = (pair.gear_two.da / 2) / mn
-    mG = pair.u_real
-    R1 = n1 / (2 * cos(psi))
-    R2 = R1 * mG
-    Cr = R1 + R2
+    ro1 = (pair.gear_one.da / 2) / mn
+    ro2 = (pair.gear_two.da / 2) / mn
+    mg = pair.u_real
+    r1 = n1 / (2 * cos(psi))
+    r2 = r1 * mg
+    cr = r1 + r2
     fi = atan(tan(fi_n) / cos(psi))
-    Rb1 = R1 * cos(fi)
-    Rb2 = Rb1 * mG
+    rb1 = r1 * cos(fi)
+    rb2 = rb1 * mg
 
     if n1 > 0:
-        fi_r = acos((Rb2 + Rb1) / Cr)
+        fi_r = acos((rb2 + rb1) / cr)
     else:
-        fi_r = acos((Rb2 - Rb1) / Cr)
+        fi_r = acos((rb2 - rb1) / cr)
 
-    Pb = 2 * pi * Rb1 / n1
-    Pn = pi * cos(fi_n)
-    psi_b = acos(Pn / Pb)
+    pb = 2 * pi * rb1 / n1
+    pn = pi * cos(fi_n)
+    psi_b = acos(pn / pb)
 
-    C6 = Cr * sin(fi_r)
+    c6 = cr * sin(fi_r)
     if n1 > 0:
-        C1 = (C6 - sqrt(Ro2 ** 2 - Rb2 ** 2))
-        # C3 = C6 / (mG + 1)
+        c1 = (c6 - sqrt(ro2 ** 2 - rb2 ** 2))
+        # C3 = c6 / (mg + 1)
     else:
-        C1 = -1 * (C6 - sqrt(Ro2 ** 2 - Rb2 ** 2))
-        # C3 = C6 / (mG - 1)
+        c1 = -1 * (c6 - sqrt(ro2 ** 2 - rb2 ** 2))
+        # C3 = c6 / (mg - 1)
 
-    C4 = C1 + Pb
-    C5 = sqrt(Ro1 ** 2. - Rb1 ** 2.)
-    C2 = C5 - Pb
+    c4 = c1 + pb
+    c5 = sqrt(ro1 ** 2. - rb1 ** 2.)
+    c2 = c5 - pb
 
-    Z = C5 - C1
-    mp = Z / Pb
+    z = c5 - c1
+    mp = z / pb
 
     nr = mp % 1
-    if psi == 0.:
+    if not psi:
         mf = 0
-        mN = 1
-        Lmin = F
+        mn = 1
+        lmin = f
     else:
-        Px = pi / sin(psi)
-        mf = F / Px
+        px = pi / sin(psi)
+        mf = f / px
         if mf > 1:
             na = mf % 1
             if 1 - nr < na:
-                Lmin = (mp * F - (1. - na) * (1. - nr) * Px) / cos(psi_b)
+                lmin = (mp * f - (1. - na) * (1. - nr) * px) / cos(psi_b)
             else:
-                Lmin = (mp * F - na * nr * Px) / cos(psi_b)
-            mN = F / Lmin
+                lmin = (mp * f - na * nr * px) / cos(psi_b)
+            mn = f / lmin
         else:
-            mN = 1
+            mn = 1
     psi_r = atan(tan(psi_b) / cos(fi_r))
     fi_nr = asin(cos(psi_b) * sin(fi_r))
 
     # I FACTOR#
     if n1 > 0:
-        d = 2 * Cr / (mG + 1.)
-        Rm1 = 0.5 * (Ro1 + (Cr - Ro2))
+        d = 2 * cr / (mg + 1.)
+        rm1 = 0.5 * (ro1 + (cr - ro2))
     else:
-        d = 2 * Cr / (mG - 1.)
-        Rm1 = 0.5 * (Ro1 + (Cr - Ro2))
+        d = 2 * cr / (mg - 1.)
+        rm1 = 0.5 * (ro1 + (cr - ro2))
 
     if mf <= 1:
-        rho_1 = C2
-        rho_m1 = sqrt(Rm1 ** 2 - Rb1 ** 2)
+        rho_1 = c2
+        rho_m1 = sqrt(rm1 ** 2 - rb1 ** 2)
         if n1 > 0:
-            rho_2 = C6 - rho_1
-            rho_m2 = C6 - rho_m1
+            rho_2 = c6 - rho_1
+            rho_m2 = c6 - rho_m1
         else:
-            rho_2 = C6 + rho_1
-            rho_m2 = C6 + rho_m1
-        C_psi = sqrt(1 - mf * (1 - rho_m1 * rho_m2 * Z / (rho_1 * rho_2 * Pn)))
+            rho_2 = c6 + rho_1
+            rho_m2 = c6 + rho_m1
+        c_psi = sqrt(1 - mf * (1 - rho_m1 * rho_m2 * z / (rho_1 * rho_2 * pn)))
     else:
-        rho_1 = sqrt(Rm1 ** 2. - Rb1 ** 2.)
+        rho_1 = sqrt(rm1 ** 2. - rb1 ** 2.)
         if n1 > 0:
-            rho_2 = C6 - rho_1
+            rho_2 = c6 - rho_1
         else:
-            rho_2 = C6 + rho_1
-        C_psi = 1
+            rho_2 = c6 + rho_1
+        c_psi = 1
 
     if n1 > 0:
-        I = (cos(fi_r) * C_psi ** 2.) / ((1. / rho_1 + 1. / rho_2) * d * mN)
+        I = (cos(fi_r) * c_psi ** 2.) / ((1. / rho_1 + 1. / rho_2) * d * mn)
     else:
-        I = (cos(fi_r) * C_psi ** 2.) / ((1. / rho_1 - 1. / rho_2) * d * mN)
-        #I FACTOR#
+        I = (cos(fi_r) * c_psi ** 2.) / ((1. / rho_1 - 1. / rho_2) * d * mn)
+        # I FACTOR #
 
-    def _J(n1, mG, Ro1, R1, R2, Rb1, C4, x, delta_sn, nc, hao, xo, rho_ao, delta_ao):
-        #J FACTOR#
+    def _j(n1, mg, ro1, r1, r2, rb1, c4, x, delta_sn, nc, hao, xo, rho_ao, delta_ao):
+        # J FACTOR #
         if psi != 0:
             n = n1 / cos(psi) ** 3.
             rn = n / 2
             rnb = rn * cos(fi_n)
             if mf <= 1:
-                rn2 = rn * mG
-                rnb2 = rnb * mG
-                rna2 = rn2 + Ro2 - R2
-                Cn6 = (rnb2 + rnb) * tan(fi_nr)
-                Cn1 = Cn6 - sqrt(rna2 ** 2 - rnb2 ** 2)
-                Cn4 = Cn1 + Pn
-                tan_fi_nW = Cn4 / rnb
+                rn2 = rn * mg
+                rnb2 = rnb * mg
+                rna2 = rn2 + ro2 - r2
+                cn6 = (rnb2 + rnb) * tan(fi_nr)
+                cn1 = cn6 - sqrt(rna2 ** 2 - rnb2 ** 2)
+                cn4 = cn1 + pn
+                tan_fi_nw = cn4 / rnb
             else:
-                rna = rn + Ro1 - R1
-                tan_fi_nW = sqrt(((rna / rnb) ** 2.) - 1.)
+                rna = rn + ro1 - r1
+                tan_fi_nw = sqrt(((rna / rnb) ** 2.) - 1.)
         else:
             n = n1
-            rn = R1
-            rnb = Rb1
-            tan_fi_nW = C4 / rnb
+            rn = r1
+            rnb = rb1
+            tan_fi_nw = c4 / rnb
 
         xg = x - delta_sn / (2 * tan(fi_n))
         sn = pi / 2 + 2 * xg * tan(fi_n)
         inv_fi_n = tan(fi_n) - fi_n
-        fi_nl = tan_fi_nW - tan(fi_n) + fi_n - sn / n
+        fi_nl = tan_fi_nw - tan(fi_n) + fi_n - sn / n
         rnl = rnb / cos(fi_nl)
         no = nc / cos(psi) ** 3.
         rno = no / 2
@@ -264,11 +261,11 @@ def __GeometryFactor__(pair):
             eta_nf = rn_2 * cos(sigma_n) + kf * sin(beta_n)
             hf = rnl - eta_nf
             y = 2 * hf * tan(beta_n) - xi_nf
-            y_ = (2 * hf / cos(beta_n) ** 2) - kf * sin(beta_n) \
-                 + no / n * ((rno_2 * sin(alpha_n) / (r_s_no * sin(alpha_n + mi_no))) - 1) \
-                   * (2 * xi_nf * tan(beta_n) - eta_nf - 2 * hf / (cos(beta_n) ** 2) ) \
-                 - rno_2 * (cos(alpha_n) - sin(alpha_n) / tan(alpha_n + mi_no)) \
-                   * ((1 + sin(beta_n) ** 2.) / cos(beta_n))
+            y_ = (2 * hf / cos(beta_n) ** 2) - kf * sin(beta_n) + no / n * (
+            (rno_2 * sin(alpha_n) / (r_s_no * sin(alpha_n + mi_no))) - 1) * (
+                                                                  2 * xi_nf * tan(beta_n) - eta_nf - 2 * hf / (
+                                                                  cos(beta_n) ** 2)) - rno_2 * (
+            cos(alpha_n) - sin(alpha_n) / tan(alpha_n + mi_no)) * ((1 + sin(beta_n) ** 2.) / cos(beta_n))
             alpha_n1 = alpha_n - y / y_
 
             if y <= 1e-6:
@@ -279,101 +276,101 @@ def __GeometryFactor__(pair):
         rho_f = rho_ao + ((rno_2 - r_s_no) ** 2) / ((rn_2 * rno_2 / (rn_2 + rno_2)) - (rno_2 - r_s_no))
         omega = degrees(atan(tan(psi) * sin(fi_n)))
         sf = 2. * xi_nf
-        H = 0.331 - 0.436 * fi_n
-        L = 0.324 - 0.492 * fi_n
-        M = 0.261 - 0.545 * fi_n
-        Kf = H + ((sf / rho_f) ** L) * ((sf / hf) ** M)
+        h = 0.331 - 0.436 * fi_n
+        l = 0.324 - 0.492 * fi_n
+        m = 0.261 - 0.545 * fi_n
+        kf = h + ((sf / rho_f) ** l) * ((sf / hf) ** m)
 
         if mf > 1:
-            Ch = 1. / (1. - sqrt((omega / 100.) * (1. - omega / 100.)))
-            K_psi = cos(psi_r) * cos(psi)
+            ch = 1. / (1. - sqrt((omega / 100.) * (1. - omega / 100.)))
+            k_psi = cos(psi_r) * cos(psi)
         else:
-            Ch = 1.
-            K_psi = 1.
+            ch = 1.
+            k_psi = 1.
 
-        Y = K_psi / ((cos(fi_nl) / cos(fi_nr)) * ((6. * hf / ((sf ** 2.) * Ch)) - tan(fi_nl) / sf))
+        y = k_psi / ((cos(fi_nl) / cos(fi_nr)) * ((6. * hf / ((sf ** 2.) * ch)) - tan(fi_nl) / sf))
 
-        return Y * C_psi / (Kf * mN)
+        return y * c_psi / (kf * mn)
 
-    J1 = _J(n1, mG, Ro1, R1, R2, Rb1, C4, x1, delta_sn1, nc1, hao1, xo1, rho_ao1, delta_ao1)
-    J2 = _J(n2, 1. / mG, Ro2, R2, R1, Rb2, C6 - C2, x2, delta_sn2, nc2, hao2, xo2, rho_ao2, delta_ao2)
+    j1 = _j(n1, mg, ro1, r1, r2, rb1, c4, x1, delta_sn1, nc1, hao1, xo1, rho_ao1, delta_ao1)
+    j2 = _j(n2, 1. / mg, ro2, r2, r1, rb2, c6 - c2, x2, delta_sn2, nc2, hao2, xo2, rho_ao2, delta_ao2)
 
     return {
         'I': I,
-        'J': [J1, J2]
+        'J': [j1, j2]
     }
 
 
 # FIXME
-def __DynamicFactor__(pair):
+def __dynamicfactor__(pair):
     fpt = pair.gear_one.f_pt
-    dT1 = pair.gear_one.da - 2 * pair.gear_one.m
-    dT2 = pair.gear_two.da - 2 * pair.gear_two.m
+    dt1 = pair.gear_one.da - 2 * pair.gear_one.m
+    dt2 = pair.gear_two.da - 2 * pair.gear_two.m
     m = pair.gear_one.m
 
-    if 5 < dT1 <= 400:
-        #Av1 = (log(abs(fpt)) - log(0.3 * m + 0.003 * dT1 + 5.2))/0.3466  + 5
-        Av1 = (log(abs(fpt)) - log(0.3 * m + 0.12 * sqrt(dT1) + 4)) / 0.3466 + 5
+    if 5 < dt1 <= 400:
+        # av1 = (log(abs(fpt)) - log(0.3 * m + 0.003 * dt1 + 5.2))/0.3466  + 5
+        av1 = (log(abs(fpt)) - log(0.3 * m + 0.12 * sqrt(dt1) + 4)) / 0.3466 + 5
     else:
-        Av1 = (log(abs(fpt)) - log(0.3 * m + 0.12 * sqrt(dT1) + 4)) / 0.3466 + 5
+        av1 = (log(abs(fpt)) - log(0.3 * m + 0.12 * sqrt(dt1) + 4)) / 0.3466 + 5
 
-    if 5 < dT2 <= 400:
-        #Av2 = (log(abs(fpt)) - log(0.3 * m + 0.003 * dT2 + 5.2))/0.3466 + 5
-        Av2 = (log(abs(fpt)) - log(0.3 * m + 0.12 * sqrt(dT2) + 4)) / 0.3466 + 5
+    if 5 < dt2 <= 400:
+        # av2 = (log(abs(fpt)) - log(0.3 * m + 0.003 * dt2 + 5.2))/0.3466 + 5
+        av2 = (log(abs(fpt)) - log(0.3 * m + 0.12 * sqrt(dt2) + 4)) / 0.3466 + 5
     else:
-        Av2 = (log(abs(fpt)) - log(0.3 * m + 0.12 * sqrt(dT2) + 4)) / 0.3466 + 5
+        av2 = (log(abs(fpt)) - log(0.3 * m + 0.12 * sqrt(dt2) + 4)) / 0.3466 + 5
 
-    Av = ceil(max([Av1, Av2]))
-    B = 0.25 * (Av - 5.0) ** (2. / 3)
-    C = 50 + 56 * (1 - B)
+    av = ceil(max([av1, av2]))
+    b = 0.25 * (av - 5.0) ** (2. / 3)
+    c = 50 + 56 * (1 - b)
     vt = pi * pair.rpm_in * pair.gear_one.d / 60000
 
-    return (C / (C + sqrt(196.85 * vt))) ** (-B)
+    return (c / (c + sqrt(196.85 * vt))) ** (-b)
 
 
-def __SizeFactor__(pair):
+def __sizefactor__(pair):
     a = [5, 6, 8, 12, 20]
     b = [1, 1.05, 1.15, 1.25, 1.40]
 
     if pair.gear_one.m < 5:
-        Ks = 1
+        ks = 1
     elif pair.gear_one.m > 20:
-        Ks = 1.40
+        ks = 1.40
     else:
-        Ks = interp(pair.gear_one.m, a, b)
+        ks = interp(pair.gear_one.m, a, b)
 
-    return Ks
+    return ks
 
 
-def __LoadDistribution__(pair):
-    Cmc = [1, 0.8]
-    Ce = [0.8, 1]
+def __loaddistribution__(pair):
+    cmc = [1, 0.8]
+    ce = [0.8, 1]
 
     if pair.gear_one.bs <= 25:
-        Cpf = -0.025 + pair.gear_one.bs / (10 * pair.gear_one.d)
+        cpf = -0.025 + pair.gear_one.bs / (10 * pair.gear_one.d)
     elif 25 < pair.gear_one.bs <= 432:
-        Cpf = (pair.gear_one.bs / (
+        cpf = (pair.gear_one.bs / (
             10 * pair.gear_one.d)) - 0.0375 + 0.000492 * pair.gear_one.bs
     else:
-        Cpf = (pair.gear_one.bs / (
+        cpf = (pair.gear_one.bs / (
             10 * pair.gear_one.d)) - 0.1109 + 0.000815 * pair.gear_one.bs - 0.000000353 * pair.gear_one.bs ** 2
 
     if pair.gear_one.s / pair.gear_one.l < 0.175:
-        Cpm = 1
+        cpm = 1
     else:
-        Cpm = 1.1
+        cpm = 1.1
 
-    A = [2.47e-1, 1.27e-1, 0.675e-1, 0.380e-1]
-    B = [0.657e-3, 0.622e-3, 0.504e-3, 0.402e-3]
-    C = [-1.186e-7, -1.69e-7, -1.44e-7, -1.27e-7]
+    a = [2.47e-1, 1.27e-1, 0.675e-1, 0.380e-1]
+    b = [0.657e-3, 0.622e-3, 0.504e-3, 0.402e-3]
+    c = [-1.186e-7, -1.69e-7, -1.44e-7, -1.27e-7]
 
-    Cma = A[pair.gear_box_type - 1] + (B[pair.gear_box_type - 1] * pair.gear_one.bs) + (C[
+    cma = a[pair.gear_box_type - 1] + (b[pair.gear_box_type - 1] * pair.gear_one.bs) + (c[
                                                                                             pair.gear_box_type - 1] * pair.gear_one.bs) ** 2
 
-    return 1. + Cmc[pair.gear_one.gear_crown - 1] * (Cpf * Cpm + Cma * Ce[pair.gear_one.gear_condition - 1])
+    return 1. + cmc[pair.gear_one.gear_crown - 1] * (cpf * cpm + cma * ce[pair.gear_one.gear_condition - 1])
 
 
-def __RimThicknessFactor__(pair):
+def __rimthicknessfactor__(pair):
     ht = pair.gear_one.h
 
     if pair.gear_one.sr == 0:
@@ -384,8 +381,8 @@ def __RimThicknessFactor__(pair):
     mb = tr / ht
 
     if mb >= 1.2:
-        Kb = 1.
+        kb = 1.
     else:
-        Kb = 1.6 * log(2.242 / mb)
+        kb = 1.6 * log(2.242 / mb)
 
-    return Kb
+    return kb
