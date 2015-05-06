@@ -20,7 +20,7 @@ def arcinvolute(inv):
     angleone = pi / 2
     invdiff = inv
     anglecal = 0
-    while abs(invdiff) > 1e-15:
+    while abs(invdiff) > 1e-5:
         anglecal = (anglezero + angleone) / 2
         invdiff = tan(anglecal) - anglecal - inv
         if invdiff > 0:

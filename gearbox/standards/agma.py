@@ -9,14 +9,14 @@ from gearbox.libs.maths import arcinvolute
 class Pitting(object):
     """
 
-    :param transmition:
+    :param transmission:
     """
 
-    def __init__(self, transmition):
-        self.transmition = transmition
+    def __init__(self, transmission):
+        self.transmission = transmission
 
     def calculate(self):
-        pair = self.transmition
+        pair = self.transmission
         d = pair.gear_one.d
         b = pair.gear_two.bs
 
@@ -62,14 +62,14 @@ class Pitting(object):
 class Bending(object):
     """
 
-    :param transmition:
+    :param transmission:
     """
 
-    def __init__(self, transmition):
-        self.transmition = transmition
+    def __init__(self, transmission):
+        self.transmission = transmission
 
     def calculate(self):
-        pair = self.transmition
+        pair = self.transmission
         ft = pair.ft
         ka = pair.ka
 

@@ -88,39 +88,66 @@ class Gear(object):
     :param favorable_contact:
     """
 
-    def __init__(self, profile, material, z, beta, b, bs, alpha=20, m=1, x=0.0, sr=0, rz=0, precision_grade=6,
-                 shaft_diameter=0, schema=0, l=0, s=0, backlash=0, gear_crown=1, gear_condition=1,
-                 helix_modification=1, favorable_contact=True):
+    def __init__(self, **kw):
+        if 'gear' in kw:
+            self.profile = kw['gear'].profile
+            self.material = kw['gear'].material
+            self.z = kw['gear'].z
+            self.beta = kw['gear'].beta
+            self.alpha = kw['gear'].alpha
+            self.m = kw['gear'].m
+            self.x = kw['gear'].x
+            self.b = kw['gear'].b
+            self.bs = kw['gear'].bs
+            self.sr = kw['gear'].sr
+            self.rz = kw['gear'].rz
+            self.precision_grade = kw['gear'].precision_grade
+            self.shaft_diameter = kw['gear'].shaft_diameter
+            self.schema = kw['gear'].schema
+            self.l = kw['gear'].l
+            self.s = kw['gear'].s
+            self.backlash = kw['gear'].backlash
 
-        self.profile = profile
-        self.material = material
+            self.gear_crown = kw['gear'].gear_crown
+            self.helix_modification = kw['gear'].helix_modification
 
-        self.z = z
-        self.beta = beta
-        self.alpha = alpha
-        self.m = m
-        self.x = x
-        self.b = b
-        self.bs = bs
-        self.sr = sr
-        self.rz = rz
-        self.precision_grade = precision_grade
-        self.shaft_diameter = shaft_diameter
-        self.schema = schema
-        self.l = l
-        self.s = s
-        self.backlash = backlash
+            if kw['gear'].favorable_contact:
+                self.favorable_contact = 1
+            else:
+                self.favorable_contact = 0
 
-        self.gear_crown = gear_crown
-        self.helix_modification = helix_modification
+            self.gear_condition = kw['gear'].gear_condition
 
-        if favorable_contact:
-            self.favorable_contact = 1
         else:
-            self.favorable_contact = 0
+            self.profile = kw['profile']
+            self.material = kw['material']
+            self.z = kw['z']
+            self.beta = kw['beta']
+            self.alpha = kw['alpha']
+            self.m = kw['m']
+            self.x = kw['x']
+            self.b = kw['b']
+            self.bs = kw['bs']
+            self.sr = kw['sr']
+            self.rz = kw['rz']
+            self.precision_grade = kw['precision_grade']
+            self.shaft_diameter = kw['shaft_diameter']
+            self.schema = kw['schema']
+            self.l = kw['l']
+            self.s = kw['s']
+            self.backlash = kw['backlash']
 
-        self.gear_condition = gear_condition
+            self.gear_crown = kw['gear_crown']
+            self.helix_modification = kw['helix_modification']
 
+            if kw['favorable_contact']:
+                self.favorable_contact = 1
+            else:
+                self.favorable_contact = 0
+
+            self.gear_condition = kw['gear_condition']
+
+        self.xmin = (1 - sqrt(self.z * sin(radians(self.alpha)))) / 2
         self.alpha_t = degrees(atan(tan(radians(self.alpha)) / cos(radians(self.beta))))
         self.d = self.m * self.z / cos(radians(self.beta))
         self.da = self.m * (self.z / cos(radians(self.beta)) + 2 * (self.profile.ha_p + self.x))
@@ -182,7 +209,7 @@ class Gear(object):
         return x
 
 
-class Transmition(object):
+class Transmission(object):
     """
 
     :param lubricant:
@@ -197,28 +224,51 @@ class Transmition(object):
     :param sh_min:
     """
 
-    def __init__(self, lubricant, rpm_in, rpm_out, gear_box_type, n, l, gears, ka, sf_min, sh_min):
-        self.rpm_in = rpm_in
-        self.rpm_out = rpm_out
-        self.ka = ka
-        self.sh_min = sh_min
-        self.sf_min = sf_min
+    def __init__(self, **kw):
 
-        self.v40 = lubricant.v40
-        self.gear_box_type = gear_box_type
+        if 'transmission' in kw:
+            gear_one = Gear(gear=kw['transmission'].gear_one)
+            gear_two = Gear(gear=kw['transmission'].gear_two)
+            gears = [gear_one, gear_two]
+            self.rpm_in = kw['transmission'].rpm_in
+            self.rpm_out = kw['transmission'].rpm_out
+            self.ka = kw['transmission'].ka
+            self.sh_min = kw['transmission'].sh_min
+            self.sf_min = kw['transmission'].sf_min
 
-        self.u = rpm_out / rpm_in
-        self.n = n
-        self.l = l
+            self.v40 = kw['transmission'].v40
+            self.gear_box_type = kw['transmission'].gear_box_type
+
+            self.u = kw['transmission'].rpm_out / kw['transmission'].rpm_in
+            self.n = kw['transmission'].n
+            self.l = kw['transmission'].l
+        else:
+            gears = kw['gears']
+            self.rpm_in = kw['rpm_in']
+            self.rpm_out = kw['rpm_out']
+            self.ka = kw['ka']
+            self.sh_min = kw['sh_min']
+            self.sf_min = kw['sf_min']
+
+            self.v40 = kw['lubricant'].v40
+            self.gear_box_type = kw['gear_box_type']
+
+            self.u = kw['rpm_out'] / kw['rpm_in']
+            self.n = kw['n']
+            self.l = kw['l']
         self.pair = self.__calculate(gears[0], gears[1], self.rpm_in, self.rpm_out)
 
     def __calculate(self, gear_one, gear_two, rpm_in, rpm_out):
         if gear_one.m is not gear_two.m:
             raise Exception("the modulus of the two gears most be equals")
+        else:
+            self.m = gear_one.m
+
         if gear_one.alpha is not gear_two.alpha:
             raise Exception("the pressure angle of the two gears most be equals")
-        if gear_one.beta is not gear_two.beta:
-            raise Warning("the helix angle of the two gears are different")
+        else:
+            self.alpha = gear_one.alpha
+            self.alpha_t = gear_one.alpha_t
 
         self.u_real = gear_two.z / gear_one.z
         self.u = rpm_in / rpm_out
@@ -241,5 +291,7 @@ class Transmition(object):
         else:
             self.fmt = self.ka * self.ft / gear_one.b
 
+        # self.xsum = ((gear_one.z + gear_two.z) * (involute(radians(self.alpha_wt))-involute(radians(self.alpha_t))))/(2*tan(radians(self.alpha)))
+        self.xsum = gear_one.x + gear_two.x
         self.gear_one = gear_one
         self.gear_two = gear_two

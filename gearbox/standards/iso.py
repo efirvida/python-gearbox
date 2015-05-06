@@ -1,8 +1,8 @@
-from math import acos, log, exp
+from math import log, exp
 
 from numpy import interp
 
-from gearbox.transmition.gears import *
+from gearbox.transmission.gears import *
 
 
 def __c__(pair):
@@ -413,11 +413,11 @@ def __kfa__(pair):
 class Pitting(object):
     """
 
-    :param transmition:
+    :param transmission:
     """
 
-    def __init__(self, transmition):
-        self.transmition = transmition
+    def __init__(self, transmission):
+        self.transmission = transmission
 
     def calculate(self):
         """
@@ -425,7 +425,7 @@ class Pitting(object):
 
         :return:
         """
-        pair = self.transmition
+        pair = self.transmission
         u = pair.u_real
 
         """
@@ -461,7 +461,7 @@ class Pitting(object):
         shtwo = znt_two * zl * zv * zr * zw_two * zx / sigmahtwo
 
         return {
-            'sigmaHOne': sigmahone,
+            'sigmaH': sigmahone,
             'sigmaHTwo': sigmahtwo,
             'sigmaHPOne': sigmahpone,
             'sigmaHPTwo': sigmahptwo,
@@ -565,7 +565,7 @@ class Pitting(object):
 
     def __znt(self, material, rpm):
 
-        nl = self.transmition.l * 60 * rpm
+        nl = self.transmission.l * 60 * rpm
 
         if material == 'NV(nitrocar)':
             y = [1.1, 1.1, 1.02, 1, 0.97, 0.93, 0.89, 0.85]
@@ -606,7 +606,7 @@ class Pitting(object):
 
     def __zl(self, pair):
         czl = self.__czl(pair)
-        v40 = self.transmition.v40
+        v40 = self.transmission.v40
         return czl + 4.0 * (1.0 - czl) / (1.2 + 134.0 / v40) ** 2
 
     def __zv(self, pair):
@@ -644,7 +644,7 @@ class Pitting(object):
         rz_two = pair.gear_two.rz
         hb_1 = pair.gear_one.material.brinell
         hb_2 = pair.gear_two.material.brinell
-        v40 = self.transmition.v40
+        v40 = self.transmission.v40
         v = pair.v
 
         rzh = ((rz_one * (10 / self.__r_red(pair)) ** 0.33) * (rz_one / rz_two) ** 0.66) / ((v40 * v / 1500) ** 0.33)
@@ -671,11 +671,11 @@ class Pitting(object):
 class Bending(object):
     """
 
-    :param transmition:
+    :param transmission:
     """
 
-    def __init__(self, transmition):
-        self.transmition = transmition
+    def __init__(self, transmission):
+        self.transmission = transmission
 
     @property
     def calculate(self):
@@ -684,7 +684,7 @@ class Bending(object):
 
         :return:
         """
-        pair = self.transmition
+        pair = self.transmission
         # ka = pair.ka
         sfmin = pair.sf_min
         gear_one = pair.gear_one
