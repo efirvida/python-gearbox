@@ -4,6 +4,7 @@ from gearbox.standards.iso import Bending as isoBending
 from gearbox.standards.agma import Pitting as agmaPitting
 from gearbox.standards.agma import Bending as agmaBending
 from gearbox.export.export import *
+from gearbox.optimization.addendum import *
 
 module = 2.5  # m
 helix_angle = 0.0  # beta
@@ -117,6 +118,19 @@ print '========================================'
 print 'AGMA Bending'
 print agmaBending(transmission=transmission).calculate()
 print '========================================'
+
+print '========================================'
+xoptim_bending = Optmization(transmission).bending()
+xoptim_pitting_iso = Optmization(transmission).pitting(standard='ISO')
+# xoptim_pitting_agma = Optmization(transmission).pitting(standard='AGMA')
+print 'Profile shift optimization'
+print 'x1=%s, x2=%s for minimum bending stress' % (xoptim_bending[0], xoptim_bending[1])
+print 'x1=%s, x2=%s for minimum contact stress using ISO standard' % (xoptim_pitting_iso[0], xoptim_pitting_iso[1])
+# print 'x1=%s, x2=%s for minimum contact stress using ISO standard' % (xoptim_pitting_agma[0],xoptim_pitting_agma[1])
+print '========================================'
+
+
+
 
 output_folder = os.path.join(os.path.dirname(__file__), 'output')
 try:
