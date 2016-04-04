@@ -32,6 +32,4 @@ make shure you have installed all dependencies `jinja2, numpy and scipy`
 The documentation isn't ready yet, see the demo.py file for uses example
 
 ###Contribute
-if you want to contribute with the project
-
-**e-mail**: efirvida@gmail.com
+if you want to contribute with the project feel free to push!
