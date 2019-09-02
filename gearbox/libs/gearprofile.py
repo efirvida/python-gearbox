@@ -867,7 +867,7 @@ class GearExport(object):
         shaft = [[0, gear.data['d_s'] / 2], rotate([[0, gear.data['d_s'] / 2]], 0.5 * (
             (gear.data['d_s'] / gear.data['z']) * 360 / gear.data['d_s']))[0]]
         gear.shaftcoords = shaft
-        gear.formcoords = gear.formcoords.values()
+        gear.formcoords = list(gear.formcoords.values())
         gear.rotate_ang = -ang / 2
 
         return gear
