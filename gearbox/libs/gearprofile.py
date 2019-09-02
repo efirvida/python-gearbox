@@ -670,7 +670,7 @@ class CylindricalGearWheel(GearWheel):
                     self.data.update({'d_Ff': self.data.get('d_b')})
                     s_yt, d_yc = self._tooth_thickness(self.data.get('d_b'))
                     fil_end_point = np.array([-s_yt / 2, d_yc / 2])  # end of involute at base circle
-                    print 'Warning: undercutting occurs!'
+                    print( 'Warning: undercutting occurs!')
                 else:
                     self.data.update({'d_Ff': self.data.get('d_b')})
                     d_tangent = sqrt(self.data.get('d_f') ** 2 + 4 * self.data.get('rho_f') * self.data.get(
@@ -679,7 +679,7 @@ class CylindricalGearWheel(GearWheel):
                     nu = atan(s_yt / d_yc)
                     fil_end_point = np.array([-d_tangent / 2 * sin(nu), d_tangent / 2 * cos(
                         nu)])  # tangential extension of involute beyond base circle
-                    print 'Warning: involute had to be extended below base cicle to achieve root fillet tangency!'
+                    print ('Warning: involute had to be extended below base cicle to achieve root fillet tangency!')
                     inv_extension = True
             else:
                 # if root form circle diameter is supplied, it is forced strictly if possible
@@ -693,7 +693,7 @@ class CylindricalGearWheel(GearWheel):
                     nu = atan(s_yt / d_yc)
                     fil_end_point = np.array(
                         [-self.data.get('d_Ff') * sin(nu), self.data.get('d_Ff') * cos(nu)])
-                    print 'Warning: involute had to be extended below base cicle to enforce root form circle diameter!'
+                    print ('Warning: involute had to be extended below base cicle to enforce root form circle diameter!')
                     inv_extension = True
 
         else:  # for internal gears
@@ -762,7 +762,7 @@ class CylindricalGearWheel(GearWheel):
                 n += 1
 
         # compute points on root fillet
-        print 'Warning: circular root fillet in transverse cross-section assumed!'
+        print ('Warning: circular root fillet in transverse cross-section assumed!')
         phi_start = asin(
             (fil_start_point[0] - fil_center_point[0]) / self.data.get('rho_f'))  # starting angle of root fillet
         if abs(phi_start - acos(-(fil_start_point[1] - fil_center_point[1]) / self.data.get(
@@ -781,7 +781,7 @@ class CylindricalGearWheel(GearWheel):
                     [sin(phi_start + n * delta_phi), -isexternal * cos(phi_start + n * delta_phi)])
                 n += 1
         if (inv_start_point - fil_end_point).any():  # check if a root fillet circle connects directly to flank
-            print 'involute was extended'  # placeholder for future
+            print ('involute was extended')  # placeholder for future
 
         # compute points on flank
         d_start = isexternal * norm(inv_start_point, 2) * 2  # start diameter of involute flank (root form diameter)
@@ -795,7 +795,7 @@ class CylindricalGearWheel(GearWheel):
 
         # compute points on tip chamfer
         if 'h_k' in self.data and (self.data.get('h_k') > 0):
-            print 'Warning: straight tip chamfer assumed!'
+            print ('Warning: straight tip chamfer assumed!')
             delta_k = 1 / (self.points_chamfer - 1)
             n = 0
             for index in range(end_involute_index, end_chamfer_index):
