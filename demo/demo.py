@@ -99,35 +99,34 @@ transmission = Transmission(
     sf_min=1
 )
 
-print '========================================'
-print 'ISO Pitting'
-print isoPitting(transmission=transmission).calculate()
-print '========================================'
+print ('========================================')
+print ('ISO Pitting')
+print (isoPitting(transmission=transmission).calculate())
+print ('========================================')
 
-print '========================================'
-print 'ISO Bending'
-print isoBending(transmission=transmission).calculate
-print '========================================'
+print ('========================================')
+print ('ISO Bending')
+print (isoBending(transmission=transmission).calculate)
+print ('========================================')
 
-print '========================================'
-print 'AGMA Pitting'
-print agmaPitting(transmission=transmission).calculate()
-print '========================================'
+print ('========================================')
+print ('AGMA Pitting')
+print (agmaPitting(transmission=transmission).calculate())
+print ('========================================')
 
-print '========================================'
-print 'AGMA Bending'
-print agmaBending(transmission=transmission).calculate()
-print '========================================'
+print ('========================================')
+print ('AGMA Bending')
+print (agmaBending(transmission=transmission).calculate())
+print ('========================================')
 
-print '========================================'
+print ('========================================')
 xoptim_bending = Optmization(transmission).bending()
 xoptim_pitting_iso = Optmization(transmission).pitting(standard='ISO')
 # xoptim_pitting_agma = Optmization(transmission).pitting(standard='AGMA')
-print 'Profile shift optimization'
-print 'x1=%s, x2=%s for minimum bending stress' % (xoptim_bending[0], xoptim_bending[1])
-print 'x1=%s, x2=%s for minimum contact stress using ISO standard' % (xoptim_pitting_iso[0], xoptim_pitting_iso[1])
-# print 'x1=%s, x2=%s for minimum contact stress using ISO standard' % (xoptim_pitting_agma[0],xoptim_pitting_agma[1])
-print '========================================'
+print ('Profile shift optimization')
+print ('x1=%s, x2=%s for minimum bending stress' % (xoptim_bending[0], xoptim_bending[1]))
+print ('x1=%s, x2=%s for minimum contact stress using ISO standard' % (xoptim_pitting_iso[0], xoptim_pitting_iso[1]))
+print ('========================================')
 
 
 

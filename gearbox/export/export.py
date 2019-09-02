@@ -58,7 +58,7 @@ class ExportGear(object):
         output_from_parsed_template = template.render(gear=self.gear.export_data.gear, model_name=model_name,
                                                       model_path=output_folder)
 
-        with open(output_folder + '/' + model_name + '.m', "wb") as fh:
+        with open(output_folder + '/' + model_name + '.m', "w") as fh:
             fh.write(output_from_parsed_template)
 
     def abaqus(self, output_folder='', model_name='model', type='2D'):
@@ -84,7 +84,7 @@ class ExportGear(object):
         output_from_parsed_template = template.render(gear=self.gear.export_data.gear, model_name=model_name,
                                                       model_path=output_folder)
 
-        with open(output_folder + '/' + model_name + '.py', "wb") as fh:
+        with open(output_folder + '/' + model_name + '.py', "w") as fh:
             fh.write(output_from_parsed_template)
 
     def ansys(self, output_folder='', model_name='model', type='2D'):
@@ -119,7 +119,7 @@ class ExportGear(object):
         output_from_parsed_template = template.render(gear=self.gear.export_data.gear, model_name=model_name,
                                                       model_path=output_folder)
 
-        with open(output_folder + '/' + model_name + '.js', "wb") as fh:
+        with open(output_folder + '/' + model_name + '.js', "w") as fh:
             fh.write(output_from_parsed_template)
 
 
@@ -173,7 +173,7 @@ class ExportPair(object):
 
         output_from_parsed_template = template.render(pair=pair, model_name=model_name, model_path=output_folder)
 
-        with open(output_folder + '/' + model_name + '.m', "wb") as fh:
+        with open(output_folder + '/' + model_name + '.m', "w") as fh:
             fh.write(output_from_parsed_template)
 
     def abaqus(self, output_folder='', model_name='model', type='2D'):
@@ -197,7 +197,7 @@ class ExportPair(object):
 
         output_from_parsed_template = template.render(pair=pair, model_name=model_name, model_path=output_folder)
 
-        with open(output_folder + '/' + model_name + '.py', "wb") as fh:
+        with open(output_folder + '/' + model_name + '.py', "w") as fh:
             fh.write(output_from_parsed_template)
 
     def ansys(self, output_folder='', model_name='model', type='2D'):
@@ -236,7 +236,7 @@ class ExportPair(object):
         model_name = model_name.replace(' ', '_')
         output_from_parsed_template = template.render(pair=pair, model_name=model_name, model_path=output_folder)
 
-        with open(output_folder + '/' + model_name + '.js', "wb") as fh:
+        with open(output_folder + '/' + model_name + '.js', "w") as fh:
             fh.write(output_from_parsed_template)
 
     def __aw(self):
