@@ -35,5 +35,34 @@ e-mail: efirvida@gmail.com
 
 License
 -------
-
 This project is licensed under the LGPL License - see the [LICENSE](LICENSE) file for details.
+
+
+For users
+---------
+
+If you use Python-Gearbox for academic research, please use the following:
+
+**BibTeX:**
+```
+@misc{https://doi.org/10.5281/zenodo.3660527,
+  doi = {10.5281/ZENODO.3660527},
+  url = {https://zenodo.org/record/3660527},
+  author = {Donéstevez, Eduardo Miguel Fírvida},
+  keywords = {gearbox, gear transmissions, gears, ISO-6336, AGMA-2101 D04, Gear stresses calculation},
+  language = {en},
+  title = {Python library for design of spur and helical gears transmissions},
+  publisher = {Zenodo},
+  year = {2020}
+}
+```
+
+**APA:**
+```
+Donéstevez, E. M. F. (2020). Python library for design of spur and helical gears transmissions (Version 1.0). Zenodo. https://doi.org/10.5281/ZENODO.3660527
+```
+
+**IEEE**
+```
+E. M. F. Donéstevez, “Python library for design of spur and helical gears transmissions.” Zenodo, 09-Feb-2020, doi: 10.5281/ZENODO.3660527.
+```
