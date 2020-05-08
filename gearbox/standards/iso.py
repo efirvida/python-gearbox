@@ -1,6 +1,6 @@
 from math import log, exp, acos
 
-from numpy import interp
+from numpy import interp, log10
 
 from gearbox.transmission.gears import *
 
@@ -17,7 +17,11 @@ def __c__(pair):
     elif beq > 1.2:
         beq = 1.2
 
-    srm = pair.gear_one.sr / pair.gear_one.m
+    if pair.gear_one.sr is None:
+        srm = 1
+    else:
+        srm = pair.gear_one.sr / pair.gear_one.m
+    
     if srm < 1:
         srm = 1
 
@@ -116,8 +120,8 @@ def __kv__(pair):
     z_one = pair.gear_one.z
 
     c_gamma_alpha, c_gamma_beta, cp = __c__(pair)
-    di_one = df_one - 2 * sr_one
-    di_two = df_two - 2 * sr_two
+    di_one = 0.0 if sr_one is None else df_one - 2 * sr_one
+    di_two = 0.0 if sr_two is None else df_two - 2 * sr_two
     dm_one = (da_one + df_one) / 2
     dm_two = (da_two + df_two) / 2
     q_one = di_one / dm_one
@@ -147,7 +151,7 @@ def __kv__(pair):
 
     ne_one = (30000 / (pi * z_one)) * sqrt(c_gamma_alpha / m_red)
 
-    n = rpm_one / ne_one
+    n = rpm_one / ne_one   # this is the resonance ratio
 
     if fmt == 100:
         ns = 0.5 + 0.35 * sqrt(fmt / 100)
@@ -566,16 +570,18 @@ class Pitting(object):
     def __znt(self, material, rpm):
 
         nl = self.transmission.l * 60 * rpm
-
+        
         if material == 'NV(nitrocar)':
-            y = [1.1, 1.1, 1.02, 1, 0.97, 0.93, 0.89, 0.85]
+            y = [1.1, 1.1, 1, 0.85]
+            x = [1e4, 1e5, 2e6, 1e10]
         elif material == 'GG' or material == 'GGG(ferr)' or material == 'NT' or material == 'NV(nitr)':
-            y = [1.3, 1.3, 1.07, 1, 0.97, 0.93, 0.89, 0.85]
+            y = [1.3, 1.3, 1, 0.85]
+            x = [1e4, 1e5, 2e6, 1e10]
         else:
-            y = [1.6, 1.6, 1.36, 1.14, 1, 0.98, 0.915, 0.85]
-        x = [1e4, 1e5, 1e6, 2e6, 1e7, 1e8, 1e9, 1e10]
+            y = [1.6, 1.6, 1, 0.85]
+            x = [1e4, 1e5, 5e7, 1e10]
 
-        return interp(nl, x, y)
+        return 10**interp(log10(nl), log10(x), log10(y))
 
     @staticmethod
     def __r_red(pair):
@@ -655,16 +661,20 @@ class Pitting(object):
             rzh = 3
 
         if hb_1 < 130:
-            return 1.2 * (3 / rzh) ** 0.15
+            zw_1 = 1.2 * (3 / rzh) ** 0.15
         elif hb_1 > 470:
-            return (3 / rzh) ** 0.15
+            zw_1 = (3 / rzh) ** 0.15
+        else:
+            zw_1 = (1.2 - (hb_1 - 130) / 1700) * (3 / rzh) ** 0.15
 
         if hb_2 < 130:
-            return 1.2 * (3 / rzh) ** 0.15
+            zw_2 = 1.2 * (3 / rzh) ** 0.15
         elif hb_2 > 470:
-            return (3 / rzh) ** 0.15
-
-        return (1.2 - (hb_1 - 130) / 1700) * (3 / rzh) ** 0.15, (1.2 - (hb_2 - 130) / 1700) * (3 / rzh) ** 0.15
+            zw_2 = (3 / rzh) ** 0.15
+        else:
+            zw_2 = (1.2 - (hb_2 - 130) / 1700) * (3 / rzh) ** 0.15
+            
+        return zw_1, zw_2
 
 
 # iso 6336-3
@@ -789,23 +799,26 @@ class Bending(object):
         nltwo = l * 60 * rpmtwo
 
         result = []
-
+        
         for material, nl in [materialone, nlone], [materialtwo, nltwo]:
-
+      
             if material == 'V' or material == 'GGG(perl)' or material == 'GTS' or material == 'St':
-                y = [2.5, 2.5, 2.5, 1.79, 1.2, 1, 0.98, 0.94, 0.895, 0.85]
-
+                y = [2.5, 2.5, 1, 0.85]
+                x = [1e2, 1e4, 3e6, 1e10]
+                
             elif material == 'Eh' or material == 'IF':
-                y = [2.5, 2.5, 1.97, 1.53, 1.15, 1, 0.98, 0.94, 0.895, 0.85]
-
+                y = [2.5, 2.5, 1, 0.85]
+                x = [1e2, 1e3, 3e6, 1e10]
+                
             elif material == 'GG' or material == 'GGG(ferr)' or material == 'NT' or material == 'NV(nitr)':
-                y = [1.6, 1.6, 1.4, 1.21, 1.07, 1, 0.98, 0.94, 0.895, 0.85]
+                y = [1.6, 1.6, 1, 0.85]
+                x = [1e2, 1e3, 3e6, 1e10]
 
             elif material == 'NV(nitrocar)':
-                y = [1.1, 1.1, 1.07, 1.05, 1.01, 1, 0.98, 0.94, 0.895, 0.85]
+                y = [1.1, 1.1, 1, 0.85]
+                x = [1e2, 1e3, 3e6, 1e10]
 
-            x = [1e2, 1e3, 1e4, 1e5, 1e6, 3e6, 1e7, 1e8, 1e9, 1e10]
-            result.append(interp(nl, x, y))
+            result.append(10**interp(log10(nl), log10(x), log10(y)))
 
         return result
 
@@ -884,13 +897,19 @@ class Bending(object):
     def __yb(gear):
         sr = gear.sr
         h = gear.h
-        srh = sr / h
-        m = gear.m
-
-        if srh >= 1.2 or sr / m <= 1.75:
+        
+        if sr is None:
+            srh = 1.21
+        else:
+            srh = sr / h
+        
+        if srh >= 1.2:
             return 1
         elif 0.5 < srh < 1.2:
             return 1.6 * log(2.242 * 1 / srh)
+        else:
+            raise Exception('External gears require: sr/ht > 0.5')
+
 
     @staticmethod
     def __ybeta(pair):
