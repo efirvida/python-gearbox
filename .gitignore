@@ -3,6 +3,5 @@
 *.pyc
 dist
 python_gearbox*
-.gitignore
 .vscode
 build

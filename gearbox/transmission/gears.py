@@ -211,17 +211,15 @@ class Gear(object):
 
 class Transmission(object):
     """
-
     :param lubricant:
-    :param rpm_in:
-    :param rpm_out:
-    :param gear_box_type:
-    :param n:
-    :param l:
-    :param gears:
-    :param ka:
-    :param sf_min:
-    :param sh_min:
+    :param rpm_in: the rotation speed of the first gear
+    :param gear_box_type: used for AGMA calculation
+    :param p: the transmitted power in kW
+    :param l: the design life in hours
+    :param gears: tuple of Gear objects
+    :param ka: the application factor
+    :param sf_min: the minimum safety factor for tooth bending
+    :param sh_min: the minumum safety factor for flank pitting
     """
 
     def __init__(self, **kw):
@@ -231,7 +229,7 @@ class Transmission(object):
             gear_two = Gear(gear=kw['transmission'].gear_two)
             gears = [gear_one, gear_two]
             self.rpm_in = kw['transmission'].rpm_in
-            self.rpm_out = kw['transmission'].rpm_out
+            self.rpm_out = gear_one.z/gear_two.z*self.rpm_in
             self.ka = kw['transmission'].ka
             self.sh_min = kw['transmission'].sh_min
             self.sf_min = kw['transmission'].sf_min
@@ -240,12 +238,12 @@ class Transmission(object):
             self.gear_box_type = kw['transmission'].gear_box_type
 
             self.u = kw['transmission'].rpm_out / kw['transmission'].rpm_in
-            self.n = kw['transmission'].n
+            self.p = kw['transmission'].p
             self.l = kw['transmission'].l
         else:
             gears = kw['gears']
             self.rpm_in = kw['rpm_in']
-            self.rpm_out = kw['rpm_out']
+            self.rpm_out = gears[0].z/gears[1].z*self.rpm_in
             self.ka = kw['ka']
             self.sh_min = kw['sh_min']
             self.sf_min = kw['sf_min']
@@ -253,8 +251,8 @@ class Transmission(object):
             self.v40 = kw['lubricant'].v40
             self.gear_box_type = kw['gear_box_type']
 
-            self.u = kw['rpm_out'] / kw['rpm_in']
-            self.n = kw['n']
+            self.u = self.rpm_out / self.rpm_in
+            self.p = kw['p']
             self.l = kw['l']
         self.pair = self.__calculate(gears[0], gears[1], self.rpm_in, self.rpm_out)
 
@@ -285,7 +283,7 @@ class Transmission(object):
         self.epsilon_beta = gear_one.b * sin(radians(gear_one.beta)) / (gear_one.m * pi)
         self.epsilon_gama = self.epsilon_alpha + self.epsilon_beta
         self.v = rpm_in * gear_one.d * pi / 60000
-        self.ft = 1000. * self.n * 60000 / (pi * gear_one.d * rpm_in)
+        self.ft = 1000. * self.p * 60000 / (pi * gear_one.d * rpm_in)
         if self.ka * self.ft / gear_one.b < 100:
             self.fmt = 100
         else:
