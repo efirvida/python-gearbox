@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import pi, sqrt
+from math import sqrt
 
+from gearbox.standards._hertz import elasticity_coefficient
 from gearbox.standards.agma2101._factors import (
     dynamic_factor,
     load_distribution_factor,
@@ -38,24 +39,6 @@ class PittingResult:
     """``I``, pitting resistance geometry factor (AGMA 908-B89)."""
 
 
-def _elastic_coefficient(transmission: Transmission) -> float:
-    p, w = transmission.pinion.material, transmission.wheel.material
-    if p.elastic_modulus == w.elastic_modulus:
-        return sqrt(p.elastic_modulus / (2 * pi * (1 - p.poissons_ratio**2)))
-    # KNOWN-ISSUE KI-15: ``(1 - nu)`` instead of ``(1 - nu**2)`` in the dissimilar-materials
-    # branch of ``C_p`` (AGMA 2001-D04 eq. 8).
-    return sqrt(
-        1
-        / (
-            pi
-            * (
-                (1 - p.poissons_ratio) / p.elastic_modulus
-                + (1 - w.poissons_ratio) / w.elastic_modulus
-            )
-        )
-    )
-
-
 def calculate_pitting(transmission: Transmission) -> PittingResult:
     """Compute the AGMA 2001-D04 contact stress.
 
@@ -69,7 +52,9 @@ def calculate_pitting(transmission: Transmission) -> PittingResult:
     # KNOWN-ISSUE KI-13: the web thickness of the wheel is used as the face width.
     width = transmission.wheel.web_thickness
 
-    elastic_coefficient = _elastic_coefficient(transmission)
+    elastic_coefficient = elasticity_coefficient(
+        transmission.pinion.material, transmission.wheel.material
+    )
     tangential_load = transmission.nominal_tangential_force
     application_factor = transmission.application_factor
     size = size_factor(transmission)

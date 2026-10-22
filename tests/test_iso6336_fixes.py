@@ -53,3 +53,18 @@ def test_ki11_slip_layer_of_normalized_steel_is_continuous():
     assert thickness(300.0) == pytest.approx(0.0833)
     assert thickness(400.0) == pytest.approx(0.0445)
     assert thickness(350.0) == pytest.approx((0.0833 + 0.0445) / 2)
+
+
+def test_ki08_elasticity_coefficient_for_dissimilar_materials():
+    from math import pi, sqrt
+
+    from gearbox.standards._hertz import elasticity_coefficient
+
+    base = scenario("spur_sr20").pinion.material
+    bronze = replace(base, elastic_modulus=105000.0, poissons_ratio=0.34)
+    expected = sqrt(1 / (pi * ((1 - 0.3**2) / 206000.0 + (1 - 0.34**2) / 105000.0)))
+    assert elasticity_coefficient(base, bronze) == pytest.approx(expected, rel=1e-12)
+    # identical materials reduce to sqrt(E / (2 pi (1 - nu^2)))
+    assert elasticity_coefficient(base, base) == pytest.approx(
+        sqrt(206000.0 / (2 * pi * (1 - 0.3**2))), rel=1e-12
+    )

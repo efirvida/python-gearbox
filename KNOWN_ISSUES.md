@@ -18,7 +18,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-05 | ISO `K_v` | `N_S`: both branches evaluate to 0.85 (the formula `0.5+0.35·sqrt(F/100)` applies for loads ≥ 100 N/mm, the 0.85 for lower loads — the test is inverted). | verify |
 | KI-06 | ISO 1328 | `f_fβ` uses the `f_Hβ` formula. | **not a defect**: ISO 1328-1:1995 defines `f_fβ` with the same formula as `f_Hβ` |
 | KI-07 | ISO `c_γ` | `C_R`: rim thickness is divided by the module twice. | verify |
-| KI-08 | ISO `Z_E` and AGMA `C_p` | For different materials `(1-ν)` is used instead of `(1-ν²)`. | certain |
+| KI-08 | ISO `Z_E` and AGMA `C_p` | For different materials `(1-ν)` is used instead of `(1-ν²)`. | **fixed** (shared `standards/_hertz.py`) |
 | KI-09 | ISO `Y_F`, `Y_S`, `Y_δ` | Tool, helix angle and base helix angle of the pinion are used for the wheel. | **fixed** |
 | KI-10 | ISO `Y_F` | `inv(α)` is evaluated with a radian argument in a function that expects degrees (`γ_e`). | **fixed** (Y_S, Y_F; bending safety factors -1 % to -7 %) |
 | KI-11 | ISO `Y_δrelT` | Slip-layer thickness of `St` steel: `0.445` should be `0.0445`. | **fixed** |

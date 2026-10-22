@@ -9,6 +9,7 @@ from numpy import interp, log10
 
 from gearbox.enums import MaterialType
 from gearbox.models import Gear
+from gearbox.standards._hertz import elasticity_coefficient
 from gearbox.standards.iso6336._load_factors import contact_ratio_factor, load_factors
 from gearbox.transmission import Transmission
 
@@ -79,7 +80,7 @@ def calculate_pitting(transmission: Transmission) -> PittingResult:
 
     zone = zone_factor(transmission)
     single_pair_pinion, single_pair_wheel = single_pair_contact_factors(transmission)
-    elasticity = elasticity_factor(p, w)
+    elasticity = elasticity_coefficient(p.material, w.material)
     z_epsilon = contact_ratio_factor(transmission)
     z_beta = 1 / sqrt(cos(radians(p.helix_angle)))
     life_pinion = life_factor(p.material.material_type, transmission, transmission.pinion_speed_rpm)
@@ -196,19 +197,6 @@ def single_pair_contact_factors(transmission: Transmission) -> tuple[float, floa
             max(m2 - eps_beta * (m2 - 1), 1.0),
         )
     return 0.0, 0.0
-
-
-def elasticity_factor(pinion: Gear, wheel: Gear) -> float:
-    """Elasticity factor ``Z_E`` [sqrt(MPa)].
-
-    KNOWN-ISSUE KI-08: for different materials ``(1 - nu)`` is used where ISO 6336-2 has
-    ``(1 - nu^2)``.
-    """
-    e1, e2 = pinion.material.elastic_modulus, wheel.material.elastic_modulus
-    nu1, nu2 = pinion.material.poissons_ratio, wheel.material.poissons_ratio
-    if e1 == e2:
-        return sqrt(e1 / (2 * pi * (1 - nu1**2)))
-    return sqrt(1 / (pi * (((1 - nu1) / e1) + (1 - nu2) / e2)))
 
 
 def life_factor(material_type: MaterialType, transmission: Transmission, speed_rpm: float) -> float:
