@@ -37,8 +37,10 @@ class BendingResult:
     """``K_s``."""
     load_distribution_factor: float
     """``K_m`` (``K_H``)."""
-    rim_thickness_factor: float
-    """``K_B``."""
+    rim_thickness_factor_pinion: float
+    """``K_B`` of the pinion."""
+    rim_thickness_factor_wheel: float
+    """``K_B`` of the wheel."""
 
 
 def calculate_bending(transmission: Transmission) -> BendingResult:
@@ -61,14 +63,15 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
     size = size_factor(transmission)
     geometry = geometry_factors(transmission).bending
     load_distribution = load_distribution_factor(transmission)
-    rim_thickness = rim_thickness_factor(transmission)
+    rim_pinion = rim_thickness_factor(pinion)
+    rim_wheel = rim_thickness_factor(transmission.wheel)
 
     common = (
         tangential_load * application_factor * dynamic * size * (1.0 / (width * transverse_module))
     )
     return BendingResult(
-        bending_stress_pinion=common * (load_distribution * rim_thickness / geometry[0]),
-        bending_stress_wheel=common * (load_distribution * rim_thickness / geometry[1]),
+        bending_stress_pinion=common * (load_distribution * rim_pinion / geometry[0]),
+        bending_stress_wheel=common * (load_distribution * rim_wheel / geometry[1]),
         tangential_load=tangential_load,
         application_factor=application_factor,
         dynamic_factor=dynamic,
@@ -76,5 +79,6 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
         bending_geometry_factor_wheel=geometry[1],
         size_factor=size,
         load_distribution_factor=load_distribution,
-        rim_thickness_factor=rim_thickness,
+        rim_thickness_factor_pinion=rim_pinion,
+        rim_thickness_factor_wheel=rim_wheel,
     )

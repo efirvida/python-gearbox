@@ -8,7 +8,8 @@
    "bending_stress_wheel": 317.26853256455627,
    "dynamic_factor": 1.1259230237720084,
    "load_distribution_factor": 1.1611958649876566,
-   "rim_thickness_factor": 1.0,
+   "rim_thickness_factor_pinion": 1.0,
+   "rim_thickness_factor_wheel": 1.0,
    "size_factor": 1,
    "tangential_load": 9252.827280092006
   },
@@ -154,7 +155,8 @@
    "bending_stress_wheel": 207.5073231487701,
    "dynamic_factor": 1.121221404704736,
    "load_distribution_factor": 1.2168929016568752,
-   "rim_thickness_factor": 1.0,
+   "rim_thickness_factor_pinion": 1.0,
+   "rim_thickness_factor_wheel": 1.0,
    "size_factor": 1,
    "tangential_load": 10052.532101544628
   },
@@ -300,7 +302,8 @@
    "bending_stress_wheel": 214.39457005346802,
    "dynamic_factor": 1.1427783977865924,
    "load_distribution_factor": 1.1505129088000001,
-   "rim_thickness_factor": 1.0,
+   "rim_thickness_factor_pinion": 1.0,
+   "rim_thickness_factor_wheel": 1.0,
    "size_factor": 1,
    "tangential_load": 7024.769901987105
   },
@@ -446,7 +449,8 @@
    "bending_stress_wheel": 328.44681028591015,
    "dynamic_factor": 1.123936642054005,
    "load_distribution_factor": 1.1635129088,
-   "rim_thickness_factor": 1.0,
+   "rim_thickness_factor_pinion": 1.0,
+   "rim_thickness_factor_wheel": 1.0,
    "size_factor": 1,
    "tangential_load": 9579.23168452787
   },
@@ -567,7 +571,8 @@
    "bending_stress_wheel": 328.44681028591015,
    "dynamic_factor": 1.123936642054005,
    "load_distribution_factor": 1.1635129088,
-   "rim_thickness_factor": 1.0,
+   "rim_thickness_factor_pinion": 1.0,
+   "rim_thickness_factor_wheel": 1.0,
    "size_factor": 1,
    "tangential_load": 9579.23168452787
   },
@@ -721,7 +726,8 @@
    "bending_stress_wheel": 254.1440127914224,
    "dynamic_factor": 1.1314071835248518,
    "load_distribution_factor": 1.1553529088,
-   "rim_thickness_factor": 1.0,
+   "rim_thickness_factor_pinion": 1.0,
+   "rim_thickness_factor_wheel": 1.0,
    "size_factor": 1,
    "tangential_load": 8429.723882384527
   },

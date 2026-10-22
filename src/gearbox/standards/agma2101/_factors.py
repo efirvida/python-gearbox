@@ -114,27 +114,31 @@ def load_distribution_factor(transmission: Transmission) -> float:
     )
 
 
-def rim_thickness_factor(transmission: Transmission) -> float:
-    """Rim thickness factor ``K_B`` (AGMA 2001-D04, clause 20).
+def rim_thickness_factor(gear: Gear) -> float:
+    """Rim thickness factor ``K_B`` of one gear, AGMA 2001-D04 annex B (B.1 and figure B.1).
+
+    ``m_B = t_R / h_t``; ``K_B = 1`` for ``m_B >= 1.2`` and ``1.6 ln(2.242 / m_B)`` below. For a
+    gear without a specified rim (solid disc) the radial thickness under the root is
+    ``(d_f - d_shaft) / 2``.
 
     Args:
-        transmission: The gear pair.
+        gear: The gear.
 
     Returns:
         The rim thickness factor.
+
+    Raises:
+        ValueError: If the backup ratio is 0.5 or less (needs a special analysis, B.2).
     """
-    p = transmission.pinion
-    tooth_height = p.tooth_height
-
-    # KNOWN-ISSUE KI-15: for a solid disc the rim thickness is taken as ``d_f - d_shaft`` (the
-    # radial rim thickness would be half of it); ``None`` is treated like the legacy ``0``.
-    if not p.rim_thickness:
-        rim_thickness = p.root_diameter - p.shaft_diameter
+    if gear.rim_thickness:
+        rim_thickness = gear.rim_thickness
     else:
-        rim_thickness = p.rim_thickness
-
-    backup_ratio = rim_thickness / tooth_height
-
+        rim_thickness = (gear.root_diameter - gear.shaft_diameter) / 2
+    backup_ratio = rim_thickness / gear.tooth_height
+    if backup_ratio <= 0.5:
+        raise ValueError(
+            f"AGMA 2001 rim thickness factor needs a backup ratio above 0.5, got {backup_ratio:.2f}"
+        )
     if backup_ratio >= 1.2:
         return 1.0
     return 1.6 * log(2.242 / backup_ratio)

@@ -97,3 +97,31 @@ def test_quality_number_is_limited_to_the_range_of_the_standard():
     assert dynamic_factor(replace(base, agma_quality_number=14)) == dynamic_factor(
         replace(base, agma_quality_number=11)
     )
+
+
+def test_rim_thickness_factor_annex_b():
+    from math import log
+
+    from gearbox.standards.agma2101._factors import rim_thickness_factor
+
+    gear = scenario("spur_sr20").pinion  # h_t = 5.625 mm
+    thin = replace(gear, rim_thickness=4.5)  # m_B = 0.8
+    assert rim_thickness_factor(thin) == pytest.approx(1.6 * log(2.242 / 0.8), rel=1e-12)
+    assert rim_thickness_factor(replace(gear, rim_thickness=20.0)) == 1.0
+    with pytest.raises(ValueError, match="backup ratio"):
+        rim_thickness_factor(replace(gear, rim_thickness=2.0))
+
+
+def test_solid_disc_uses_the_radial_rim_thickness_and_each_gear_its_own():
+    from gearbox.standards.agma2101._factors import rim_thickness_factor
+
+    gear = replace(scenario("spur_sr20").pinion, rim_thickness=None)
+    radial = (gear.root_diameter - gear.shaft_diameter) / 2
+    assert radial / gear.tooth_height > 1.2
+    assert rim_thickness_factor(gear) == 1.0
+
+    base = scenario("spur_sr20")
+    thin_wheel = replace(base, wheel=replace(base.wheel, rim_thickness=4.5))
+    result = agma2101.calculate_bending(thin_wheel)
+    assert result.rim_thickness_factor_pinion == 1.0
+    assert result.rim_thickness_factor_wheel > 1.0
