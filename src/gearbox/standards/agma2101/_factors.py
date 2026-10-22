@@ -109,9 +109,7 @@ def load_distribution_factor(transmission: Transmission) -> float:
     c = [-1.186e-7, -1.69e-7, -1.44e-7, -1.27e-7]
     index = int(transmission.gearing_type) - 1
 
-    # KNOWN-ISSUE KI-14: the term ``(c*bs)**2`` is mis-parenthesised; AGMA 2001-D04 prescribes
-    # ``c*bs**2``.
-    mesh_alignment = a[index] + (b[index] * width) + (c[index] * width) ** 2
+    mesh_alignment = a[index] + (b[index] * width) + c[index] * width**2
 
     return 1.0 + crowning_factors[int(p.crowning) - 1] * (
         pinion_proportion * pinion_proportion_modifier
