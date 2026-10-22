@@ -118,3 +118,39 @@ def test_residual_fillet_undercut_enters_formula_26():
     before = bending._tooth_root_geometry(base, base.pinion)
     after = bending._tooth_root_geometry(other, other.pinion)
     assert after.tooth_root_chord != pytest.approx(before.tooth_root_chord, rel=1e-9)
+
+
+def _shaper_gear(transmission, teeth, **tool_changes):
+    tool = replace(
+        transmission.pinion.tool, cutter_type="shaper", cutter_teeth=teeth, **tool_changes
+    )
+    return replace(transmission.pinion, tool=tool)
+
+
+def test_shaper_cutter_of_infinite_teeth_is_the_hob():
+    """Formulae (33)-(60) of clause 6.2.4 tend to those of the hob (clause 6.2.3)."""
+    t = scenario("spur_sr20")
+    hob = bending._tooth_root_geometry(t, t.pinion)
+    shaper = bending._tooth_root_geometry(t, _shaper_gear(t, 1e5))
+    assert shaper.tooth_root_chord == pytest.approx(hob.tooth_root_chord, rel=1e-4)
+    assert shaper.root_fillet_radius == pytest.approx(hob.root_fillet_radius, rel=1e-3)
+    assert shaper.bending_lever_arm == pytest.approx(hob.bending_lever_arm, rel=1e-4)
+    assert shaper.load_angle_at_load_point == hob.load_angle_at_load_point
+
+
+def test_smaller_shaper_cutters_give_larger_root_fillets():
+    t = scenario("spur_sr20")
+    radii = [
+        bending._tooth_root_geometry(t, _shaper_gear(t, z0)).root_fillet_radius
+        for z0 in (25, 40, 60, 1000)
+    ]
+    assert radii == sorted(radii, reverse=True)
+    assert radii[0] > radii[-1] * 1.2
+
+
+def test_shaper_cutter_changes_the_bending_result_through_the_whole_chain():
+    base = scenario("spur_sr20")
+    shaper = replace(base, pinion=_shaper_gear(base, 25))
+    assert bending.calculate_bending(shaper).stress_correction_factor_pinion != pytest.approx(
+        bending.calculate_bending(base).stress_correction_factor_pinion, rel=1e-3
+    )

@@ -18,6 +18,7 @@ from math import atan, cos, degrees, pi, radians, sin, sqrt, tan
 from gearbox.enums import (
     AssemblyCondition,
     Crowning,
+    CutterType,
     LeadModification,
     MaterialType,
     ShaftArrangement,
@@ -45,6 +46,7 @@ class Tool:
         tool_edge_radius_coefficient: Tool tip radius ``rho_a0`` of the AGMA geometry factor;
             defaults to the root fillet radius coefficient of the tool.
         tool_tip_displacement: ``delta_a0`` of the AGMA geometry factor (AGMA 908 notation).
+        cutter_type: Hob or shaper cutter; a shaper changes the tooth root model of ISO 6336-3.
         cutter_teeth: Number of teeth of the generating cutter (``n_c``), AGMA 908-B89 clause 5.5;
             10 000 represents a hob or rack cutter (the default), a smaller number a shaper cutter.
         residual_fillet_undercut_coefficient: Residual fillet undercut ``s_pr`` left by a
@@ -58,10 +60,12 @@ class Tool:
     profile_shift_coefficient: float = 0.0
     tool_edge_radius_coefficient: float | None = None
     tool_tip_displacement: float = 0.0
+    cutter_type: CutterType = CutterType.HOB
     cutter_teeth: float = 10_000.0
     residual_fillet_undercut_coefficient: float = 0.0
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "cutter_type", CutterType(self.cutter_type))
         if self.tool_edge_radius_coefficient is None:
             object.__setattr__(
                 self, "tool_edge_radius_coefficient", self.root_fillet_radius_coefficient

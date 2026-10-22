@@ -7,6 +7,7 @@ from math import acos, cos, degrees, log, pi, radians, sin, sqrt, tan
 
 from numpy import interp, log10
 
+from gearbox.enums import CutterType
 from gearbox.enums import MaterialType as M
 from gearbox.mathutils import involute
 from gearbox.models import Gear
@@ -263,6 +264,11 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
     )
     load_angle = load_point_pressure_angle - gamma_e
 
+    if gear.tool.cutter_type is CutterType.SHAPER:
+        chord, fillet, depth = _shaper_root_section(transmission, gear)
+        lever = (cos(gamma_e) - sin(gamma_e) * tan(load_angle)) * load_point_diameter / 2 - depth
+        return ToothRootGeometry(load_angle, chord, fillet, lever)
+
     tooth_root_chord = module * (
         virtual_teeth * sin((pi / 3) - theta)
         + sqrt(3) * ((g / cos(theta)) - (tool_fillet_radius / module))
@@ -281,6 +287,77 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
         )
     )
     return ToothRootGeometry(load_angle, tooth_root_chord, fillet_radius, lever_arm)
+
+
+def _shaper_root_section(transmission: Transmission, gear: Gear) -> tuple[float, float, float]:
+    """Critical section of a gear cut with a shaper cutter, ISO 6336-3 clause 6.2.4.
+
+    Implements formulae (33) to (60) for external gears: the manufacturing mesh of the cutter and
+    the gear, the tool tip corner ``M`` and the 30 degree tangent point of the root fillet.
+
+    Returns:
+        ``(s_Fn, rho_F, Y)``: the root chord and fillet radius [mm] and the ordinate ``Y`` of the
+        tangent point (formula 58) from which the bending arm of formula (61) follows.
+    """
+    p = transmission.pinion
+    tool = gear.tool
+    module = p.module
+    alpha = radians(p.pressure_angle)
+    helix = radians(p.helix_angle)
+    base_helix = radians(p.base_helix_angle)
+    zn = gear.virtual_number_of_teeth
+    x = gear.profile_shift_coefficient
+    x0 = tool.profile_shift_coefficient
+    z0v = tool.cutter_teeth / (cos(helix) * cos(base_helix) ** 2)  # (33)
+    rho_a0 = tool.tool_edge_radius_coefficient * module
+    h_ap0 = tool.dedendum_coefficient * module
+    s_pr = tool.residual_fillet_undercut_coefficient * module
+    theta = pi / 6  # tangential angle of the external gear
+    inv_alpha = tan(alpha) - alpha
+
+    xi = 2 * (x0 + x) / (z0v + zn) * tan(alpha) + inv_alpha  # (34)
+    alpha_w0 = (3 * xi) ** (1 / 3)  # (35)
+    for _ in range(50):  # (36)
+        correction = (xi - (tan(alpha_w0) - alpha_w0)) / tan(alpha_w0) ** 2
+        alpha_w0 += correction
+        if abs(correction) < 1e-14:
+            break
+    a0 = module * (z0v + zn) / 2 * cos(alpha) / cos(alpha_w0)  # (37)
+    u0 = z0v / zn  # (38)
+    r_w = a0 / (1 + u0)  # (39)
+    r_w0 = r_w * u0
+    r_b0 = 0.5 * module * z0v * cos(alpha)  # (40)
+
+    r_m = module * (z0v / 2 + h_ap0 / module + x0 - rho_a0 / module)  # (42)
+    alpha_m = acos(r_b0 / r_m)  # (43)
+    d_alpha = (
+        (0.5 * pi + 2 * x0 * tan(alpha)) / z0v
+        - (rho_a0 - s_pr) / r_b0
+        + inv_alpha
+        - (tan(alpha_m) - alpha_m)
+    )  # (44)
+    y_m = r_m * cos(d_alpha)  # (45)
+
+    psi_0 = pi / zn + theta  # (46)
+    psi = psi_0  # (47)
+    for _ in range(50):
+        lam = r_w0 / r_m * cos(psi)  # (48)
+        y = psi - acos(lam) + d_alpha + (psi - psi_0) / u0  # (49)
+        dy = 1 + 1 / u0 - r_w0 / r_m * sin(psi) / sqrt(1 - lam**2)  # (50)
+        step = y / dy
+        psi -= step  # (51)
+        if abs(step) < 1e-12:
+            break
+    delta = acos(r_w0 / r_m * cos(psi))  # (53)
+    omega_0 = delta - psi - d_alpha  # (52)
+    dh_prime = y_m - r_w0 * cos(omega_0)  # (54)
+    dh = dh_prime * sin(psi) / sin(psi + omega_0)  # (55)
+    k = dh / sin(psi)  # (56)
+    x_t = r_w * sin(psi - theta) - (k + rho_a0) * cos(theta)  # (57)
+    y_t = r_w * cos(psi - theta) - (k + rho_a0) * sin(theta)  # (58)
+    chord = 2 * x_t  # (59)
+    fillet = k**2 / (r_w0 * r_w / (r_w0 + r_w) * sin(psi) + k) + rho_a0  # (60)
+    return chord, fillet, y_t
 
 
 def _load_bearing_width(transmission: Transmission, gear: Gear) -> float:

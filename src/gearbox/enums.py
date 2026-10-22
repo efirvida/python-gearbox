@@ -122,6 +122,15 @@ class DynamicFactorMethod(str, Enum):
     """Simplified formula by tolerance class (6.6); spur gears and helical gears alike."""
 
 
+class CutterType(str, Enum):
+    """Generating tool of a gear (selects the root fillet model of ISO 6336-3 clause 6.2)."""
+
+    HOB = "hob"
+    """Hob or rack-type cutter (clause 6.2.3); also the default of the AGMA geometry factors."""
+    SHAPER = "shaper"
+    """Pinion-type shaper cutter with ``Tool.cutter_teeth`` teeth (clause 6.2.4)."""
+
+
 class Standard(str, Enum):
     """Calculation standard used by the optimisation helpers."""
 
