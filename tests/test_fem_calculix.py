@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import warnings
+from math import cos, hypot, pi, radians, sqrt
 
 import pytest
 
 from gearbox.fem import ElasticMaterial, ToothMeshSettings, find_ccx, solve_bending
+from gearbox.standards.iso6336 import bending
 from tests.scenarios import build_transmission
 
 pytest.importorskip("gmsh")
@@ -99,3 +101,36 @@ def test_invalid_arguments_are_rejected(tmp_path):
 def test_missing_solver_is_reported(tmp_path):
     with pytest.raises(FileNotFoundError, match="not found"):
         find_ccx(tmp_path / "nope")
+
+
+@pytest.mark.parametrize("shift", [0.0, 0.525])
+def test_root_stress_agrees_with_iso6336_3(tmp_path, shift):
+    # ISO 6336-3 method B: sigma_F0 = Ft / (b * m_n) * Y_F * Y_S with the load at the outer point
+    # of single pair contact (spur gear, f_epsilon = 1). The fillet is the one the rack generates,
+    # so the critical section of the mesh is the one of the standard; method B is known to be
+    # somewhat conservative for large Y_S (positive profile shift)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        transmission = build_transmission(x1=shift, x2=0.0)
+    gear = transmission.pinion
+    root = bending._tooth_root_geometry(transmission, gear)
+    iso = (
+        FORCE
+        / (gear.face_width * gear.module)
+        * bending._form_factor(transmission, root)
+        * bending._stress_correction_factor(root, gear)
+    )
+    alpha = radians(gear.pressure_angle)
+    reference = gear.module * gear.number_of_teeth
+    tip = reference + 2 * gear.module * (gear.tool.addendum_coefficient + shift)
+    base = reference * cos(alpha)
+    pitch = pi * base / gear.number_of_teeth
+    single_contact = hypot(
+        sqrt(tip**2 - base**2) / 2 - pitch * (transmission.transverse_contact_ratio - 1), base / 2
+    )
+    band = 0.1 * gear.module
+    result = solve_bending(
+        gear, tmp_path, FORCE, "iso", "2D", teeth=3,
+        load_radius=single_contact + band / 2, load_height=band, ccx=CCX,
+    )  # fmt: skip
+    assert result.max_principal_stress == pytest.approx(iso, rel=0.15)
