@@ -45,3 +45,20 @@ def test_ki14_mesh_alignment_quadratic_term():
     c_pm = 1.1  # offset / span = 15 / 60 >= 0.175
     expected = 1.0 + 1.0 * (c_pf * c_pm + c_ma * 0.8)  # uncrowned, improved assembly
     assert load_distribution_factor(transmission) == pytest.approx(expected, rel=1e-6)
+
+
+def test_pinion_proportion_uses_the_minimum_slenderness():
+    from gearbox.standards.agma2101._factors import load_distribution_factor
+
+    base = scenario("spur_sr20")
+    narrow = replace(
+        base,
+        pinion=replace(base.pinion, face_width=20.0, web_thickness=20.0),
+        wheel=replace(base.wheel, face_width=20.0, web_thickness=20.0),
+    )
+    d = narrow.pinion.reference_diameter
+    assert 20.0 / (10 * d) < 0.05
+    c_ma = 0.127 + 0.622e-3 * 20.0 - 1.693e-7 * 20.0**2
+    c_pf = 0.05 - 0.025
+    expected = 1.0 + (c_pf * 1.1 + c_ma * 0.8)
+    assert load_distribution_factor(narrow) == pytest.approx(expected, rel=1e-6)

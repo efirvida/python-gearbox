@@ -90,14 +90,14 @@ def load_distribution_factor(transmission: Transmission) -> float:
     width = transmission.net_face_width
     diameter = p.reference_diameter
 
+    # AGMA 2001-D04, clause 15.3: F/(10 d) is not taken below 0.05 in equations 39 to 41.
+    slenderness = max(width / (10 * diameter), 0.05)
     if width <= 25:
-        pinion_proportion = -0.025 + width / (10 * diameter)
+        pinion_proportion = -0.025 + slenderness
     elif 25 < width <= 432:
-        pinion_proportion = (width / (10 * diameter)) - 0.0375 + 0.000492 * width
+        pinion_proportion = slenderness - 0.0375 + 0.000492 * width
     else:
-        pinion_proportion = (
-            (width / (10 * diameter)) - 0.1109 + 0.000815 * width - 0.000000353 * width**2
-        )
+        pinion_proportion = slenderness - 0.1109 + 0.000815 * width - 0.000000353 * width**2
 
     if p.offset / p.bearing_span < 0.175:
         pinion_proportion_modifier = 1

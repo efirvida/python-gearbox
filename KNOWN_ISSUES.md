@@ -32,6 +32,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-19 | `Gear.tolerances` | ISO 1328-1:1995 formulas; ISO 1328-1:2013 changed them. Intervals out of range used to return `None` (now `ValueError`). | verify |
 | KI-20 | `export` | Tool fillet radius and bottom clearance are exported as coefficients, not multiplied by the module. | verify |
 | KI-21 | edition | The code follows ISO 6336:2006 and AGMA 2101-D04 (metric edition of AGMA 2001-D04). ISO 6336:2019 changed several factors. | — |
+| KI-22 | AGMA `C_pf` | `F/(10d)` was not limited to a minimum of 0.05 (AGMA 2001-D04 clause 15.3). | **fixed** (only slender pinions change: `spur_grey_iron` σ_H +0.2 %) |
 
 Two behaviours that are *not* defects but were surprising and are now explicit:
 
