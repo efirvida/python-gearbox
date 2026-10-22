@@ -45,6 +45,8 @@ class Tool:
         tool_edge_radius_coefficient: Tool edge radius ``rho_a0`` used by the AGMA geometry factor.
         tool_tip_displacement: ``delta_a0`` of the AGMA geometry factor (AGMA 908 notation).
         cutter_teeth: Number of teeth of the generating cutter (``N_c``), AGMA geometry factor.
+        residual_fillet_undercut_coefficient: Residual fillet undercut ``s_pr`` left by a
+            protuberance tool, in modules (ISO 6336-3 formula 26); 0 when the gear is not undercut.
     """
 
     addendum_coefficient: float
@@ -55,6 +57,7 @@ class Tool:
     tool_edge_radius_coefficient: float = 0.0
     tool_tip_displacement: float = 0.0
     cutter_teeth: float = 10.0
+    residual_fillet_undercut_coefficient: float = 0.0
 
     def __post_init__(self) -> None:
         _require_positive(
@@ -173,6 +176,8 @@ class Gear:
         face_width: Face width ``b`` [mm].
         quality_grade: ISO 1328 accuracy grade (e.g. 6).
         surface_roughness: Mean peak-to-valley flank roughness ``Rz`` [micrometres].
+        root_surface_roughness: Roughness ``Rz`` of the tooth root fillet [micrometres] used by the
+            relative surface factor ``Y_R_relT``; defaults to ``surface_roughness``.
         shaft_diameter: Shaft diameter at the gear ``d_sh`` [mm].
         shaft_arrangement: Position of the gear on its shaft (ISO 6336-1).
         bearing_span: Bearing span ``l`` [mm].
@@ -203,6 +208,7 @@ class Gear:
     helix_angle: float = 0.0
     pressure_angle: float = 20.0
     profile_shift_coefficient: float = 0.0
+    root_surface_roughness: float | None = None
     web_thickness: float | None = None
     rim_thickness: float | None = None
     backlash: float = 0.0
@@ -230,6 +236,8 @@ class Gear:
         object.__setattr__(self, "assembly_condition", AssemblyCondition(self.assembly_condition))
         object.__setattr__(self, "lead_modification", LeadModification(self.lead_modification))
         object.__setattr__(self, "favorable_contact", bool(self.favorable_contact))
+        if self.root_surface_roughness is None:
+            object.__setattr__(self, "root_surface_roughness", self.surface_roughness)
         if self.web_thickness is None:
             object.__setattr__(self, "web_thickness", self.face_width)
 

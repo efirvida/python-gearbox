@@ -41,6 +41,11 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-28 | ISO `Z_B`, `Z_D` | ISO 6336-2:2019 clause 6.3: `Z_D` only for `u < 1.5` (the old rule had the ratio inverted), helical `eps_beta >= 1` gives `sqrt(f_ZCa)` (table 3; was 1, new `Transmission.flank_modification`, default without modifications = 1.2), partial overlap uses formulae 20-23; `eps_alpha <= 1` raises. | **fixed** |
 | KI-29 | ISO `Z_W` | Work hardening was applied to both gears for any material pair. ISO 6336-2:2019 clause 13.3 defines it for the wheel only and for three material combinations (formulae 58-71); `Z_W = 1` otherwise. | **fixed** |
 | KI-30 | ISO `Z_L` | Viscosities above 500 mm²/s were not limited. | **fixed** |
+| KI-31 | ISO `Y_F` | ISO 6336-3:2019 formula (9) includes the contact ratio factor `f_ε` (formulae 10-14); it was missing. | **fixed** |
+| KI-32 | ISO `Y_β` | Formula (66) of 2019 is `(1 - ε_β β/120°) / cos³β`; the code had the 2006 form without `1/cos³β`. | **fixed** |
+| KI-33 | ISO `Y_DT` | For `ε_αn > 2.5` the 2019 edition gives 0.7 (formula 74), not 0.9; the worse accuracy grade of the pair applies. | **fixed** |
+| KI-34 | ISO `Y_R_relT` | Exponent of formula (89) is 0.005 (2019), the code had 0.0058. The fillet roughness can now be given separately (`Gear.root_surface_roughness`). | **fixed** |
+| KI-35 | ISO `σ_F0` | Face width of formula (4): the wider gear carries at most the narrower width plus 1 module per end; `Tool.residual_fillet_undercut_coefficient` adds the `s_pr` term of formula (26). | **fixed** |
 
 Two behaviours that are *not* defects but were surprising and are now explicit:
 

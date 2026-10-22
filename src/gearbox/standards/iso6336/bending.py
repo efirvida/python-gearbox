@@ -116,7 +116,7 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
     nominal_force = transmission.nominal_tangential_force
     nominal_pinion = (
         nominal_force
-        / (p.face_width * module)
+        / (_load_bearing_width(transmission, p) * module)
         * form_pinion
         * stress_corr_pinion
         * helix
@@ -125,7 +125,7 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
     )
     nominal_wheel = (
         nominal_force
-        / (w.face_width * module)
+        / (_load_bearing_width(transmission, w) * module)
         * form_wheel
         * stress_corr_wheel
         * helix
@@ -217,6 +217,7 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
         (pi / 4) * module
         - dedendum_of_tool * tan(alpha)
         - (1 - sin(alpha)) * (tool_fillet_radius / cos(alpha))
+        + gear.tool.residual_fillet_undercut_coefficient * module / cos(alpha)
     )
     g = (tool_fillet_radius / module) - (dedendum_of_tool / module) + shift
     h = (2 / virtual_teeth) * ((pi / 2) - (e / module)) - (pi / 3)
@@ -268,12 +269,35 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
     return ToothRootGeometry(load_angle, tooth_root_chord, fillet_radius, lever_arm)
 
 
+def _load_bearing_width(transmission: Transmission, gear: Gear) -> float:
+    """Face width ``b`` of formula (4): the wider gear carries at most 1 module more per end."""
+    narrow = transmission.net_face_width
+    return min(gear.face_width, narrow + 2 * transmission.module)
+
+
+def _contact_ratio_factor(transmission: Transmission) -> float:
+    """Contact ratio factor ``f_epsilon`` of the form factor, formulae (10)-(14)."""
+    eps_beta = transmission.overlap_ratio
+    eps_alpha_n = transmission.transverse_contact_ratio / (
+        cos(radians(transmission.pinion.base_helix_angle)) ** 2
+    )
+    if eps_beta == 0:
+        return 1.0 if eps_alpha_n < 2 else 0.7
+    if eps_beta >= 1:
+        return eps_alpha_n**-0.5
+    if eps_alpha_n < 2:
+        return (1 - eps_beta + eps_beta / eps_alpha_n) ** 0.5
+    return ((1 - eps_beta) / 2 + eps_beta / eps_alpha_n) ** 0.5
+
+
 def _form_factor(transmission: Transmission, root: ToothRootGeometry) -> float:
-    """Form factor ``Y_F``."""
+    """Form factor ``Y_F``, formula (9) of ISO 6336-3:2019 (includes ``f_epsilon``)."""
     module = transmission.module
     alpha = radians(transmission.pressure_angle)
-    return ((6 * root.bending_lever_arm / module) * cos(root.load_angle_at_load_point)) / (
-        ((root.tooth_root_chord / module) ** 2) * cos(alpha)
+    return (
+        ((6 * root.bending_lever_arm / module) * cos(root.load_angle_at_load_point))
+        / (((root.tooth_root_chord / module) ** 2) * cos(alpha))
+        * _contact_ratio_factor(transmission)
     )
 
 
@@ -285,10 +309,13 @@ def _stress_correction_factor(root: ToothRootGeometry) -> float:
 
 
 def _helix_angle_factor(transmission: Transmission) -> float:
-    """Helix angle factor ``Y_beta``."""
+    """Helix angle factor ``Y_beta``, formula (66): ``(1 - eps_beta beta / 120) / cos^3(beta)``.
+
+    ``eps_beta`` is limited to 1 and ``beta`` to 30 degrees.
+    """
     overlap = min(transmission.overlap_ratio, 1)
     helix = min(transmission.pinion.helix_angle, 30)
-    return 1 - overlap * (helix / 120)
+    return (1 - overlap * (helix / 120)) / cos(radians(helix)) ** 3
 
 
 def _rim_thickness_factor(gear: Gear) -> float:
@@ -302,15 +329,15 @@ def _rim_thickness_factor(gear: Gear) -> float:
 
 
 def _deep_tooth_factor(transmission: Transmission) -> float:
-    """Deep tooth factor ``Y_DT``."""
+    """Deep tooth factor ``Y_DT``, formulae (72)-(74); the worse accuracy grade applies."""
     base_helix = radians(transmission.pinion.base_helix_angle)
-    grade = transmission.pinion.quality_grade
+    grade = max(transmission.pinion.quality_grade, transmission.wheel.quality_grade)
     normal_contact_ratio = transmission.transverse_contact_ratio / (cos(base_helix) ** 2)
     if normal_contact_ratio <= 2.05 or grade > 4:
         return 1.0
     if normal_contact_ratio <= 2.5:
         return -0.666 * normal_contact_ratio + 2.366
-    return 0.9
+    return 0.7
 
 
 def _size_factor(gear: Gear) -> float:
@@ -356,7 +383,7 @@ def _life_factor(material: M, transmission: Transmission, speed_rpm: float) -> f
 
 def _relative_surface_factor(gear: Gear) -> float:
     """Relative surface factor ``Y_R_relT``."""
-    roughness = gear.surface_roughness
+    roughness = gear.root_surface_roughness
     material = gear.material.material_type
     group_a = (
         M.THROUGH_HARDENED_STEEL,
@@ -375,7 +402,7 @@ def _relative_surface_factor(gear: Gear) -> float:
         return 1.674 - 0.529 * (roughness + 1) ** 0.1
     if material is M.NORMALIZED_STEEL:
         return 5.306 - 4.203 * (roughness + 1) ** 0.01
-    return 4.299 - 3.259 * (roughness + 1) ** 0.0058
+    return 4.299 - 3.259 * (roughness + 1) ** 0.005
 
 
 def _slip_layer_thickness(gear: Gear) -> float:
