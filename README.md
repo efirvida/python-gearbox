@@ -6,6 +6,8 @@ Strength calculation and finite-element geometry export for **spur and helical i
   **AGMA 2101-D04** (metric edition of AGMA 2001-D04).
 * Profile shift (addendum modification) helpers.
 * One-tooth 2D/3D geometry export for **MATLAB/COMSOL**, **ABAQUS** and **ANSYS**.
+* Structured quad/hex finite-element meshes of gear sectors and gear pairs with **Gmsh**
+  (`pip install python-gearbox[fem]`), written as `.msh`/`.inp` with named node and element sets.
 
 > **Status:** version 0.2 is a refactor of the original code (Python ≥ 3.10, typed immutable models,
 > descriptive names, test suite). Numerical results are pinned to those of 0.1.x, *including some
@@ -62,6 +64,7 @@ standard's symbol in each field's docstring.
 | [`examples/02_helical_gears_and_what_if.py`](examples/02_helical_gears_and_what_if.py) | spur vs helical, parameter sweeps with `replace` |
 | [`examples/03_profile_shift_optimization.py`](examples/03_profile_shift_optimization.py) | profile shift scan and optimisation |
 | [`examples/04_export_geometry.py`](examples/04_export_geometry.py) | COMSOL / ABAQUS / ANSYS export |
+| [`examples/05_fem_mesh.py`](examples/05_fem_mesh.py) | Structured Gmsh meshes (sector and pair) |
 
 ## Migrating from 0.1.x
 
