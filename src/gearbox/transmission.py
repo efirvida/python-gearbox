@@ -1,0 +1,154 @@
+"""A pair of meshing gears plus the operating conditions needed for strength calculations."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from functools import cached_property
+from math import cos, pi, radians, sin, sqrt, tan
+
+from gearbox.enums import GearingType
+from gearbox.mathutils import inverse_involute, involute
+from gearbox.models import Gear, Lubricant
+
+
+@dataclass(frozen=True, kw_only=True)
+class Transmission:
+    """External gear pair (``pinion`` drives ``wheel``) with its operating conditions.
+
+    Attributes:
+        pinion: Driving gear (gear 1).
+        wheel: Driven gear (gear 2).
+        lubricant: Lubricant used in the mesh.
+        pinion_speed_rpm: Rotational speed of the pinion [rpm].
+        power_kw: Transmitted power [kW].
+        design_life_hours: Required design life [h].
+        application_factor: Application (overload) factor ``K_A``.
+        min_safety_factor_pitting: Minimum required safety factor against pitting, ``S_Hmin``.
+        min_safety_factor_bending: Minimum required safety factor against tooth breakage,
+            ``S_Fmin``.
+        gearing_type: Gear unit quality class, used by the AGMA mesh alignment factor.
+    """
+
+    pinion: Gear
+    wheel: Gear
+    lubricant: Lubricant
+    pinion_speed_rpm: float
+    power_kw: float
+    design_life_hours: float
+    application_factor: float = 1.0
+    min_safety_factor_pitting: float = 1.0
+    min_safety_factor_bending: float = 1.0
+    gearing_type: GearingType = GearingType.COMMERCIAL_ENCLOSED
+
+    def __post_init__(self) -> None:
+        if self.pinion.module != self.wheel.module:
+            raise ValueError("The normal module of both gears must be equal")
+        if self.pinion.pressure_angle != self.wheel.pressure_angle:
+            raise ValueError("The pressure angle of both gears must be equal")
+        if self.pinion.helix_angle != self.wheel.helix_angle:
+            raise ValueError("The helix angle of both gears must be equal (opposite hand)")
+        for name in ("pinion_speed_rpm", "power_kw", "design_life_hours"):
+            if not getattr(self, name) > 0:
+                raise ValueError(f"Transmission.{name} must be positive")
+        object.__setattr__(self, "gearing_type", GearingType(self.gearing_type))
+
+    # --- kinematics ---------------------------------------------------------------------------
+    @property
+    def module(self) -> float:
+        """Common normal module [mm]."""
+        return self.pinion.module
+
+    @property
+    def pressure_angle(self) -> float:
+        """Common normal pressure angle [deg]."""
+        return self.pinion.pressure_angle
+
+    @property
+    def gear_ratio(self) -> float:
+        """``u = z2 / z1`` (always >= 1 for a speed-reducing pair)."""
+        return self.wheel.number_of_teeth / self.pinion.number_of_teeth
+
+    @property
+    def wheel_speed_rpm(self) -> float:
+        """Rotational speed of the wheel [rpm]."""
+        return self.pinion_speed_rpm / self.gear_ratio
+
+    @property
+    def profile_shift_sum(self) -> float:
+        """``x1 + x2``."""
+        return self.pinion.profile_shift_coefficient + self.wheel.profile_shift_coefficient
+
+    # --- mesh geometry ------------------------------------------------------------------------
+    @cached_property
+    def working_pressure_angle(self) -> float:
+        """Transverse working pressure angle ``alpha_wt`` [deg]."""
+        involute_alpha_wt = involute(self.pinion.transverse_pressure_angle) + 2 * (
+            self.profile_shift_sum
+        ) / (self.pinion.number_of_teeth + self.wheel.number_of_teeth) * tan(
+            radians(self.pinion.pressure_angle)
+        )
+        return inverse_involute(involute_alpha_wt)
+
+    @property
+    def reference_center_distance(self) -> float:
+        """``a``, centre distance without profile shift [mm]."""
+        return ((self.pinion.number_of_teeth + self.wheel.number_of_teeth) * self.module) / (
+            2 * cos(radians(self.pinion.helix_angle))
+        )
+
+    @property
+    def working_center_distance(self) -> float:
+        """``a_w`` [mm]."""
+        return (
+            self.reference_center_distance
+            * cos(radians(self.pinion.pressure_angle))
+            / cos(radians(self.working_pressure_angle))
+        )
+
+    @cached_property
+    def transverse_contact_ratio(self) -> float:
+        """``epsilon_alpha``."""
+        p, w = self.pinion, self.wheel
+        line_of_action = 0.5 * (
+            sqrt(p.tip_diameter**2 - p.base_diameter**2)
+            + sqrt(w.tip_diameter**2 - w.base_diameter**2)
+        ) - self.reference_center_distance * sin(radians(self.working_pressure_angle))
+        transverse_base_pitch = (
+            pi
+            * self.module
+            * cos(radians(p.transverse_pressure_angle))
+            / cos(radians(p.helix_angle))
+        )
+        return line_of_action / transverse_base_pitch
+
+    @property
+    def overlap_ratio(self) -> float:
+        """``epsilon_beta``."""
+        return self.pinion.face_width * sin(radians(self.pinion.helix_angle)) / (self.module * pi)
+
+    @property
+    def total_contact_ratio(self) -> float:
+        """``epsilon_gamma = epsilon_alpha + epsilon_beta``."""
+        return self.transverse_contact_ratio + self.overlap_ratio
+
+    # --- loads --------------------------------------------------------------------------------
+    @property
+    def pitch_line_velocity(self) -> float:
+        """Tangential speed at the reference circle of the pinion [m/s]."""
+        return self.pinion_speed_rpm * self.pinion.reference_diameter * pi / 60000
+
+    @property
+    def nominal_tangential_force(self) -> float:
+        """``F_t`` at the reference circle [N]."""
+        return (
+            1000.0
+            * self.power_kw
+            * 60000
+            / (pi * self.pinion.reference_diameter * self.pinion_speed_rpm)
+        )
+
+    @property
+    def specific_tangential_load(self) -> float:
+        """``F_t K_A / b`` [N/mm], limited below to 100 N/mm as in ISO 6336-1."""
+        load = self.application_factor * self.nominal_tangential_force / self.pinion.face_width
+        return max(load, 100.0)
