@@ -161,6 +161,9 @@ class GearMesh:
             angles only, so slender elements are not penalised.
         groups: Names of the physical groups defined in the mesh.
         bodies: Names of the meshed bodies.
+        placements: For each body prefix (``""`` for a single gear, ``"PINION_"``/``"WHEEL_"`` for
+            a pair), the centre ``(x, y)``, the tooth axis angles [rad] and the twist of the
+            section over the face width [rad].
     """
 
     paths: dict[str, Path]
@@ -170,6 +173,9 @@ class GearMesh:
     min_quality: float
     groups: list[str] = field(default_factory=list)
     bodies: list[str] = field(default_factory=list)
+    placements: dict[str, tuple[tuple[float, float], tuple[float, ...], float]] = field(
+        default_factory=dict
+    )
 
 
 @dataclass(frozen=True)
@@ -384,6 +390,10 @@ def _run(
             min_quality=float(np.min(quality)) if len(quality) else float("nan"),
             groups=sorted(groups),
             bodies=body_names,
+            placements={
+                placement.prefix: (placement.center, placement.axis_angles, placement.twist)
+                for _, placement, _ in bodies
+            },
         )
     finally:
         gmsh.finalize()

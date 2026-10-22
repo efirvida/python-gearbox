@@ -9,6 +9,8 @@ Strength calculation and finite-element geometry export for **spur and helical i
 * One-tooth 2D/3D geometry export for **MATLAB/COMSOL**, **ABAQUS** and **ANSYS**.
 * Structured quad/hex finite-element meshes of gear sectors and gear pairs with **Gmsh**
   (`pip install python-gearbox[fem]`), written as `.msh`/`.inp` with named node and element sets.
+* Tooth bending analysis with **CalculiX** (`gearbox.fem.solve_bending`); CalculiX is an external
+  program: `conda install -c conda-forge calculix`, then put `ccx` on the `PATH` or set `GEARBOX_CCX`.
 
 > **Status:** version 0.2 is a refactor of the original code (Python ≥ 3.10, typed immutable models,
 > descriptive names, test suite) and an update of the ISO 6336 implementation from the 2006 to the
@@ -86,6 +88,7 @@ standard's symbol in each field's docstring.
 | [`examples/03_profile_shift_optimization.py`](examples/03_profile_shift_optimization.py) | profile shift scan and optimisation |
 | [`examples/04_export_geometry.py`](examples/04_export_geometry.py) | COMSOL / ABAQUS / ANSYS export |
 | [`examples/05_fem_mesh.py`](examples/05_fem_mesh.py) | Structured Gmsh meshes (sector and pair) |
+| [`examples/06_fem_bending.py`](examples/06_fem_bending.py) | Root stress of a tooth with CalculiX |
 
 ## Migrating from 0.1.x
 
