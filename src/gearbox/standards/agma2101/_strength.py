@@ -106,7 +106,7 @@ def hardness_ratio_factors(transmission: Transmission) -> tuple[float, float]:
             a = 0.00698
         else:
             a = 0.00898 * ratio - 0.00829  # (33)
-        return 1.0, 1.0 + a * (transmission.gear_ratio - 1.0)  # (32)
+        return 1.0, 1.0 + a * (abs(transmission.gear_ratio) - 1.0)  # (32), m_G = N_G / N_P
     surface_hardened = pinion_type in (
         M.CASE_HARDENED_STEEL,
         M.FLAME_OR_INDUCTION_HARDENED_STEEL,

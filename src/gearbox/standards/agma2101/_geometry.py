@@ -16,8 +16,8 @@ class GeometryFactors:
 
     pitting: float
     """``I``."""
-    bending: tuple[float, float]
-    """``(J_pinion, J_wheel)``."""
+    bending: tuple[float, float] | None
+    """``(J_pinion, J_wheel)``; ``None`` for internal gears (AGMA 908-B89 gives no ``J``)."""
 
 
 @dataclass(frozen=True)
@@ -33,16 +33,23 @@ class _Mesh:
     c_psi: float
 
 
-def require_supported_gears(transmission: Transmission) -> None:
+def require_supported_gears(transmission: Transmission, *, bending: bool) -> None:
     """Reject the gear types AGMA 2001-D04 / 908-B89 are not implemented for.
 
     Raises:
-        ValueError: For double helical gears (the 908-B89 factors are for single helical gears).
+        ValueError: For double helical gears (the 908-B89 factors are for single helical gears)
+            and, when ``bending`` is set, for internal gears: AGMA 908-B89 gives no geometry
+            factor ``J`` for them.
     """
     if transmission.double_helical:
         raise ValueError(
             "AGMA 2001-D04 no implementado para engranajes helicoidales dobles: "
             "use ISO 6336 (double helical gears are only covered by gearbox.standards.iso6336)"
+        )
+    if bending and transmission.wheel.internal:
+        raise ValueError(
+            "AGMA 908-B89 no da el factor geometrico J para engranajes internos: "
+            "el calculo de flexion AGMA no esta disponible (use ISO 6336-3)"
         )
 
 
@@ -74,6 +81,9 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
         The :class:`GeometryFactors`.
     """
     p, w = transmission.pinion, transmission.wheel
+    # AGMA 908-B89 works with magnitudes: "where double signs are used (e.g. +-), the upper sign
+    # applies to external gears and the lower sign to internal gears" (clause 3).
+    external = not w.internal
     n1 = p.number_of_teeth
     n2 = w.number_of_teeth
 
@@ -83,16 +93,16 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
     f = p.face_width / mn
 
     ro1 = (p.tip_diameter / 2) / mn
-    ro2 = (w.tip_diameter / 2) / mn
-    mg = transmission.gear_ratio
+    ro2 = abs(w.tip_diameter / 2) / mn
+    mg = abs(transmission.gear_ratio)
     r1 = n1 / (2 * cos(psi))
     r2 = r1 * mg
-    cr = transmission.working_center_distance / mn  # operating centre distance, eq. 3.7
+    cr = abs(transmission.working_center_distance) / mn  # operating centre distance, eq. 3.7
     fi = atan(tan(fi_n) / cos(psi))
     rb1 = r1 * cos(fi)
     rb2 = rb1 * mg
 
-    if n1 > 0:
+    if external:
         fi_r = acos((rb2 + rb1) / cr)
     else:
         fi_r = acos((rb2 - rb1) / cr)
@@ -102,7 +112,7 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
     psi_b = acos(pn / pb)
 
     c6 = cr * sin(fi_r)
-    if n1 > 0:
+    if external:
         c1 = c6 - sqrt(ro2**2 - rb2**2)
     else:
         c1 = -1 * (c6 - sqrt(ro2**2 - rb2**2))
@@ -135,17 +145,17 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
     fi_nr = asin(cos(psi_b) * sin(fi_r))
 
     # I factor
-    if n1 > 0:
-        d = 2 * cr / (mg + 1.0)
-        rm1 = 0.5 * (ro1 + (cr - ro2))
+    if external:
+        d = 2 * cr / (mg + 1.0)  # eq. 4.2
+        rm1 = 0.5 * (ro1 + (cr - ro2))  # eq. 4.3
     else:
         d = 2 * cr / (mg - 1.0)
-        rm1 = 0.5 * (ro1 + (cr - ro2))
+        rm1 = 0.5 * (ro1 - (cr - ro2))
 
     if mf <= 1:
         rho_1 = c2
         rho_m1 = sqrt(rm1**2 - rb1**2)
-        if n1 > 0:
+        if external:
             rho_2 = c6 - rho_1
             rho_m2 = c6 - rho_m1
         else:
@@ -154,13 +164,13 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
         c_psi = sqrt(1 - mf * (1 - rho_m1 * rho_m2 * z / (rho_1 * rho_2 * pn)))
     else:
         rho_1 = sqrt(rm1**2.0 - rb1**2.0)
-        if n1 > 0:
+        if external:
             rho_2 = c6 - rho_1
         else:
             rho_2 = c6 + rho_1
         c_psi = 1
 
-    if n1 > 0:
+    if external:
         pitting = (cos(fi_r) * c_psi**2.0) / ((1.0 / rho_1 + 1.0 / rho_2) * d * mn)
     else:
         pitting = (cos(fi_r) * c_psi**2.0) / ((1.0 / rho_1 - 1.0 / rho_2) * d * mn)
@@ -174,6 +184,8 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
         mn=mn,
         c_psi=c_psi,
     )
+    if not external:
+        return GeometryFactors(pitting=pitting, bending=None)
     j1 = _bending_geometry_factor(
         mesh, p, n1, mg, ro1, ro2, r1, r2, rb1, c4, p.profile_shift_coefficient, p.backlash
     )

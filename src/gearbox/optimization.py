@@ -101,8 +101,11 @@ def feasible_pinion_profile_shift_range(
         ``(x1_min, x1_max)``. If the feasible set is made of several intervals, the widest one.
 
     Raises:
-        ValueError: If no distribution of the profile shift sum is feasible.
+        ValueError: If no distribution of the profile shift sum is feasible, or the wheel is an
+            internal gear (the geometric limits used here are those of external gears).
     """
+    if transmission.wheel.internal:
+        raise ValueError("Profile shift optimisation no implementado para engranajes internos")
     lower = transmission.pinion.minimum_profile_shift_coefficient
     upper = transmission.profile_shift_sum - transmission.wheel.minimum_profile_shift_coefficient
     if lower > upper:

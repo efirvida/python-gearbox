@@ -17,7 +17,10 @@ def _estimated_quality_number(gear: Gear) -> float:
     ``Q_v = 17 - A_v``, the relation between the ``B`` exponents of AGMA 2101-C95 and
     AGMA 2001-D04 (A.3). It is an estimate, not a classification of the standard.
     """
-    root_to_tip_diameter = gear.tip_diameter - 2 * gear.module
+    if gear.internal:  # negative diameters: d ~ |d_a| + 2 m
+        root_to_tip_diameter = -gear.tip_diameter + 2 * gear.module
+    else:
+        root_to_tip_diameter = gear.tip_diameter - 2 * gear.module
     tolerance = gear.tolerances.single_pitch_deviation
     accuracy_grade = (
         log(abs(tolerance)) - log(0.3 * gear.module + 0.12 * sqrt(root_to_tip_diameter) + 4)

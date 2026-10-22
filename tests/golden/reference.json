@@ -114,6 +114,7 @@
    "reference_diameter": 56.940189922554566,
    "root_diameter": 53.315189922554566,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 22,
    "tip_diameter": 64.56518992255457,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -141,6 +142,7 @@
    "reference_diameter": 103.5276180410083,
    "root_diameter": 95.9026180410083,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 40,
    "tip_diameter": 107.15261804100831,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -274,6 +276,7 @@
    "reference_diameter": 52.41045115071836,
    "root_diameter": 47.16045115071836,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 19,
    "tip_diameter": 58.41045115071836,
    "tolerances": {
     "helix_form_deviation": 11.0,
@@ -301,6 +304,7 @@
    "reference_diameter": 157.23135345215508,
    "root_diameter": 151.48135345215508,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 57,
    "tip_diameter": 162.73135345215508,
    "tolerances": {
     "helix_form_deviation": 11.0,
@@ -434,6 +438,7 @@
    "reference_diameter": 75.0,
    "root_diameter": 68.75,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 30,
    "tip_diameter": 80.0,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -461,6 +466,7 @@
    "reference_diameter": 112.5,
    "root_diameter": 106.25,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 45,
    "tip_diameter": 117.5,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -569,6 +575,7 @@
    "reference_diameter": 55.0,
    "root_diameter": 51.375,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 22,
    "tip_diameter": 62.625,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -596,6 +603,7 @@
    "reference_diameter": 100.0,
    "root_diameter": 92.375,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 40,
    "tip_diameter": 103.625,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -737,6 +745,7 @@
    "reference_diameter": 55.0,
    "root_diameter": 51.375,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 22,
    "tip_diameter": 62.625,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -764,6 +773,7 @@
    "reference_diameter": 100.0,
    "root_diameter": 92.375,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 40,
    "tip_diameter": 103.625,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -897,6 +907,7 @@
    "reference_diameter": 62.5,
    "root_diameter": 56.25,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 25,
    "tip_diameter": 67.5,
    "tolerances": {
     "helix_form_deviation": 10.0,
@@ -924,6 +935,7 @@
    "reference_diameter": 150.0,
    "root_diameter": 143.75,
    "root_fillet_radius": 0.95,
+   "signed_number_of_teeth": 60,
    "tip_diameter": 155.0,
    "tolerances": {
     "helix_form_deviation": 11.0,

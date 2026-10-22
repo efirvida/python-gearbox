@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import cached_property
-from math import cos, pi, radians, sin, sqrt, tan
+from math import copysign, cos, pi, radians, sin, sqrt, tan
 
 from gearbox.enums import DynamicFactorMethod, FlankModification, GearingType
 from gearbox.mathutils import inverse_involute, involute
@@ -13,7 +13,11 @@ from gearbox.models import Gear, Lubricant
 
 @dataclass(frozen=True, kw_only=True)
 class Transmission:
-    """External gear pair (``pinion`` drives ``wheel``) with its operating conditions.
+    """Gear pair (``pinion`` drives ``wheel``) with its operating conditions.
+
+    The pinion is always an external gear; the wheel can be external or internal
+    (``Gear.internal``). For an internal wheel the signs follow ISO 6336-1: ``z_2``, ``u``, the
+    centre distance and every diameter of the wheel are negative.
 
     Attributes:
         pinion: Driving gear (gear 1).
@@ -73,6 +77,13 @@ class Transmission:
             raise ValueError("The helix angle of both gears must be equal (opposite hand)")
         if self.pinion.double_helical != self.wheel.double_helical:
             raise ValueError("Both gears must be double helical, or neither")
+        if self.pinion.internal:
+            raise ValueError("The pinion must be an external gear; only the wheel can be internal")
+        if self.wheel.internal and self.wheel.number_of_teeth <= self.pinion.number_of_teeth:
+            raise ValueError(
+                "An internal wheel needs more teeth than its pinion "
+                f"({self.wheel.number_of_teeth} <= {self.pinion.number_of_teeth})"
+            )
         for name in ("pinion_speed_rpm", "power_kw", "design_life_hours"):
             if not getattr(self, name) > 0:
                 raise ValueError(f"Transmission.{name} must be positive")
@@ -99,13 +110,13 @@ class Transmission:
 
     @property
     def gear_ratio(self) -> float:
-        """``u = z2 / z1`` (always >= 1 for a speed-reducing pair)."""
-        return self.wheel.number_of_teeth / self.pinion.number_of_teeth
+        """``u = z2 / z1``: >= 1 for an external pair, negative with an internal wheel."""
+        return self.wheel.signed_number_of_teeth / self.pinion.number_of_teeth
 
     @property
     def wheel_speed_rpm(self) -> float:
         """Rotational speed of the wheel [rpm]."""
-        return self.pinion_speed_rpm / self.gear_ratio
+        return self.pinion_speed_rpm / abs(self.gear_ratio)
 
     @property
     def net_face_width(self) -> float:
@@ -136,21 +147,21 @@ class Transmission:
         """Transverse working pressure angle ``alpha_wt`` [deg]."""
         involute_alpha_wt = involute(self.pinion.transverse_pressure_angle) + 2 * (
             self.profile_shift_sum
-        ) / (self.pinion.number_of_teeth + self.wheel.number_of_teeth) * tan(
+        ) / (self.pinion.signed_number_of_teeth + self.wheel.signed_number_of_teeth) * tan(
             radians(self.pinion.pressure_angle)
         )
         return inverse_involute(involute_alpha_wt)
 
     @property
     def reference_center_distance(self) -> float:
-        """``a``, centre distance without profile shift [mm]."""
-        return ((self.pinion.number_of_teeth + self.wheel.number_of_teeth) * self.module) / (
-            2 * cos(radians(self.pinion.helix_angle))
-        )
+        """``a``, centre distance without profile shift [mm]; negative for an internal wheel."""
+        return (
+            (self.pinion.signed_number_of_teeth + self.wheel.signed_number_of_teeth) * self.module
+        ) / (2 * cos(radians(self.pinion.helix_angle)))
 
     @property
     def working_center_distance(self) -> float:
-        """``a_w`` [mm]."""
+        """``a_w`` [mm]; negative for an internal wheel."""
         return (
             self.reference_center_distance
             * cos(radians(self.pinion.transverse_pressure_angle))
@@ -159,11 +170,16 @@ class Transmission:
 
     @cached_property
     def transverse_contact_ratio(self) -> float:
-        """``epsilon_alpha``."""
+        """``epsilon_alpha`` (ISO 6336-2 formula 32, without the active root diameter limit).
+
+        With the signed quantities of an internal wheel (negative ``d_b2`` and ``a_w``) the line of
+        action is ``r_b1 (tan a_a1 - tan a_wt) + r_b2 (tan a_a2 - tan a_wt)``, as in formulae (32),
+        (36) and (38).
+        """
         p, w = self.pinion, self.wheel
         line_of_action = 0.5 * (
-            sqrt(p.tip_diameter**2 - p.base_diameter**2)
-            + sqrt(w.tip_diameter**2 - w.base_diameter**2)
+            copysign(sqrt(p.tip_diameter**2 - p.base_diameter**2), p.base_diameter)
+            + copysign(sqrt(w.tip_diameter**2 - w.base_diameter**2), w.base_diameter)
         ) - self.working_center_distance * sin(radians(self.working_pressure_angle))
         transverse_base_pitch = (
             pi

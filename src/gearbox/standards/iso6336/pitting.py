@@ -187,11 +187,13 @@ def zone_factor(transmission: Transmission) -> float:
 def single_pair_contact_factors(transmission: Transmission) -> tuple[float, float]:
     """Contact factors ``(Z_B, Z_D)`` of pinion and wheel, ISO 6336-2 clause 6.3.
 
-    * Spur gears: ``Z_B = max(M1, 1)`` and ``Z_D = max(M2, 1)`` (formulae 17-18).
+    * Spur gears: ``Z_B = max(M1, 1)`` and ``Z_D = max(M2, 1)`` (formulae 17-18). For an internal
+      wheel ``z_2`` is negative in formula (17) and ``Z_D = 1``.
     * Helical gears with ``eps_beta >= 1``: ``Z_B = Z_D = sqrt(f_ZCa)`` (19), table 3.
     * Helical gears with ``eps_beta < 1``: linear interpolation (20)-(23).
 
-    ``Z_D`` is only determined for ``u < 1.5``; above that ``M2`` is taken as 1.
+    ``Z_D`` is only determined for ``u < 1.5``; above that ``M2`` is taken as 1 (as for internal
+    gears, 6.3).
 
     Raises:
         ValueError: If ``eps_alpha <= 1``, a case outside the scope of the standard.
@@ -209,16 +211,18 @@ def single_pair_contact_factors(transmission: Transmission) -> tuple[float, floa
     def _tip_term(gear: Gear) -> float:
         return sqrt((gear.tip_diameter**2 / gear.base_diameter**2) - 1)
 
+    z1, z2 = p.signed_number_of_teeth, w.signed_number_of_teeth  # z2 < 0 for an internal wheel
     m1 = tan(working) / sqrt(
-        (_tip_term(p) - (2 * pi) / p.number_of_teeth)
-        * (_tip_term(w) - (eps_alpha - 1) * (2 * pi) / w.number_of_teeth)
+        (_tip_term(p) - (2 * pi) / z1) * (_tip_term(w) - (eps_alpha - 1) * (2 * pi) / z2)
     )
-    m2 = tan(working) / sqrt(
-        (_tip_term(w) - (2 * pi) / w.number_of_teeth)
-        * (_tip_term(p) - (eps_alpha - 1) * (2 * pi) / p.number_of_teeth)
-    )
-    if transmission.gear_ratio > 1.5:
-        m2 = 1.0
+    if w.internal:
+        m2 = 1.0  # Z_D = 1 for internal gears (clause 6.3)
+    else:
+        m2 = tan(working) / sqrt(
+            (_tip_term(w) - (2 * pi) / z2) * (_tip_term(p) - (eps_alpha - 1) * (2 * pi) / z1)
+        )
+        if transmission.gear_ratio > 1.5:
+            m2 = 1.0
 
     root_f_zca = sqrt(float(transmission.flank_modification))
     if eps_beta >= 1:
@@ -367,7 +371,7 @@ def work_hardening_factors(transmission: Transmission) -> tuple[float, float]:
 
     if pinion_type in THROUGH_HARDENED_STEELS and wheel_type in THROUGH_HARDENED_STEELS:
         hardness_ratio = p.material.brinell_hardness / hardness
-        ratio = min(transmission.gear_ratio, 20.0)
+        ratio = min(abs(transmission.gear_ratio), 20.0)
         if hardness_ratio < 1.2:
             return 1.0, 1.0  # (67)
         if hardness_ratio <= 1.7:

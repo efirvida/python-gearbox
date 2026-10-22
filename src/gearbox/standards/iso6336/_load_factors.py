@@ -102,6 +102,8 @@ def mesh_stiffness(transmission: Transmission) -> MeshStiffness:
     p, w = transmission.pinion, transmission.wheel
     helix = cos(radians(p.helix_angle))
     zn1, zn2 = p.number_of_teeth / helix**3, w.number_of_teeth / helix**3  # formula (81)
+    if w.internal:
+        zn2 = float("inf")  # internal gearing: z_n2 -> infinity in formula (84), 9.3.2.6 b)
     x1, x2 = p.profile_shift_coefficient, w.profile_shift_coefficient
     minimum_flexibility = (
         0.04723
@@ -289,8 +291,19 @@ def dynamic_factor_method_c(transmission: Transmission) -> float:
 
 
 def dynamic_factor_method_b(transmission: Transmission) -> float:
-    """Dynamic factor ``K_v``, method B of ISO 6336-1."""
+    """Dynamic factor ``K_v``, method B of ISO 6336-1.
+
+    Raises:
+        ValueError: For an internal wheel: clause 6.5.9 gives the reduced mass of pairs with
+            external teeth only.
+    """
     p, w = transmission.pinion, transmission.wheel
+    if w.internal:
+        raise ValueError(
+            "Method B de K_v no implementado para engranajes internos: ISO 6336-1 6.5.9 solo da "
+            "la masa reducida de pares con dentado exterior; use dynamic_factor_method='C' "
+            "(6.6.1 b, engranajes rectos internos) o measured_dynamic_factor"
+        )
     line_load = transmission.line_load
     total_contact_ratio = transmission.total_contact_ratio
     stiffness = mesh_stiffness(transmission)

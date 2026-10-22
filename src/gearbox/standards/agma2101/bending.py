@@ -66,9 +66,9 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
         A :class:`BendingResult` with the stresses and every factor.
 
     Raises:
-        ValueError: For double helical gears.
+        ValueError: For double helical gears and internal gears (AGMA 908-B89 has no ``J``).
     """
-    require_supported_gears(transmission)
+    require_supported_gears(transmission, bending=True)
     pinion = transmission.pinion
     tangential_load = transmission.nominal_tangential_force
     application_factor = transmission.application_factor

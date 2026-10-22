@@ -69,7 +69,7 @@ def calculate_pitting(transmission: Transmission) -> PittingResult:
     Raises:
         ValueError: For double helical gears.
     """
-    require_supported_gears(transmission)
+    require_supported_gears(transmission, bending=False)
     diameter = transmission.pinion.reference_diameter
     width = transmission.net_face_width
 

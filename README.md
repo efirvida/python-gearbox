@@ -23,10 +23,10 @@ Strength calculation and finite-element geometry export for **spur and helical i
 | Standard | Implemented | Not implemented |
 |----------|-------------|-----------------|
 | ISO 1328-1:2013 | flank tolerances `f_pT`, `F_pT`, `F_αT`, `F_βT`, `f_fαT`, `f_HαT`, `f_HβT`, `f_fβT` (formulae 5-12) | runout, tooth thickness |
-| ISO 6336-1:2019 | `K_A`, `K_γ` (given), `K_v` by method B, method C or a measured value (A), `K_Hβ`/`K_Fβ` (method C), `K_Hα`/`K_Fα` (method B), tooth stiffness `c'`, `c_γα`, `c_γβ` (method B) | method A/B of `K_Hβ`, internal and double helical gears, multi-mesh resonance (idlers, planets) |
-| ISO 6336-2:2019 | pitting, method B, reference, limited-life and static stress (`Z_H`, `Z_E`, `Z_ε`, `Z_β`, `Z_B`, `Z_D`, `Z_NT` with and without limited pitting, `Z_L`, `Z_v`, `Z_R`, `Z_W`, `Z_X`) | internal gears; the standard gives no formula for `Z_B`/`Z_D` when `ε_α > 2` (clause 6.4), which raises no error but is outside the validated range |
-| ISO 6336-3:2019 | tooth breakage, method B, external gears cut with a hob or a shaper cutter; reference, limited-life and static stress; `Y_Sg` for grinding notches | internal gears, the graphical `Y_δrelT` for static stress of `St` without a yield point |
-| AGMA 2001-D04 / 908-B89 | pitting and bending stress, `I` and `J` (checked against the 908-B89 tables), `K_v`, `K_s`, `K_m`, `K_B`, `K_o`; allowable stresses and safety factors with `Z_N`, `Y_N`, `C_H`, `K_T`, `K_R` when `s_ac`/`s_at` are given | internal gears, cast-iron stress cycle factors, the critical-service curves of `Z_N`, `s_ac`/`s_at` tables (the numbers must be supplied) |
+| ISO 6336-1:2019 | `K_A`, `K_γ` (given), `K_v` by method B, method C or a measured value (A), `K_Hβ`/`K_Fβ` (method C), `K_Hα`/`K_Fα` (method B), tooth stiffness `c'`, `c_γα`, `c_γβ` (method B) | method A/B of `K_Hβ`, `K_v` method B for internal gears, multi-mesh resonance (idlers, planets) |
+| ISO 6336-2:2019 | pitting, method B, reference, limited-life and static stress (`Z_H`, `Z_E`, `Z_ε`, `Z_β`, `Z_B`, `Z_D`, `Z_NT` with and without limited pitting, `Z_L`, `Z_v`, `Z_R`, `Z_W`, `Z_X`); internal and double helical gears | the standard gives no formula for `Z_B`/`Z_D` when `ε_α > 2` (clause 6.4), which raises no error but is outside the validated range |
+| ISO 6336-3:2019 | tooth breakage, method B, external gears cut with a hob or a shaper cutter and internal gears cut with a shaper cutter; double helical gears; reference, limited-life and static stress; `Y_Sg` for grinding notches | the graphical `Y_δrelT` for static stress of `St` without a yield point |
+| AGMA 2001-D04 / 908-B89 | pitting and bending stress, `I` and `J` (checked against the 908-B89 tables), `K_v`, `K_s`, `K_m`, `K_B`, `K_o`; allowable stresses and safety factors with `Z_N`, `Y_N`, `C_H`, `K_T`, `K_R` when `s_ac`/`s_at` are given; pitting of internal gears | bending of internal gears (908-B89 gives no `J`), double helical gears, cast-iron stress cycle factors, the critical-service curves of `Z_N`, `s_ac`/`s_at` tables (the numbers must be supplied) |
 
 ## Install
 
@@ -68,6 +68,12 @@ print(result.contact_stress_pinion, result.safety_factor_pinion)
 ```
 
 Units: lengths in mm, angles in degrees, stresses in MPa, power in kW, speed in rpm.
+
+Double helical gears: `Gear(double_helical=True, face_width=b_B, helix_angle=…)` on both gears, with
+`face_width` the width of *each* helix (ISO 6336 only). Internal gears: `Gear(internal=True)` on the
+wheel, `number_of_teeth` positive, cut with a shaper (`Tool(cutter_type="shaper", cutter_teeth=…)`)
+for the bending calculation; the dynamic factor needs `dynamic_factor_method="C"`. Details and
+limits in [KNOWN_ISSUES.md](KNOWN_ISSUES.md) (KI-38, KI-39).
 
 Inputs that select a table of the standard are enums with descriptive members instead of numeric
 codes: `MaterialType`, `ShaftArrangement` (ISO 6336-1 figure 13), `LeadModification` (table 12),

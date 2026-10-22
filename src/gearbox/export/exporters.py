@@ -219,7 +219,12 @@ def _build_wheel(gear: Gear) -> CylindricalGearWheel:
 
     The profile engine takes the root fillet radius and the bottom clearance in millimetres, so the
     dimensionless tool coefficients are multiplied by the normal module.
+
+    Raises:
+        ValueError: For an internal gear (the profile engine only generates external teeth).
     """
+    if gear.internal:
+        raise ValueError("Export no implementado para engranajes internos")
     gear_data = {
         "m_n": gear.module,
         "z": gear.number_of_teeth,

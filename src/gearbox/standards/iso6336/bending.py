@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import acos, cos, degrees, log, pi, radians, sin, sqrt, tan
+from math import acos, copysign, cos, degrees, log, pi, radians, sin, sqrt, tan
 
 from numpy import interp, log10
 
@@ -224,7 +224,12 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
     dedendum_of_tool = gear.tool.dedendum_coefficient * module
     addendum_coefficient = gear.tool.addendum_coefficient
     tool_fillet_radius = gear.tool.root_fillet_radius_coefficient * module
-    teeth = gear.number_of_teeth
+    if gear.internal and gear.tool.cutter_type is not CutterType.SHAPER:
+        raise ValueError(
+            "ISO 6336-3 6.1 e): internal gears are generated with a shaper cutter; "
+            "set Tool.cutter_type=CutterType.SHAPER for an internal gear"
+        )
+    teeth = gear.signed_number_of_teeth  # negative for an internal gear
     virtual_teeth = gear.virtual_number_of_teeth
     shift = gear.profile_shift_coefficient
 
@@ -241,20 +246,26 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
     for _ in range(1, 10):
         theta = ((2 * g) / virtual_teeth) * tan(theta) - h
 
-    reference_diameter = module * teeth / cos(helix)
+    reference_diameter = module * teeth / cos(helix)  # negative for an internal gear
     tip_diameter = module * (teeth / cos(helix) + 2.0 * (addendum_coefficient + shift))
     transverse_contact_ratio_normal = transmission.transverse_contact_ratio / (cos(base_helix) ** 2)
     normal_reference_diameter = reference_diameter / (cos(base_helix) ** 2)
     normal_base_diameter = normal_reference_diameter * cos(alpha)
     normal_tip_diameter = normal_reference_diameter + tip_diameter - reference_diameter
-    load_point_diameter = 2.0 * sqrt(
-        (
-            sqrt((normal_tip_diameter / 2.0) ** 2 - (normal_base_diameter / 2.0) ** 2)
-            - ((pi * reference_diameter * cos(helix) * cos(alpha)) / teeth)
-            * (transverse_contact_ratio_normal - 1)
+    # Formulae (18)-(22): z/|z| and |z| make d_en negative for an internal gear, whose load point
+    # lies further from the tip along the profile (tangent length grows towards the root).
+    load_point_diameter = (
+        2.0
+        * copysign(1.0, teeth)
+        * sqrt(
+            (
+                sqrt((normal_tip_diameter / 2.0) ** 2 - (normal_base_diameter / 2.0) ** 2)
+                - ((pi * reference_diameter * cos(helix) * cos(alpha)) / abs(teeth))
+                * (transverse_contact_ratio_normal - 1)
+            )
+            ** 2
+            + (normal_base_diameter / 2) ** 2
         )
-        ** 2
-        + (normal_base_diameter / 2) ** 2
     )
     load_point_pressure_angle = acos(normal_base_diameter / load_point_diameter)
     gamma_e = (
@@ -309,10 +320,17 @@ def _shaper_root_section(transmission: Transmission, gear: Gear) -> tuple[float,
     x = gear.profile_shift_coefficient
     x0 = tool.profile_shift_coefficient
     z0v = tool.cutter_teeth / (cos(helix) * cos(base_helix) ** 2)  # (33)
+    if gear.internal and z0v >= -zn:
+        raise ValueError(
+            "The shaper cutter of an internal gear needs fewer (virtual) teeth than the gear: "
+            f"z_0v = {z0v:.1f}, |z_n| = {-zn:.1f}"
+        )
     rho_a0 = tool.tool_edge_radius_coefficient * module
     h_ap0 = tool.dedendum_coefficient * module
     s_pr = tool.residual_fillet_undercut_coefficient * module
-    theta = pi / 6  # tangential angle of the external gear
+    theta = (
+        pi / 3 if gear.internal else pi / 6
+    )  # tangential angle: 60 deg internal, 30 deg external
     inv_alpha = tan(alpha) - alpha
 
     xi = 2 * (x0 + x) / (z0v + zn) * tan(alpha) + inv_alpha  # (34)
@@ -420,7 +438,19 @@ def _helix_angle_factor(transmission: Transmission) -> float:
 
 
 def _rim_thickness_factor(gear: Gear) -> float:
-    """Rim thickness factor ``Y_B``."""
+    """Rim thickness factor ``Y_B``: formulae (68)-(69) external, (70)-(71) internal gears.
+
+    For an internal gear the ratio is ``s_R / m_n`` (clause 9.3.2) and the rim thickness is needed.
+    """
+    if gear.internal:
+        if gear.rim_thickness is None:
+            raise ValueError("Internal gears need Gear.rim_thickness for the rim factor Y_B")
+        rim_in_modules = gear.rim_thickness / gear.module
+        if rim_in_modules >= 3.5:
+            return 1.0  # (70)
+        if rim_in_modules > 1.75:
+            return 1.15 * log(8.324 / rim_in_modules)  # (71), 8.324 m_n / s_R
+        raise ValueError("Internal gears require: rim_thickness / module > 1.75")
     ratio = 1.21 if gear.rim_thickness is None else gear.rim_thickness / gear.tooth_height
     if ratio >= 1.2:
         return 1.0

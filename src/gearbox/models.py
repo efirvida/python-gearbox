@@ -234,6 +234,12 @@ class Gear:
         assembly_condition: Mesh alignment condition (AGMA).
         lead_modification: Helix modification case (ISO).
         favorable_contact: ``True`` if the contact pattern is favourable (ISO 6336-1).
+        internal: ``True`` for an internal gear (ring). Only the wheel of a pair can be internal.
+            ``number_of_teeth`` is then still given as a positive count; the formulae of ISO 6336
+            use :attr:`signed_number_of_teeth`, and every diameter property (reference, tip, root,
+            base) is negative, as in the sign convention of ISO 6336-1. The profile shift
+            coefficient ``x`` is the one of ISO 6336-3 formula (24): positive ``x`` thickens the
+            tooth and moves it towards the axis.
         double_helical: ``True`` for a double helical gear (two helices of opposite hand, each of
             width ``face_width``); ISO 6336 only, the two halves are treated as two helical gears
             in parallel sharing the load equally (ISO 6336-1 clause 4.2.1).
@@ -264,6 +270,7 @@ class Gear:
     lead_modification: LeadModification = LeadModification.NONE
     favorable_contact: bool = False
     double_helical: bool = False
+    internal: bool = False
 
     def __post_init__(self) -> None:
         _require_positive(
@@ -285,6 +292,14 @@ class Gear:
         object.__setattr__(self, "lead_modification", LeadModification(self.lead_modification))
         object.__setattr__(self, "favorable_contact", bool(self.favorable_contact))
         object.__setattr__(self, "double_helical", bool(self.double_helical))
+        object.__setattr__(self, "internal", bool(self.internal))
+        if self.internal and not (
+            self.tip_diameter < 0 and self.tip_diameter**2 > self.base_diameter**2
+        ):
+            raise ValueError(
+                "Gear.internal: the tip circle lies inside the base circle (|d_a| <= |d_b|); "
+                "increase the number of teeth or reduce the profile shift"
+            )
         if self.double_helical and self.helix_angle == 0:
             raise ValueError("Gear.double_helical needs a helix_angle greater than 0")
         if (self.grinding_notch_depth is None) != (self.grinding_notch_radius is None):
@@ -301,10 +316,20 @@ class Gear:
 
         ``z_n`` is the virtual number of teeth, so the limit also holds for helical gears. Smaller
         shifts cut into the tooth root (theoretical limit; a slight undercut is often accepted).
+
+        Raises:
+            ValueError: For internal gears, which have no undercut limit of this kind.
         """
+        if self.internal:
+            raise ValueError("Internal gears have no undercut limit x_min (not applicable)")
         return self.tool.addendum_coefficient - (
             self.virtual_number_of_teeth * sin(radians(self.pressure_angle)) ** 2 / 2
         )
+
+    @property
+    def signed_number_of_teeth(self) -> int:
+        """``z`` with the sign of ISO 6336-1: negative for an internal gear."""
+        return -self.number_of_teeth if self.internal else self.number_of_teeth
 
     @property
     def transverse_pressure_angle(self) -> float:
@@ -318,20 +343,20 @@ class Gear:
 
     @property
     def reference_diameter(self) -> float:
-        """``d`` [mm]."""
-        return self.module * self.number_of_teeth / cos(radians(self.helix_angle))
+        """``d`` [mm]; negative for an internal gear."""
+        return self.module * self.signed_number_of_teeth / cos(radians(self.helix_angle))
 
     @property
     def tip_diameter(self) -> float:
-        """``d_a`` [mm]."""
+        """``d_a`` [mm]; negative for an internal gear (``|d_a| < |d|``)."""
         return self.module * (
-            self.number_of_teeth / cos(radians(self.helix_angle))
+            self.signed_number_of_teeth / cos(radians(self.helix_angle))
             + 2 * (self.tool.addendum_coefficient + self.profile_shift_coefficient)
         )
 
     @property
     def root_diameter(self) -> float:
-        """``d_f`` [mm]."""
+        """``d_f`` [mm]; negative for an internal gear (``|d_f| > |d|``)."""
         return self.reference_diameter - 2 * self.module * (
             self.tool.addendum_coefficient
             + self.tool.bottom_clearance_coefficient
@@ -340,7 +365,7 @@ class Gear:
 
     @property
     def base_diameter(self) -> float:
-        """``d_b`` [mm]."""
+        """``d_b`` [mm]; negative for an internal gear."""
         return self.reference_diameter * cos(radians(self.transverse_pressure_angle))
 
     @property
@@ -377,8 +402,11 @@ class Gear:
 
     @property
     def virtual_number_of_teeth(self) -> float:
-        """``z_n``, number of teeth of the virtual spur gear in the normal section."""
-        return self.number_of_teeth / (
+        """``z_n``, number of teeth of the virtual spur gear in the normal section.
+
+        Negative for an internal gear.
+        """
+        return self.signed_number_of_teeth / (
             cos(radians(self.helix_angle)) * cos(radians(self.base_helix_angle)) ** 2
         )
 
@@ -392,7 +420,7 @@ class Gear:
         """
         ranges = {
             "number_of_teeth": (self.number_of_teeth, 5, 1000),
-            "reference_diameter": (self.reference_diameter, 5, 15000),
+            "reference_diameter": (abs(self.reference_diameter), 5, 15000),
             "module": (self.module, 0.5, 70),
             "face_width": (self.face_width, 4, 1200),
             "helix_angle": (self.helix_angle, 0, 45),
@@ -403,5 +431,5 @@ class Gear:
                     f"Gear.{name}={value:g} is outside the range [{low}, {high}] of ISO 1328-1:2013"
                 )
         return _compute_tolerances(
-            self.module, self.reference_diameter, self.face_width, self.quality_grade
+            self.module, abs(self.reference_diameter), self.face_width, self.quality_grade
         )
