@@ -11,3 +11,5 @@ Regenerate:
     .venv/bin/python tests/golden/regenerate_reference.py
 
 Rule: a numerical fix must regenerate `reference.json` in the same commit, and the commit message must explain every changed number in the diff.
+
+`regenerate_export.py` rewrites `tests/golden/export/` from the current code; use it (and explain the diff) when a change intentionally alters the exported geometry.
