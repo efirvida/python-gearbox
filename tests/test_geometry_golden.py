@@ -24,3 +24,16 @@ def test_mesh_geometry(name):
     transmission = scenario(name)
     for attribute, value in REFERENCE[name]["mesh"].items():
         assert_matches(getattr(transmission, attribute), value, attribute)
+
+
+def test_minimum_profile_shift_matches_the_classic_limits():
+    """17 teeth is the textbook limit of a 20 degree spur gear without undercut."""
+    from dataclasses import replace
+
+    pinion = scenario("spur_sr20").pinion
+    assert replace(pinion, number_of_teeth=17).minimum_profile_shift_coefficient == pytest.approx(
+        0.0058, abs=1e-3
+    )
+    assert replace(pinion, number_of_teeth=22).minimum_profile_shift_coefficient == pytest.approx(
+        -0.2868, abs=1e-3
+    )

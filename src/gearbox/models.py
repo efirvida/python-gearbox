@@ -236,8 +236,14 @@ class Gear:
     # --- reference geometry -------------------------------------------------------------------
     @property
     def minimum_profile_shift_coefficient(self) -> float:
-        """Profile shift below which undercut is expected (historical estimate)."""
-        return (1 - sqrt(self.number_of_teeth * sin(radians(self.pressure_angle)))) / 2
+        """Smallest profile shift without undercut, ``x_min = h_aP* - z_n sin^2(alpha_n) / 2``.
+
+        ``z_n`` is the virtual number of teeth, so the limit also holds for helical gears. Smaller
+        shifts cut into the tooth root (theoretical limit; a slight undercut is often accepted).
+        """
+        return self.tool.addendum_coefficient - (
+            self.virtual_number_of_teeth * sin(radians(self.pressure_angle)) ** 2 / 2
+        )
 
     @property
     def transverse_pressure_angle(self) -> float:
