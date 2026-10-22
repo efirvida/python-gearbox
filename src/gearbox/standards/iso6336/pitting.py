@@ -116,7 +116,7 @@ def calculate_pitting(transmission: Transmission, *, static: bool = False) -> Pi
         * z_beta
         * sqrt(
             (transmission.nominal_tangential_force * (ratio + 1))
-            / (p.reference_diameter * transmission.net_face_width * ratio)
+            / (p.reference_diameter * transmission.total_face_width * ratio)
         )
     )
     load_amplification = sqrt(

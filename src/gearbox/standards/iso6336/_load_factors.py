@@ -376,13 +376,42 @@ def dynamic_factor_method_b(transmission: Transmission) -> float:
     return kv
 
 
+def shaft_deformation_equivalent_misalignment(
+    transmission: Transmission, load_per_width: float
+) -> float:
+    """Equivalent misalignment ``f_sh`` of pinion and shaft [um], ISO 6336-1 7.5.3.5.2.
+
+    Formula (59) for spur and single helical gears; formula (60) for double helical gears, with
+    ``b_B`` the smaller helix width of the pair, ``2 k_unit`` and ``B* = 1.5`` (all the power
+    through a single engagement), where ``F_m / b`` refers to the total width ``b = 2 b_B``.
+
+    Args:
+        transmission: The gear pair.
+        load_per_width: ``F_m / b`` [N/mm].
+    """
+    p = transmission.pinion
+    k_unit = 0.023  # mm um / N
+    stiffness_ratio = p.reference_diameter / p.shaft_diameter
+    shaft_constant = _SHAFT_STIFFNESS_CONSTANT[p.shaft_arrangement][
+        0 if stiffness_ratio < 1.15 else 1
+    ]
+    shaft_term = (stiffness_ratio**4) * ((p.bearing_span * p.offset) / (p.reference_diameter**2))
+    if transmission.double_helical:
+        bracket = abs(1.5 + shaft_constant * shaft_term - 0.3) + 0.3  # B* = 1.5
+        width = transmission.net_face_width  # b_B
+        return load_per_width * 2 * k_unit * bracket * (width / p.reference_diameter) ** 2  # (60)
+    bracket = abs(1 + shaft_constant * shaft_term - 0.3) + 0.3  # B* = 1
+    return load_per_width * k_unit * bracket * (p.face_width / p.reference_diameter) ** 2  # (59)
+
+
 def face_load_factor_contact(transmission: Transmission) -> float:
     """Face load factor for contact stress ``K_H_beta``, method C of ISO 6336-1 (clause 7.5).
 
     The initial equivalent misalignment ``F_beta_x`` is built from the shaft deformation ``f_sh``
     (59) and the mesh misalignment ``f_ma`` (66) with formulae (54) or (55), bounded below by
     ``F_beta_x,min`` (58); running-in (45)-(53) gives ``F_beta_y`` and formulae (41)-(44) the
-    factor.
+    factor. Double helical gears use ``b_B`` and formula (60) for ``f_sh``, and ``F_m / b`` with
+    ``b = 2 b_B``.
 
     Args:
         transmission: The gear pair.
@@ -396,17 +425,7 @@ def face_load_factor_contact(transmission: Transmission) -> float:
     load_per_width = kv * transmission.line_load  # F_m / b = F_t K_A K_gamma K_v / b
 
     b1, b2 = _LEAD_MODIFICATION_FACTORS[p.lead_modification]
-    stiffness_ratio = p.reference_diameter / p.shaft_diameter
-    shaft_constant = _SHAFT_STIFFNESS_CONSTANT[p.shaft_arrangement][
-        0 if stiffness_ratio < 1.15 else 1
-    ]
-    shaft_term = (stiffness_ratio**4) * ((p.bearing_span * p.offset) / (p.reference_diameter**2))
-    shaft_deformation = (  # f_sh, formula (59) with B* = 1
-        load_per_width
-        * 0.023
-        * (abs(1 + shaft_constant * shaft_term - 0.3) + 0.3)
-        * ((p.face_width / p.reference_diameter) ** 2)
-    )
+    shaft_deformation = shaft_deformation_equivalent_misalignment(transmission, load_per_width)
     helix_slope = (p.tolerances.helix_slope_deviation, w.tolerances.helix_slope_deviation)
     mesh_misalignment = sqrt(helix_slope[0] ** 2 + helix_slope[1] ** 2)  # f_ma, formula (66)
     reference_deviation = max(

@@ -11,7 +11,7 @@ from gearbox.standards.agma2101._factors import (
     load_distribution_factor,
     size_factor,
 )
-from gearbox.standards.agma2101._geometry import geometry_factors
+from gearbox.standards.agma2101._geometry import geometry_factors, require_supported_gears
 from gearbox.standards.agma2101._strength import (
     hardness_ratio_factors,
     pitting_stress_cycle_factor,
@@ -65,7 +65,11 @@ def calculate_pitting(transmission: Transmission) -> PittingResult:
 
     Returns:
         A :class:`PittingResult` with the stress and every factor.
+
+    Raises:
+        ValueError: For double helical gears.
     """
+    require_supported_gears(transmission)
     diameter = transmission.pinion.reference_diameter
     width = transmission.net_face_width
 

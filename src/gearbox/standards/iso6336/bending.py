@@ -361,9 +361,13 @@ def _shaper_root_section(transmission: Transmission, gear: Gear) -> tuple[float,
 
 
 def _load_bearing_width(transmission: Transmission, gear: Gear) -> float:
-    """Face width ``b`` of formula (4): the wider gear carries at most 1 module more per end."""
+    """Face width ``b`` of formula (4): the wider gear carries at most 1 module more per end.
+
+    For double helical gears ``b = 2 b_B``; the limit of the wider gear applies to each helix.
+    """
     narrow = transmission.net_face_width
-    return min(gear.face_width, narrow + 2 * transmission.module)
+    helix_width = min(gear.face_width, narrow + 2 * transmission.module)
+    return 2 * helix_width if transmission.double_helical else helix_width
 
 
 def _contact_ratio_factor(transmission: Transmission) -> float:

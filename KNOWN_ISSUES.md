@@ -48,6 +48,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-35 | ISO `σ_F0` | Face width of formula (4): the wider gear carries at most the narrower width plus 1 module per end; `Tool.residual_fillet_undercut_coefficient` adds the `s_pr` term of formula (26). | **fixed** |
 | KI-36 | `Transmission.working_center_distance` | `a_w = a cos α / cos α_wt` used the normal pressure angle; for helical gears it must be the transverse one (`a_w = a` when `x1 + x2 = 0`). Affects ε_α and everything derived from it in helical pairs (ISO bending −/+ up to 6 %). | **fixed** |
 | KI-37 | AGMA `I`, `J` | Verified against the tables of AGMA 908-B89 (spur and 15° helical, 14 cases, J to ±0.01, I to ±0.0015). Fixed: `C_r` is the operating centre distance (was the reference one); `M = 0.261 + 0.545 φ_n` (sign); the tool addendum `h_ao` is the tool's (`= h_fP`, was the gear addendum); `n_c` defaults to 10 000 (hob, was 10) and the tool tip radius to the root fillet radius (was 0); the mate outside radius is used for the wheel's virtual contact; the critical-point iteration tests `|y|`. Pinion `J` of the reference spur pair went from 1.045 to 0.57. | **fixed** (AGMA stresses change up to 80 %) |
+| KI-38 | double helical gears | New feature (`Gear.double_helical`, `face_width` = width `b_B` of each helix). Decisions, each checked against the clause: load `b = 2 b_B` (ISO 6336-1 4.2.1, 6336-2 clause 5.3, 6336-3 formula 4); `ε_β` with `b_B` (6336-2 formula 40); `f_sh` by formula (60) with `B* = 1.5` (one engagement, no multi-path `k`) and the smaller `b_B` of the pair (6336-1 7.5.3.1); `K_Fβ` with `b_B/h` (6336-1 formulae 71-72); tolerances `f_Hβ`, `f_ma` with `b_B`. Assumptions: the load is shared equally by both helices (no axial-load unbalance); the 6336-3 rule "wider gear carries at most the narrower plus 1 module per end" is applied to each helix; `C_R` uses `b_s/b_B`. AGMA 2001/908 raises `ValueError` (not implemented). | **implemented** (ISO 6336 only) |
 
 Two behaviours that are *not* defects but were surprising and are now explicit:
 
@@ -61,8 +62,7 @@ Two behaviours that are *not* defects but were surprising and are now explicit:
 * **Internal gears** (ISO 6336 and AGMA): the geometry model (`Gear`, `Transmission`, contact ratio,
   tooth root, `I` and `J`) is written for external gears. AGMA 908-B89 does not give `J` for
   internal gears either.
-* **Double helical gears**: face width, overlap ratio and `f_sh` (formula 60) would need a separate
-  half-width model.
+* **Double helical gears in AGMA 2001-D04 / 908-B89**: raise `ValueError` (ISO 6336 supports them, KI-38).
 * **`Z_B`, `Z_D` for `ε_α > 2`** (ISO 6336-2 clause 6.4): the standard states the principle only.
 * **Methods A and C of `K_Hβ`**, multi-mesh dynamic analysis (idler gears, planetary stages).
 * **Cast iron** `Z_N`, `Y_N` of AGMA 2001-D04, and the lower (critical service) edge of its `Z_N`

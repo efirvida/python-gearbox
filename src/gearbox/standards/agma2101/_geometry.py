@@ -33,6 +33,19 @@ class _Mesh:
     c_psi: float
 
 
+def require_supported_gears(transmission: Transmission) -> None:
+    """Reject the gear types AGMA 2001-D04 / 908-B89 are not implemented for.
+
+    Raises:
+        ValueError: For double helical gears (the 908-B89 factors are for single helical gears).
+    """
+    if transmission.double_helical:
+        raise ValueError(
+            "AGMA 2001-D04 no implementado para engranajes helicoidales dobles: "
+            "use ISO 6336 (double helical gears are only covered by gearbox.standards.iso6336)"
+        )
+
+
 def geometry_factors(transmission: Transmission) -> GeometryFactors:
     """Compute the pitting and bending geometry factors, AGMA 908-B89 / AGMA 2001-D04.
 

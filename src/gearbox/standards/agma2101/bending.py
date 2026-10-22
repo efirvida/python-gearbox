@@ -11,7 +11,7 @@ from gearbox.standards.agma2101._factors import (
     rim_thickness_factor,
     size_factor,
 )
-from gearbox.standards.agma2101._geometry import geometry_factors
+from gearbox.standards.agma2101._geometry import geometry_factors, require_supported_gears
 from gearbox.standards.agma2101._strength import bending_stress_cycle_factor
 from gearbox.transmission import Transmission
 
@@ -64,7 +64,11 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
 
     Returns:
         A :class:`BendingResult` with the stresses and every factor.
+
+    Raises:
+        ValueError: For double helical gears.
     """
+    require_supported_gears(transmission)
     pinion = transmission.pinion
     tangential_load = transmission.nominal_tangential_force
     application_factor = transmission.application_factor

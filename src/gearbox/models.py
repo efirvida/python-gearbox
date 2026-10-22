@@ -210,7 +210,8 @@ class Gear:
         material: Gear material.
         number_of_teeth: Number of teeth ``z``.
         module: Normal module ``m_n`` [mm].
-        face_width: Face width ``b`` [mm].
+        face_width: Face width ``b`` [mm]. For a double helical gear it is the width ``b_B`` of
+            *each* helix (without the gap); the total width is ``2 b_B``.
         quality_grade: ISO 1328-1:2013 flank tolerance class (1 to 11, e.g. 6).
         surface_roughness: Mean peak-to-valley flank roughness ``Rz`` [micrometres].
         root_surface_roughness: Roughness ``Rz`` of the tooth root fillet [micrometres] used by the
@@ -233,6 +234,9 @@ class Gear:
         assembly_condition: Mesh alignment condition (AGMA).
         lead_modification: Helix modification case (ISO).
         favorable_contact: ``True`` if the contact pattern is favourable (ISO 6336-1).
+        double_helical: ``True`` for a double helical gear (two helices of opposite hand, each of
+            width ``face_width``); ISO 6336 only, the two halves are treated as two helical gears
+            in parallel sharing the load equally (ISO 6336-1 clause 4.2.1).
     """
 
     tool: Tool
@@ -259,6 +263,7 @@ class Gear:
     assembly_condition: AssemblyCondition = AssemblyCondition.NOT_IMPROVED
     lead_modification: LeadModification = LeadModification.NONE
     favorable_contact: bool = False
+    double_helical: bool = False
 
     def __post_init__(self) -> None:
         _require_positive(
@@ -279,6 +284,9 @@ class Gear:
         object.__setattr__(self, "assembly_condition", AssemblyCondition(self.assembly_condition))
         object.__setattr__(self, "lead_modification", LeadModification(self.lead_modification))
         object.__setattr__(self, "favorable_contact", bool(self.favorable_contact))
+        object.__setattr__(self, "double_helical", bool(self.double_helical))
+        if self.double_helical and self.helix_angle == 0:
+            raise ValueError("Gear.double_helical needs a helix_angle greater than 0")
         if (self.grinding_notch_depth is None) != (self.grinding_notch_radius is None):
             raise ValueError("Give both grinding_notch_depth and grinding_notch_radius")
         if self.root_surface_roughness is None:

@@ -71,6 +71,8 @@ class Transmission:
             raise ValueError("The pressure angle of both gears must be equal")
         if self.pinion.helix_angle != self.wheel.helix_angle:
             raise ValueError("The helix angle of both gears must be equal (opposite hand)")
+        if self.pinion.double_helical != self.wheel.double_helical:
+            raise ValueError("Both gears must be double helical, or neither")
         for name in ("pinion_speed_rpm", "power_kw", "design_life_hours"):
             if not getattr(self, name) > 0:
                 raise ValueError(f"Transmission.{name} must be positive")
@@ -107,8 +109,21 @@ class Transmission:
 
     @property
     def net_face_width(self) -> float:
-        """Face width of the narrower gear [mm] (``F`` in AGMA 2001)."""
+        """Face width of the narrower gear [mm] (``F`` in AGMA 2001).
+
+        For double helical gears it is the width ``b_B`` of one helix.
+        """
         return min(self.pinion.face_width, self.wheel.face_width)
+
+    @property
+    def double_helical(self) -> bool:
+        """``True`` if both gears are double helical."""
+        return self.pinion.double_helical
+
+    @property
+    def total_face_width(self) -> float:
+        """Face width ``b`` of the load-carrying teeth [mm]: ``2 b_B`` for double helical gears."""
+        return 2 * self.net_face_width if self.double_helical else self.net_face_width
 
     @property
     def profile_shift_sum(self) -> float:
@@ -160,7 +175,7 @@ class Transmission:
 
     @property
     def overlap_ratio(self) -> float:
-        """``epsilon_beta``."""
+        """``epsilon_beta`` (ISO 6336-2 formula 40, with ``b_B`` for double helical gears)."""
         return self.net_face_width * sin(radians(self.pinion.helix_angle)) / (self.module * pi)
 
     @property
@@ -191,5 +206,8 @@ class Transmission:
 
     @property
     def line_load(self) -> float:
-        """``F_t K_A / b``, the load per unit face width as used by ISO 6336-1 method B [N/mm]."""
-        return self.external_load_factor * self.nominal_tangential_force / self.net_face_width
+        """``F_t K_A / b``, the load per unit face width as used by ISO 6336-1 method B [N/mm].
+
+        ``b = 2 b_B`` for double helical gears.
+        """
+        return self.external_load_factor * self.nominal_tangential_force / self.total_face_width
