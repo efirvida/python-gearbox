@@ -27,6 +27,9 @@ class Transmission:
         min_safety_factor_bending: Minimum required safety factor against tooth breakage,
             ``S_Fmin``.
         gearing_type: Gear unit quality class, used by the AGMA mesh alignment factor.
+        agma_quality_number: Transmission accuracy level ``Q_v`` of AGMA 2001-D04 (5 to 11, higher
+            is more accurate) for the dynamic factor. ``None`` estimates it from the ISO 1328 single
+            pitch deviation of the gears.
         flank_modification: Flank modifications of a helical pair (ISO 6336-2 table 3). Only used
             for helical gears with ``eps_beta >= 1`` or a partial overlap; the default is the
             conservative case without modifications.
@@ -43,6 +46,7 @@ class Transmission:
     min_safety_factor_bending: float = 1.0
     gearing_type: GearingType = GearingType.COMMERCIAL_ENCLOSED
     flank_modification: FlankModification = FlankModification.NONE
+    agma_quality_number: int | None = None
 
     def __post_init__(self) -> None:
         if self.pinion.module != self.wheel.module:

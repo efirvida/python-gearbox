@@ -62,3 +62,38 @@ def test_pinion_proportion_uses_the_minimum_slenderness():
     c_pf = 0.05 - 0.025
     expected = 1.0 + (c_pf * 1.1 + c_ma * 0.8)
     assert load_distribution_factor(narrow) == pytest.approx(expected, rel=1e-6)
+
+
+def test_dynamic_factor_follows_annex_a_formulae():
+    from math import sqrt
+
+    from gearbox.standards.agma2101._factors import dynamic_factor
+
+    base = scenario("spur_sr20")
+    vt = base.pitch_line_velocity * 196.85  # ft/min
+    for quality in (5, 8, 11):
+        b = 0.25 * (12 - quality) ** 0.667  # (A.3)
+        a = 50 + 56 * (1 - b)  # (A.2)
+        t = replace(base, agma_quality_number=quality)
+        assert dynamic_factor(t) == pytest.approx(((a + sqrt(vt)) / a) ** b, rel=1e-12)  # (A.1)
+
+
+def test_dynamic_factor_decreases_with_the_quality_number():
+    from gearbox.standards.agma2101._factors import dynamic_factor
+
+    base = scenario("spur_sr20")
+    values = [dynamic_factor(replace(base, agma_quality_number=q)) for q in range(5, 12)]
+    assert values == sorted(values, reverse=True)
+    assert values[-1] == pytest.approx(1.0, abs=0.05) or values[-1] > 1.0
+
+
+def test_quality_number_is_limited_to_the_range_of_the_standard():
+    from gearbox.standards.agma2101._factors import dynamic_factor
+
+    base = scenario("spur_sr20")
+    assert dynamic_factor(replace(base, agma_quality_number=3)) == dynamic_factor(
+        replace(base, agma_quality_number=5)
+    )
+    assert dynamic_factor(replace(base, agma_quality_number=14)) == dynamic_factor(
+        replace(base, agma_quality_number=11)
+    )

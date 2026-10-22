@@ -2,56 +2,53 @@
 
 from __future__ import annotations
 
-from math import ceil, log, pi, sqrt
+from math import ceil, log, sqrt
 
 from numpy import interp
 
+from gearbox.models import Gear
 from gearbox.transmission import Transmission
 
 
+def _estimated_quality_number(gear: Gear) -> float:
+    """``Q_v`` equivalent to the ISO 1328 single pitch deviation of ``gear``.
+
+    Inverts the empirical ``f_pt`` formula of ISO 1328-1 (accuracy grade ``A_v``) and uses
+    ``Q_v = 17 - A_v``, the relation between the ``B`` exponents of AGMA 2101-C95 and
+    AGMA 2001-D04 (A.3). It is an estimate, not a classification of the standard.
+    """
+    root_to_tip_diameter = gear.tip_diameter - 2 * gear.module
+    tolerance = gear.tolerances.single_pitch_deviation
+    accuracy_grade = (
+        log(abs(tolerance)) - log(0.3 * gear.module + 0.12 * sqrt(root_to_tip_diameter) + 4)
+    ) / 0.3466 + 5
+    return 17 - ceil(accuracy_grade)
+
+
 def dynamic_factor(transmission: Transmission) -> float:
-    """Dynamic factor ``K_v`` (AGMA 2001-D04, clause 15 / eq. 6).
+    """Dynamic factor ``K_v``, AGMA 2001-D04 annex A, formulae (A.1) to (A.3).
+
+    ``K_v = ((A + sqrt(v_t)) / A)^B`` with ``B = 0.25 (12 - Q_v)^0.667``, ``A = 50 + 56 (1 - B)``
+    and ``v_t`` the pitch line velocity in ft/min. ``Q_v`` is limited to 5..11 (A.2).
 
     Args:
-        transmission: The gear pair.
+        transmission: The gear pair. ``agma_quality_number`` selects ``Q_v``; if ``None`` the lower
+            of the values estimated for pinion and wheel is used.
 
     Returns:
-        The dynamic factor.
+        The dynamic factor (>= 1).
     """
-    p, w = transmission.pinion, transmission.wheel
-    single_pitch_deviation = p.tolerances.single_pitch_deviation
-    module = p.module
-    # KNOWN-ISSUE KI-15: the dynamic factor deviates from AGMA 2001-D04: the root-diameter
-    # estimate is da - 2 m and both branches below (5 < dt <= 400 or not) are identical, the
-    # alternative 0.003*dt + 5.2 form having been commented out. Single pitch deviation of the
-    # pinion is used for both gears.
-    pinion_diameter = p.tip_diameter - 2 * p.module
-    wheel_diameter = w.tip_diameter - 2 * w.module
-
-    if 5 < pinion_diameter <= 400:
-        quality_pinion = (
-            log(abs(single_pitch_deviation)) - log(0.3 * module + 0.12 * sqrt(pinion_diameter) + 4)
-        ) / 0.3466 + 5
-    else:
-        quality_pinion = (
-            log(abs(single_pitch_deviation)) - log(0.3 * module + 0.12 * sqrt(pinion_diameter) + 4)
-        ) / 0.3466 + 5
-
-    if 5 < wheel_diameter <= 400:
-        quality_wheel = (
-            log(abs(single_pitch_deviation)) - log(0.3 * module + 0.12 * sqrt(wheel_diameter) + 4)
-        ) / 0.3466 + 5
-    else:
-        quality_wheel = (
-            log(abs(single_pitch_deviation)) - log(0.3 * module + 0.12 * sqrt(wheel_diameter) + 4)
-        ) / 0.3466 + 5
-
-    transmission_accuracy = ceil(max([quality_pinion, quality_wheel]))
-    b = 0.25 * (transmission_accuracy - 5.0) ** (2.0 / 3)
-    c = 50 + 56 * (1 - b)
-    pitch_line_velocity = pi * transmission.pinion_speed_rpm * p.reference_diameter / 60000
-
-    return (c / (c + sqrt(196.85 * pitch_line_velocity))) ** (-b)
+    quality = transmission.agma_quality_number
+    if quality is None:
+        quality = min(
+            _estimated_quality_number(transmission.pinion),
+            _estimated_quality_number(transmission.wheel),
+        )
+    quality = min(max(quality, 5), 11)
+    b = 0.25 * (12 - quality) ** 0.667
+    a = 50 + 56 * (1 - b)
+    velocity_ft_per_min = transmission.pitch_line_velocity * 196.85
+    return ((a + sqrt(velocity_ft_per_min)) / a) ** b
 
 
 def size_factor(transmission: Transmission) -> float:
