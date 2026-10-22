@@ -61,9 +61,9 @@ Two behaviours that are *not* defects but were surprising and are now explicit:
 
 ## Out of scope (not implemented)
 
-* **Internal gears** (KI-39): AGMA bending (908-B89 gives no `J`), `K_v` method B, profile shift
+* **Internal gears** (KI-39): tooth interference checks between pinion and ring (needs ISO 21771, not available), AGMA bending (908-B89 gives no `J`), `K_v` method B, profile shift
   optimisation and geometry export are not available and raise `ValueError`.
-* **Double helical gears in AGMA 2001-D04 / 908-B89**: raise `ValueError` (ISO 6336 supports them, KI-38).
+* **Double helical gears in AGMA 2001-D04 / 908-B89**: raise `ValueError` (ISO 6336 supports them, KI-38). The AGMA clauses on `F` and `K_m` (pages 23-44 of the PDF) were not available.
 * **`Z_B`, `Z_D` for `ε_α > 2`** (ISO 6336-2 clause 6.4): the standard states the principle only.
 * **Methods A and C of `K_Hβ`**, multi-mesh dynamic analysis (idler gears, planetary stages).
 * **Cast iron** `Z_N`, `Y_N` of AGMA 2001-D04, and the lower (critical service) edge of its `Z_N`

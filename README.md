@@ -28,6 +28,26 @@ Strength calculation and finite-element geometry export for **spur and helical i
 | ISO 6336-3:2019 | tooth breakage, method B, external gears cut with a hob or a shaper cutter and internal gears cut with a shaper cutter; double helical gears; reference, limited-life and static stress; `Y_Sg` for grinding notches | the graphical `Y_δrelT` for static stress of `St` without a yield point |
 | AGMA 2001-D04 / 908-B89 | pitting and bending stress, `I` and `J` (checked against the 908-B89 tables), `K_v`, `K_s`, `K_m`, `K_B`, `K_o`; allowable stresses and safety factors with `Z_N`, `Y_N`, `C_H`, `K_T`, `K_R` when `s_ac`/`s_at` are given; pitting of internal gears | bending of internal gears (908-B89 gives no `J`), double helical gears, cast-iron stress cycle factors, the critical-service curves of `Z_N`, `s_ac`/`s_at` tables (the numbers must be supplied) |
 
+## Limitations and pending work
+
+Not implemented; each item that depends on a missing source says which one. Details in
+[KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
+* **Internal gears:** AGMA bending (AGMA 908-B89 gives no `J`), `K_v` method B (ISO 6336-1 only gives
+  the reduced mass of external teeth and of planetary stages), tooth interference checks between
+  pinion and ring (needs ISO 21771), profile shift optimisation and geometry export. These raise
+  `ValueError`.
+* **Double helical gears:** ISO 6336 only. AGMA raises `ValueError`: the AGMA 2001-D04 clauses on face
+  width and `K_m` for this type were not available to check the formulae.
+* **Contact ratio:** the limits by the active root diameter (ISO 6336-2 formulae 34-35) are not
+  applied; they need ISO 21771 data. Formula (33) (base circle) is.
+* **ISO 6336-2:** `Z_B`, `Z_D` for `ε_α > 2` (the standard gives no formula).
+* **ISO 6336-1:** methods A and B of `K_Hβ`, multi-mesh dynamics (idlers, planetary stages).
+* **ISO 6336-3:** graphical `Y_δrelT` for static stress of `St` without a yield point.
+* **AGMA 2001-D04:** cast-iron `Z_N`/`Y_N`, the critical-service edge of `Z_N`; the `s_ac`/`s_at`
+  tables are inputs.
+* **ISO 1328-1:** runout and tooth thickness tolerances.
+
 ## Install
 
 ```bash
