@@ -115,7 +115,7 @@ class Transmission:
         """``a_w`` [mm]."""
         return (
             self.reference_center_distance
-            * cos(radians(self.pinion.pressure_angle))
+            * cos(radians(self.pinion.transverse_pressure_angle))
             / cos(radians(self.working_pressure_angle))
         )
 

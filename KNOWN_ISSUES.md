@@ -46,6 +46,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-33 | ISO `Y_DT` | For `ε_αn > 2.5` the 2019 edition gives 0.7 (formula 74), not 0.9; the worse accuracy grade of the pair applies. | **fixed** |
 | KI-34 | ISO `Y_R_relT` | Exponent of formula (89) is 0.005 (2019), the code had 0.0058. The fillet roughness can now be given separately (`Gear.root_surface_roughness`). | **fixed** |
 | KI-35 | ISO `σ_F0` | Face width of formula (4): the wider gear carries at most the narrower width plus 1 module per end; `Tool.residual_fillet_undercut_coefficient` adds the `s_pr` term of formula (26). | **fixed** |
+| KI-36 | `Transmission.working_center_distance` | `a_w = a cos α / cos α_wt` used the normal pressure angle; for helical gears it must be the transverse one (`a_w = a` when `x1 + x2 = 0`). Affects ε_α and everything derived from it in helical pairs (ISO bending −/+ up to 6 %). | **fixed** |
 
 Two behaviours that are *not* defects but were surprising and are now explicit:
 
