@@ -322,3 +322,18 @@ def test_helical_and_double_helical_internal_pairs_are_calculated():
     )
     assert double.total_face_width == 60.0
     assert iso6336.calculate_bending(double).tooth_root_stress_wheel > 0
+
+
+def test_contact_ratio_is_limited_by_the_base_circle_of_each_flank():
+    """ISO 6336-2 formula (33): ``ξ ≤ tan(α_wt)``; a small pinion would otherwise interfere."""
+    t = build(z1=8, z2=60, x1=0.0, x2=0.0, internal=False, cutter="hob")
+    p, w = t.pinion, t.wheel
+    alpha_wt = radians(t.working_pressure_angle)
+    r_b1, r_b2 = p.base_diameter / 2, w.base_diameter / 2
+    pinion_tip = r_b1 * (tan(acos(p.base_diameter / p.tip_diameter)) - tan(alpha_wt))
+    wheel_tip = r_b2 * (tan(acos(w.base_diameter / w.tip_diameter)) - tan(alpha_wt))
+    assert wheel_tip > r_b1 * tan(alpha_wt)  # the wheel tip lies beyond the pinion tangent point
+    base_pitch = pi * MODULE * cos(radians(20.0))
+    expected = (min(pinion_tip, r_b2 * tan(alpha_wt)) + r_b1 * tan(alpha_wt)) / base_pitch
+    assert t.transverse_contact_ratio == pytest.approx(expected, rel=1e-12)
+    assert t.transverse_contact_ratio < (pinion_tip + wheel_tip) / base_pitch

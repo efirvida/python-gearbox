@@ -177,10 +177,22 @@ class Transmission:
         (36) and (38).
         """
         p, w = self.pinion, self.wheel
-        line_of_action = 0.5 * (
-            copysign(sqrt(p.tip_diameter**2 - p.base_diameter**2), p.base_diameter)
-            + copysign(sqrt(w.tip_diameter**2 - w.base_diameter**2), w.base_diameter)
-        ) - self.working_center_distance * sin(radians(self.working_pressure_angle))
+        alpha_wt = radians(self.working_pressure_angle)
+        base_radius1, base_radius2 = p.base_diameter / 2, w.base_diameter / 2
+        # Parts of the line of action on each side of the pitch point (formulae 36-38).
+        pinion_tip_part = copysign(sqrt(p.tip_diameter**2 - p.base_diameter**2), 1) / 2 - (
+            base_radius1 * tan(alpha_wt)
+        )
+        wheel_tip_part = copysign(
+            sqrt(w.tip_diameter**2 - w.base_diameter**2), base_radius2
+        ) / 2 - (base_radius2 * tan(alpha_wt))
+        if not w.internal:
+            # Formula (33): the roll angle of each flank is limited by its base circle (the
+            # tangent point of the line of action); the active root diameter limits of (34)-(35)
+            # need ISO 21771 data and are not applied.
+            pinion_tip_part = min(pinion_tip_part, base_radius2 * tan(alpha_wt))
+            wheel_tip_part = min(wheel_tip_part, base_radius1 * tan(alpha_wt))
+        line_of_action = pinion_tip_part + wheel_tip_part
         transverse_base_pitch = (
             pi
             * self.module
