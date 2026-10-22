@@ -84,6 +84,9 @@ class Material:
         contact_stress_limit: Allowable stress number for contact, ``sigma_Hlim`` [MPa].
         bending_stress_limit: Allowable stress number for bending, ``sigma_Flim`` [MPa].
         brinell_hardness: Hardness HB of the tooth flank.
+        yield_strength: Yield point ``sigma_S`` (normalized steel ``St``) or 0.2 % proof stress
+            ``sigma_0.2`` (through-hardened steel and pearlitic ductile iron) [MPa]. Only needed
+            for the static bending strength of those materials (ISO 6336-3 formulae 78 and 79).
         elastic_modulus: Young's modulus ``E`` [MPa].
         poissons_ratio: Poisson's ratio ``nu``.
         density: Mass density [kg/mm^3].
@@ -94,6 +97,7 @@ class Material:
     brinell_hardness: float
     material_type: MaterialType
     name: str = ""
+    yield_strength: float | None = None
     elastic_modulus: float = 206000.0
     poissons_ratio: float = 0.3
     density: float = 7.83e-6
@@ -210,6 +214,10 @@ class Gear:
         pressure_angle: Normal pressure angle ``alpha_n`` [deg].
         profile_shift_coefficient: Profile shift coefficient ``x``.
         web_thickness: Web thickness ``b_s`` [mm]; defaults to the face width.
+        grinding_notch_depth: Depth ``t_g`` of a grinding notch in the root fillet near the critical
+            section [mm] (ISO 6336-3 clause 7.3); with ``grinding_notch_radius`` it replaces ``Y_S``
+            by ``Y_Sg`` (formula 65).
+        grinding_notch_radius: Radius ``rho_g`` of that notch [mm].
         rim_thickness: Rim thickness ``s_R`` [mm]; ``None`` for a solid disc.
         backlash: Tooth thickness allowance used by the AGMA geometry factor [mm/mm].
         crowning: Lengthwise crowning (AGMA).
@@ -233,6 +241,8 @@ class Gear:
     pressure_angle: float = 20.0
     profile_shift_coefficient: float = 0.0
     root_surface_roughness: float | None = None
+    grinding_notch_depth: float | None = None
+    grinding_notch_radius: float | None = None
     web_thickness: float | None = None
     rim_thickness: float | None = None
     backlash: float = 0.0
@@ -260,6 +270,8 @@ class Gear:
         object.__setattr__(self, "assembly_condition", AssemblyCondition(self.assembly_condition))
         object.__setattr__(self, "lead_modification", LeadModification(self.lead_modification))
         object.__setattr__(self, "favorable_contact", bool(self.favorable_contact))
+        if (self.grinding_notch_depth is None) != (self.grinding_notch_radius is None):
+            raise ValueError("Give both grinding_notch_depth and grinding_notch_radius")
         if self.root_surface_roughness is None:
             object.__setattr__(self, "root_surface_roughness", self.surface_roughness)
         if self.web_thickness is None:

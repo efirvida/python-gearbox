@@ -79,11 +79,15 @@ class ToothRootGeometry:
     """``h_Fe`` [mm]."""
 
 
-def calculate_bending(transmission: Transmission) -> BendingResult:
+def calculate_bending(transmission: Transmission, *, static: bool = False) -> BendingResult:
     """Compute the tooth root stress and permissible stress of both gears.
 
     Args:
         transmission: The gear pair and its operating conditions.
+        static: Evaluate the permissible stress for a static load: ``Y_NT`` is the value of the
+            horizontal branch (table 3), ``Y_R_relT = Y_X = 1`` and ``Y_delta_relT`` follows
+            formulae (78) to (83), which need ``Material.yield_strength`` for ``St``, ``V`` and
+            ``GGG(perl.)``. The design life is ignored.
 
     Returns:
         A :class:`BendingResult` with the stresses and every intermediate factor.
@@ -99,18 +103,28 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
     root_p, root_w = _tooth_root_geometry(transmission, p), _tooth_root_geometry(transmission, w)
     form_pinion = _form_factor(transmission, root_p)
     form_wheel = _form_factor(transmission, root_w)
-    stress_corr_pinion = _stress_correction_factor(root_p)
-    stress_corr_wheel = _stress_correction_factor(root_w)
+    stress_corr_pinion = _stress_correction_factor(root_p, p)
+    stress_corr_wheel = _stress_correction_factor(root_w, w)
     helix = _helix_angle_factor(transmission)
     rim_pinion, rim_wheel = _rim_thickness_factor(p), _rim_thickness_factor(w)
-    notch_pinion = _relative_notch_sensitivity(p, root_p)
-    notch_wheel = _relative_notch_sensitivity(w, root_w)
+    if static:
+        notch_pinion = _static_relative_notch_sensitivity(p, stress_corr_pinion)
+        notch_wheel = _static_relative_notch_sensitivity(w, stress_corr_wheel)
+        size_pinion = size_wheel = 1.0
+    else:
+        notch_pinion = _relative_notch_sensitivity(p, root_p)
+        notch_wheel = _relative_notch_sensitivity(w, root_w)
     deep_tooth = _deep_tooth_factor(transmission)
     life_pinion = _life_factor(
-        p.material.material_type, transmission, transmission.pinion_speed_rpm
+        p.material.material_type, transmission, transmission.pinion_speed_rpm, static=static
     )
-    life_wheel = _life_factor(w.material.material_type, transmission, transmission.wheel_speed_rpm)
-    surface_pinion, surface_wheel = _relative_surface_factor(p), _relative_surface_factor(w)
+    life_wheel = _life_factor(
+        w.material.material_type, transmission, transmission.wheel_speed_rpm, static=static
+    )
+    if static:
+        surface_pinion = surface_wheel = 1.0  # formula (90)
+    else:
+        surface_pinion, surface_wheel = _relative_surface_factor(p), _relative_surface_factor(w)
 
     loads = load_factors(transmission)
     nominal_force = transmission.nominal_tangential_force
@@ -301,11 +315,17 @@ def _form_factor(transmission: Transmission, root: ToothRootGeometry) -> float:
     )
 
 
-def _stress_correction_factor(root: ToothRootGeometry) -> float:
-    """Stress correction factor ``Y_S``."""
+def _stress_correction_factor(root: ToothRootGeometry, gear: Gear) -> float:
+    """Stress correction factor ``Y_S``; ``Y_Sg`` (formula 65) with a grinding notch."""
     lever = root.tooth_root_chord / root.bending_lever_arm
     q_s = root.tooth_root_chord / (2 * root.root_fillet_radius)
-    return (1.2 + 0.13 * lever) * (q_s ** (1 / (1.21 + (2.3 / lever))))
+    stress_correction = (1.2 + 0.13 * lever) * (q_s ** (1 / (1.21 + (2.3 / lever))))  # (62)
+    if gear.grinding_notch_depth is None:
+        return stress_correction
+    notch_ratio = sqrt(gear.grinding_notch_depth / gear.grinding_notch_radius)
+    if notch_ratio >= 2.0:
+        raise ValueError("Formula (65) of ISO 6336-3 needs sqrt(t_g / rho_g) < 2")
+    return 1.3 * stress_correction / (1.3 - 0.6 * notch_ratio)  # (65)
 
 
 def _helix_angle_factor(transmission: Transmission) -> float:
@@ -357,8 +377,10 @@ def _size_factor(gear: Gear) -> float:
     return float(interp(gear.module, modules, factors))
 
 
-def _life_factor(material: M, transmission: Transmission, speed_rpm: float) -> float:
-    """Life factor ``Y_NT``."""
+def _life_factor(
+    material: M, transmission: Transmission, speed_rpm: float, *, static: bool = False
+) -> float:
+    """Life factor ``Y_NT`` (table 3 and figure 11); the static value is the first branch."""
     cycles = transmission.design_life_hours * 60 * speed_rpm
     if material in (
         M.THROUGH_HARDENED_STEEL,
@@ -378,6 +400,8 @@ def _life_factor(material: M, transmission: Transmission, speed_rpm: float) -> f
         factors, cycle_points = [1.6, 1.6, 1, 0.85], [1e2, 1e3, 3e6, 1e10]
     else:  # nitrocarburized
         factors, cycle_points = [1.1, 1.1, 1, 0.85], [1e2, 1e3, 3e6, 1e10]
+    if static:
+        return float(factors[0])
     return float(10 ** interp(log10(cycles), log10(cycle_points), log10(factors)))
 
 
@@ -443,3 +467,35 @@ def _relative_notch_sensitivity(gear: Gear, root: ToothRootGeometry) -> float:
     stress_gradient = (1 / 5.0) * (1 + 2 * q_s)
     reference_gradient = (1 / 5.0) * (1 + 2 * 2.5)
     return (1 + sqrt(slip_layer * stress_gradient)) / (1 + sqrt(slip_layer * reference_gradient))
+
+
+def _static_relative_notch_sensitivity(gear: Gear, stress_correction: float) -> float:
+    """Relative notch sensitivity factor ``Y_delta_relT`` for static stress, formulae (78)-(83).
+
+    Raises:
+        ValueError: If ``Material.yield_strength`` is missing for ``St``, ``V`` or ``GGG(perl.)``.
+    """
+    material = gear.material.material_type
+    y_s = stress_correction
+    if material in (M.NORMALIZED_STEEL, M.THROUGH_HARDENED_STEEL, M.NODULAR_CAST_IRON_PEARLITIC):
+        strength = gear.material.yield_strength
+        if strength is None:
+            raise ValueError(
+                f"The static bending strength of {material.value} needs Material.yield_strength"
+            )
+        if material is M.NORMALIZED_STEEL:
+            root = (200 / strength) ** 0.25
+            return (1 + 0.93 * (y_s - 1) * root) / (1 + 0.93 * root)  # (78)
+        root = (300 / strength) ** 0.25
+        return (1 + 0.82 * (y_s - 1) * root) / (1 + 0.82 * root)  # (79)
+    if material in (M.CASE_HARDENED_STEEL, M.FLAME_OR_INDUCTION_HARDENED_STEEL):
+        return 0.44 * y_s + 0.12  # (80)
+    if material in (
+        M.NITRIDED_STEEL,
+        M.THROUGH_HARDENED_NITRIDED_STEEL,
+        M.NITROCARBURIZED_STEEL,
+    ):
+        return 0.20 * y_s + 0.60  # (81)
+    if material is M.BLACK_MALLEABLE_CAST_IRON:
+        return 0.075 * y_s + 0.85  # (82)
+    return 1.0  # (83) GG and GGG(ferr.)

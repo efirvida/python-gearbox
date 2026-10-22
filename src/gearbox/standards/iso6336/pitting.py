@@ -71,11 +71,15 @@ class PittingResult:
     """``K_H_alpha``."""
 
 
-def calculate_pitting(transmission: Transmission) -> PittingResult:
+def calculate_pitting(transmission: Transmission, *, static: bool = False) -> PittingResult:
     """Compute the contact stress and permissible contact stress of both gears.
 
     Args:
         transmission: The gear pair and its operating conditions.
+        static: Evaluate the permissible stress for a static load (``N_L`` below the knee of the
+            S-N curve): ``Z_NT`` takes the value of the horizontal branch, ``Z_L = Z_v = Z_R = 1``
+            (formula 57) and ``Z_W`` follows the static formulae (62-64). The design life is then
+            ignored.
 
     Returns:
         A :class:`PittingResult` with the stresses and every intermediate factor.
@@ -88,12 +92,20 @@ def calculate_pitting(transmission: Transmission) -> PittingResult:
     elasticity = elasticity_coefficient(p.material, w.material)
     z_epsilon = contact_ratio_factor(transmission)
     z_beta = 1 / sqrt(cos(radians(p.helix_angle)))
-    life_pinion = life_factor(p.material.material_type, transmission, transmission.pinion_speed_rpm)
-    life_wheel = life_factor(w.material.material_type, transmission, transmission.wheel_speed_rpm)
-    lubricant = lubricant_factor(transmission)
-    velocity = velocity_factor(transmission)
-    roughness = roughness_factor(transmission)
-    hardening_pinion, hardening_wheel = work_hardening_factors(transmission)
+    life_pinion = life_factor(
+        p.material.material_type, transmission, transmission.pinion_speed_rpm, static=static
+    )
+    life_wheel = life_factor(
+        w.material.material_type, transmission, transmission.wheel_speed_rpm, static=static
+    )
+    if static:
+        lubricant = velocity = roughness = 1.0  # formula (57)
+        hardening_pinion, hardening_wheel = static_work_hardening_factors(transmission)
+    else:
+        lubricant = lubricant_factor(transmission)
+        velocity = velocity_factor(transmission)
+        roughness = roughness_factor(transmission)
+        hardening_pinion, hardening_wheel = work_hardening_factors(transmission)
     size = 1.0
 
     loads = load_factors(transmission)
@@ -222,8 +234,19 @@ def single_pair_contact_factors(transmission: Transmission) -> tuple[float, floa
     return _interpolate(m1), _interpolate(m2)
 
 
-def life_factor(material_type: MaterialType, transmission: Transmission, speed_rpm: float) -> float:
-    """Life factor ``Z_NT`` for the required number of load cycles."""
+def life_factor(
+    material_type: MaterialType,
+    transmission: Transmission,
+    speed_rpm: float,
+    *,
+    static: bool = False,
+) -> float:
+    """Life factor ``Z_NT``, ISO 6336-2:2019 table 5 and figure 6 (log-log interpolation).
+
+    Steels and pearlitic irons follow curve 2 (no pitting allowed) or, when
+    ``Transmission.limited_pitting_allowed`` is set, curve 1. The static value is the horizontal
+    branch of the curve.
+    """
     cycles = transmission.design_life_hours * 60 * speed_rpm
     if material_type is MaterialType.NITROCARBURIZED_STEEL:
         factors = [1.1, 1.1, 1, 0.85]
@@ -236,9 +259,14 @@ def life_factor(material_type: MaterialType, transmission: Transmission, speed_r
     ):
         factors = [1.3, 1.3, 1, 0.85]
         cycle_points = [1e4, 1e5, 2e6, 1e10]
-    else:
+    elif transmission.limited_pitting_allowed:  # curve 1
+        factors = [1.6, 1.6, 1.3, 1, 0.85]
+        cycle_points = [1e4, 6e5, 1e7, 1e9, 1e10]
+    else:  # curve 2
         factors = [1.6, 1.6, 1, 0.85]
         cycle_points = [1e4, 1e5, 5e7, 1e10]
+    if static:
+        return float(factors[0])
     return float(10 ** interp(log10(cycles), log10(cycle_points), log10(factors)))
 
 
@@ -347,4 +375,25 @@ def work_hardening_factors(transmission: Transmission) -> tuple[float, float]:
             return 1.0, 1.0 + slope * (ratio - 1.0)  # (65)
         return 1.0, 1.0 + 0.00698 * (ratio - 1.0)  # (68)
 
+    return 1.0, 1.0
+
+
+def static_work_hardening_factors(transmission: Transmission) -> tuple[float, float]:
+    """Work hardening factors ``(Z_W1, Z_W2)`` for static stress, ISO 6336-2 clause 13.3.1.4.
+
+    Only a surface-hardened pinion against a through-hardened steel wheel gives ``Z_W > 1``:
+    ``1.05 - (HB - 130) / 6800`` for ``130 <= HB <= 470``, 1.05 below and 1.0 above. Every other
+    combination uses 1.0 (13.3.2.4 and 13.3.3.4).
+    """
+    p, w = transmission.pinion, transmission.wheel
+    if (
+        p.material.material_type in SURFACE_HARDENED
+        and w.material.material_type in THROUGH_HARDENED_STEELS
+    ):
+        hardness = w.material.brinell_hardness
+        if hardness < 130:
+            return 1.0, 1.05  # (63)
+        if hardness > 470:
+            return 1.0, 1.0  # (64)
+        return 1.0, 1.05 - (hardness - 130) / 6800  # (62)
     return 1.0, 1.0
