@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import cos, exp, log, pi, radians, sin, sqrt
 
-from gearbox.enums import LeadModification, ShaftArrangement
+from gearbox.enums import DynamicFactorMethod, LeadModification, ShaftArrangement
 from gearbox.models import Gear
 from gearbox.standards.iso6336._materials import CAST_IRONS, STEELS_AND_PEARLITIC_IRONS
 from gearbox.transmission import Transmission
@@ -235,6 +235,60 @@ def profile_deviations(transmission: Transmission) -> ProfileDeviations:
 
 
 def dynamic_factor(transmission: Transmission) -> float:
+    """Dynamic factor ``K_v`` by the method selected in the transmission.
+
+    A value given in ``Transmission.measured_dynamic_factor`` (Method A) is used as it is.
+    """
+    if transmission.measured_dynamic_factor is not None:
+        return transmission.measured_dynamic_factor
+    if transmission.dynamic_factor_method is DynamicFactorMethod.METHOD_C:
+        return dynamic_factor_method_c(transmission)
+    return dynamic_factor_method_b(transmission)
+
+
+# K1 of table 11 by ISO 1328-1:2013 tolerance class (3 to 11) and K2.
+_K1_SPUR = {3: 2.1, 4: 3.9, 5: 7.5, 6: 14.9, 7: 26.8, 8: 39.1, 9: 52.8, 10: 76.6, 11: 102.6}
+_K1_HELICAL = {3: 1.9, 4: 3.5, 5: 6.7, 6: 13.3, 7: 23.9, 8: 34.8, 9: 47.0, 10: 68.2, 11: 91.4}
+_K2_SPUR, _K2_HELICAL = 0.0193, 0.0087
+
+
+def dynamic_factor_method_c(transmission: Transmission) -> float:
+    """Dynamic factor ``K_v``, method C of ISO 6336-1 (clause 6.6.3, formulae 35 to 38).
+
+    ``K_v = 1 + (K1 / (F_t K_A K_gamma / b) + K2) (v z1 / 100) K3 sqrt(u^2 / (1 + u^2))`` with
+    ``K1`` and ``K2`` from table 11 for the worse tolerance class of the pair. Helical gears with
+    ``eps_beta < 1`` interpolate linearly between the spur and the helical value (35). The line
+    load is not taken below 100 N/mm.
+
+    Raises:
+        ValueError: If the tolerance class is not an integer from 3 to 11.
+    """
+    p, w = transmission.pinion, transmission.wheel
+    tolerance_class = max(p.quality_grade, w.quality_grade)
+    if tolerance_class != int(tolerance_class) or not 3 <= tolerance_class <= 11:
+        raise ValueError("Method C needs an ISO 1328-1:2013 tolerance class from 3 to 11")
+    tolerance_class = int(tolerance_class)
+    line_load = max(transmission.line_load, 100.0)
+    u = transmission.gear_ratio
+    speed_term = (
+        transmission.pitch_line_velocity * p.number_of_teeth / 100 * sqrt(u**2 / (1 + u**2))
+    )
+    k3 = 2.0 if speed_term <= 0.2 else -0.357 * speed_term + 2.071  # (37), (38)
+
+    def value(k1: float, k2: float) -> float:
+        return 1 + (k1 / line_load + k2) * speed_term * k3  # (36)
+
+    spur = value(_K1_SPUR[tolerance_class], _K2_SPUR)
+    helical = value(_K1_HELICAL[tolerance_class], _K2_HELICAL)
+    overlap = transmission.overlap_ratio
+    if overlap == 0:
+        return spur
+    if overlap >= 1:
+        return helical
+    return spur - overlap * (spur - helical)  # (35)
+
+
+def dynamic_factor_method_b(transmission: Transmission) -> float:
     """Dynamic factor ``K_v``, method B of ISO 6336-1."""
     p, w = transmission.pinion, transmission.wheel
     line_load = transmission.line_load

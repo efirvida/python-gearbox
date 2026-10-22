@@ -108,7 +108,7 @@ def calculate_pitting(transmission: Transmission) -> PittingResult:
         )
     )
     load_amplification = sqrt(
-        transmission.application_factor
+        transmission.external_load_factor
         * loads.dynamic_factor
         * loads.face_load_factor_contact
         * loads.transverse_load_factor_contact

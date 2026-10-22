@@ -113,6 +113,15 @@ class FlankModification(float, Enum):
     """Helical gear sets without flank modifications."""
 
 
+class DynamicFactorMethod(str, Enum):
+    """Method used to obtain the dynamic factor ``K_v`` of ISO 6336-1 (clause 6)."""
+
+    METHOD_B = "B"
+    """Resonance analysis with the stiffness of the mesh (6.5)."""
+    METHOD_C = "C"
+    """Simplified formula by tolerance class (6.6); spur gears and helical gears alike."""
+
+
 class Standard(str, Enum):
     """Calculation standard used by the optimisation helpers."""
 

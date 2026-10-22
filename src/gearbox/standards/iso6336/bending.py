@@ -133,7 +133,7 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
         * deep_tooth
     )
     amplification = (
-        transmission.application_factor
+        transmission.external_load_factor
         * loads.dynamic_factor
         * loads.face_load_factor_root
         * loads.transverse_load_factor_root

@@ -3,6 +3,7 @@
 from gearbox.enums import (
     AssemblyCondition,
     Crowning,
+    DynamicFactorMethod,
     FlankModification,
     GearingType,
     LeadModification,
@@ -16,6 +17,7 @@ from gearbox.transmission import Transmission
 __all__ = [
     "AssemblyCondition",
     "Crowning",
+    "DynamicFactorMethod",
     "FlankModification",
     "Gear",
     "GearTolerances",

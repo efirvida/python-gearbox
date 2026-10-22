@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from math import cos, pi, radians, sin, sqrt, tan
 
-from gearbox.enums import FlankModification, GearingType
+from gearbox.enums import DynamicFactorMethod, FlankModification, GearingType
 from gearbox.mathutils import inverse_involute, involute
 from gearbox.models import Gear, Lubricant
 
@@ -27,6 +27,11 @@ class Transmission:
         min_safety_factor_bending: Minimum required safety factor against tooth breakage,
             ``S_Fmin``.
         gearing_type: Gear unit quality class, used by the AGMA mesh alignment factor.
+        mesh_load_factor: Mesh load factor ``K_gamma`` of ISO 6336-1 (uneven load sharing between
+            several load paths); 1.0 for a single mesh.
+        dynamic_factor_method: ISO 6336-1 method for ``K_v`` (B by default).
+        measured_dynamic_factor: ``K_v`` obtained by Method A (measurement or a dynamic analysis);
+            when given it replaces the calculated one.
         agma_quality_number: Transmission accuracy level ``Q_v`` of AGMA 2001-D04 (5 to 11, higher
             is more accurate) for the dynamic factor. ``None`` estimates it from the ISO 1328 single
             pitch deviation of the gears.
@@ -47,6 +52,9 @@ class Transmission:
     gearing_type: GearingType = GearingType.COMMERCIAL_ENCLOSED
     flank_modification: FlankModification = FlankModification.NONE
     agma_quality_number: int | None = None
+    mesh_load_factor: float = 1.0
+    dynamic_factor_method: DynamicFactorMethod = DynamicFactorMethod.METHOD_B
+    measured_dynamic_factor: float | None = None
 
     def __post_init__(self) -> None:
         if self.pinion.module != self.wheel.module:
@@ -59,6 +67,13 @@ class Transmission:
             if not getattr(self, name) > 0:
                 raise ValueError(f"Transmission.{name} must be positive")
         object.__setattr__(self, "gearing_type", GearingType(self.gearing_type))
+        object.__setattr__(
+            self, "dynamic_factor_method", DynamicFactorMethod(self.dynamic_factor_method)
+        )
+        if self.mesh_load_factor <= 0:
+            raise ValueError("Transmission.mesh_load_factor must be positive")
+        if self.measured_dynamic_factor is not None and self.measured_dynamic_factor < 1:
+            raise ValueError("Transmission.measured_dynamic_factor must be at least 1")
         object.__setattr__(self, "flank_modification", FlankModification(self.flank_modification))
 
     # --- kinematics ---------------------------------------------------------------------------
@@ -162,6 +177,11 @@ class Transmission:
         )
 
     @property
+    def external_load_factor(self) -> float:
+        """``K_A K_gamma``, the factors applied to the nominal load before the internal ones."""
+        return self.application_factor * self.mesh_load_factor
+
+    @property
     def line_load(self) -> float:
         """``F_t K_A / b``, the load per unit face width as used by ISO 6336-1 method B [N/mm]."""
-        return self.application_factor * self.nominal_tangential_force / self.net_face_width
+        return self.external_load_factor * self.nominal_tangential_force / self.net_face_width
