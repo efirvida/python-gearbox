@@ -19,7 +19,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-06 | ISO 1328 | `f_fβ` uses the `f_Hβ` formula. | **not a defect**: ISO 1328-1:1995 defines `f_fβ` with the same formula as `f_Hβ` |
 | KI-07 | ISO `c_γ` | `C_R`: rim thickness is divided by the module twice. | verify |
 | KI-08 | ISO `Z_E` and AGMA `C_p` | For different materials `(1-ν)` is used instead of `(1-ν²)`. | certain |
-| KI-09 | ISO `Y_F`, `Y_S`, `Y_δ` | Tool, helix angle and base helix angle of the pinion are used for the wheel. | certain |
+| KI-09 | ISO `Y_F`, `Y_S`, `Y_δ` | Tool, helix angle and base helix angle of the pinion are used for the wheel. | **fixed** |
 | KI-10 | ISO `Y_F` | `inv(α)` is evaluated with a radian argument in a function that expects degrees (`γ_e`). | certain |
 | KI-11 | ISO `Y_δrelT` | Slip-layer thickness of `St` steel: `0.445` should be `0.0445`. | certain |
 | KI-12 | ISO `K_v`, `K_Hα`, `K_Fα` | The `Material` object (not its type) was compared against the material codes when computing `y_α`, so `y_α` was always 0. Flag `_LEGACY_ZERO_PROFILE_ALLOWANCE`. | certain |

@@ -199,8 +199,7 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
     ``theta`` the angle of the critical section, ``gamma_e`` the half-angle of the tooth thickness
     at the load point.
 
-    KNOWN-ISSUE KI-09: the tool, helix angle and base helix angle of the *pinion* are used for both
-    gears.
+    The helix angle and base helix angle are those of the pinion (both gears share them).
     KNOWN-ISSUE KI-10: ``involute`` (which expects degrees) receives radians in ``gamma_e``.
     """
     p = transmission.pinion
@@ -208,9 +207,9 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
     helix = radians(p.helix_angle)
     base_helix = radians(p.base_helix_angle)
     alpha = radians(p.pressure_angle)
-    dedendum_of_tool = p.tool.dedendum_coefficient * module
-    addendum_coefficient = p.tool.addendum_coefficient
-    tool_fillet_radius = p.tool.root_fillet_radius_coefficient * module
+    dedendum_of_tool = gear.tool.dedendum_coefficient * module
+    addendum_coefficient = gear.tool.addendum_coefficient
+    tool_fillet_radius = gear.tool.root_fillet_radius_coefficient * module
     teeth = gear.number_of_teeth
     virtual_teeth = gear.virtual_number_of_teeth
     shift = gear.profile_shift_coefficient

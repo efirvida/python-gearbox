@@ -26,3 +26,16 @@ def test_ki04_roughness_factor_uses_the_weaker_material():
         ),
     )
     assert roughness_factor(softer_wheel) != pytest.approx(roughness_factor(base), rel=1e-9)
+
+
+def test_ki09_tooth_root_uses_the_tool_of_each_gear():
+    from gearbox.standards.iso6336 import calculate_bending
+
+    base = scenario("spur_sr20")
+    rounder_tool = replace(base.wheel.tool, root_fillet_radius_coefficient=0.25)
+    changed = replace(base, wheel=replace(base.wheel, tool=rounder_tool))
+    before, after = calculate_bending(base), calculate_bending(changed)
+    assert after.form_factor_pinion == pytest.approx(before.form_factor_pinion, rel=1e-12)
+    assert after.stress_correction_factor_wheel != pytest.approx(
+        before.stress_correction_factor_wheel, rel=1e-6
+    )
