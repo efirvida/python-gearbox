@@ -44,7 +44,7 @@ transmission = Transmission(
 )
 
 output = Path(__file__).parent / "output"
-fine_flank = ToothMeshSettings(flank_size=0.12)
+fine_flank = ToothMeshSettings(flank_size=0.12, surface_growth=1.3)  # finest at the flank and root
 
 # three pinion teeth in 3D (hexahedra, twisted by the helix angle)
 single = mesh_gear(

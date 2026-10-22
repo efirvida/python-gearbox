@@ -208,3 +208,35 @@ def test_default_layers_make_flank_elements_cubic(transmission, tmp_path):
     finally:
         gmsh.finalize()
     assert max(aspects) < 1.5
+
+
+def test_refined_settings_add_elements(transmission, tmp_path):
+    base = mesh_gear(transmission.pinion, tmp_path, "base", teeth=1)
+    fine = mesh_gear(transmission.pinion, tmp_path, "fine", settings=ToothMeshSettings().refined(2))
+    assert fine.element_count > 3 * base.element_count
+    assert fine.min_quality > 0.5
+    with pytest.raises(ValueError):
+        ToothMeshSettings().refined(0)
+
+
+def test_surface_growth_makes_the_first_layer_thinner(transmission, tmp_path):
+    def first_layer(growth: float) -> float:
+        settings = ToothMeshSettings(surface_growth=growth)
+        result = mesh_gear(
+            transmission.pinion, tmp_path, f"g{growth}".replace(".", "_"), settings=settings
+        )
+        flank = _nodes_of(result.paths["msh"], "FLANK")[:, :2]
+        gmsh.initialize()
+        try:
+            gmsh.option.setNumber("General.Terminal", 0)
+            gmsh.open(str(result.paths["msh"]))
+            _, coords, _ = gmsh.model.mesh.getNodes()
+        finally:
+            gmsh.finalize()
+        inside = coords.reshape(-1, 3)[:, :2]
+        distance, _ = cKDTree(flank).query(inside)
+        return float(np.min(distance[distance > 1e-9]))
+
+    assert first_layer(1.3) < 0.5 * first_layer(1.0)
+    with pytest.raises(ValueError):
+        ToothMeshSettings(surface_growth=0.9)

@@ -20,7 +20,7 @@ Gmsh is an optional dependency: ``pip install python-gearbox[fem]``.
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from math import ceil, cos, pi, radians, sin, tan
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -62,6 +62,9 @@ class ToothMeshSettings:
             tip circle uses the same number.
         rim_elements: Elements through the rim, in the radial direction. ``None`` chooses a number
             that keeps the rim elements at about four times longer than wide.
+        surface_growth: Ratio between consecutive element sizes moving from the flank and the
+            root fillet towards the inside of the tooth. 1 keeps the elements uniform; values such
+            as 1.2-1.4 make them finest at the surface, where contact and root stresses peak.
         cross_angle: Angle [deg] below the horizontal of the line that closes the flank block
             towards the tooth axis; it sets how deep the flank block reaches into the tooth.
         width_elements: Elements across the face width (3D only). ``None`` makes the layers as
@@ -77,6 +80,7 @@ class ToothMeshSettings:
     flank_size: float = 0.08
     tooth_elements: int = 10
     rim_elements: int | None = None
+    surface_growth: float = 1.0
     cross_angle: float = 30.0
     width_elements: int | None = None
     order: int = 1
@@ -91,12 +95,42 @@ class ToothMeshSettings:
             value = getattr(self, name)
             if value is not None and value < 1:
                 raise ValueError(f"{name} must be at least 1, got {value}")
+        if self.surface_growth < 1:
+            raise ValueError(f"surface_growth must be at least 1, got {self.surface_growth}")
         if not 0 < self.cross_angle < 80:
             raise ValueError(f"cross_angle must be in (0, 80) degrees, got {self.cross_angle}")
         if self.order not in (1, 2):
             raise ValueError(f"order must be 1 or 2, got {self.order}")
         if self.bore_diameter is not None and self.bore_diameter <= 0:
             raise ValueError(f"bore_diameter must be positive, got {self.bore_diameter}")
+
+    def refined(self, factor: float) -> ToothMeshSettings:
+        """Return settings with about ``factor`` times more elements per length.
+
+        The profile sizes are divided by ``factor`` and the elements across the tooth are
+        multiplied by it; the layers across the face width follow the flank size.
+
+        Args:
+            factor: Refinement factor, positive; 2 halves the element size, 0.5 doubles it.
+
+        Raises:
+            ValueError: If ``factor`` is not positive.
+        """
+        if factor <= 0:
+            raise ValueError(f"factor must be positive, got {factor}")
+        return replace(
+            self,
+            root_size=self.root_size / factor,
+            fillet_size=self.fillet_size / factor,
+            flank_size=self.flank_size / factor,
+            tooth_elements=max(1, round(self.tooth_elements * factor)),
+            rim_elements=None
+            if self.rim_elements is None
+            else max(1, round(self.rim_elements * factor)),
+            width_elements=(
+                None if self.width_elements is None else max(1, round(self.width_elements * factor))
+            ),
+        )
 
 
 @dataclass
@@ -518,7 +552,10 @@ class _SectionBuilder:
             tags += [self.geo.addPoint(x, y, 0.0) for x, y in placed[1:-1]]
             tags.append(self._point(*placed[-1]))
             curve = self.geo.addSpline(tags)
-            self.geo.mesh.setTransfiniteCurve(curve, count + 1)
+            if name == "TIP":  # runs from the flank to the axis: fine at the flank
+                self._set_divisions(curve, count + 1, s.surface_growth, from_start=True)
+            else:
+                self.geo.mesh.setTransfiniteCurve(curve, count + 1)
             curves[name] = [curve]
         a_point = self._point(*self._transform(*self._first(), axis, mirror))
         c_xy = segments["FLANK"][0][0]
@@ -550,13 +587,14 @@ class _SectionBuilder:
         rim_count = s.rim_elements or self._rim_elements(f_radius)
         for key, count in (
             ("EF", flank_count),
-            ("FC", across),
             ("FJ", base),
-            ("JA", across),
             ("IJ", rim_count + 1),
             ("FH", rim_count + 1),
         ):
             self.geo.mesh.setTransfiniteCurve(abs(lines[key]), count)
+        # both lines end on the surface (flank, root) and are graded to be finest there
+        for key in ("FC", "JA"):
+            self._set_divisions(lines[key], across, s.surface_growth, from_start=False)
         self.geo.mesh.setTransfiniteCurve(abs(bore_arc), base)
 
         base_curves = curves.get("ROOT", []) + curves.get("FILLET", [])
@@ -582,6 +620,16 @@ class _SectionBuilder:
         self._group("GEAR", 2, [tip_surface, root_surface, rim_surface])
         if self.partial:
             self._cut_groups(tooth, mirror, lines["JA"], lines["IJ"])
+
+    def _set_divisions(self, curve: int, nodes: int, growth: float, from_start: bool) -> None:
+        """Divide a curve in ``nodes - 1`` elements that grow by ``growth`` away from one end.
+
+        ``curve`` is signed as traversed; ``from_start`` selects the traversal's first end as the
+        finest one, otherwise its last end is the finest.
+        """
+        along = growth if from_start else 1 / growth
+        ratio = along if curve > 0 else 1 / along
+        self.geo.mesh.setTransfiniteCurve(abs(curve), nodes, "Progression", ratio)
 
     def _rim_elements(self, outer_radius: float) -> int:
         """Return the radial count that makes rim elements about four times longer than wide."""
