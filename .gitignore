@@ -13,3 +13,5 @@ __pycache__/
 demo/output
 docs/*.pdf
 examples/output
+docs/scribd/
+.playwright-mcp/
