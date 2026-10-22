@@ -14,7 +14,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-01 | ISO `Z_ε`, `Z_B`, `Z_D`, `K_Hα` | `epsilon_beta is 0` / `beta is 0` is never true for floats, so spur gears use the helical branch (`Z_ε = sqrt(1/ε_α)`) instead of `sqrt((4-ε_α)/3)`, and the `z1/z2 > 1.5` rule for `Z_D` is skipped. | **Z_ε fixed** (spur σ_H +12.7 %); the `Z_D` rule for `z1/z2 > 1.5` is still to verify |
 | KI-02 | ISO `K_v` | Pinion rim thickness is used for the wheel too. | **fixed** |
 | KI-03 | ISO `K_v`, `K_Hα` | `f_pb` and `f_fα` are both taken from the profile form deviation `f_fα`; the pitch and profile terms of `K_v` are therefore identical. | certain |
-| KI-04 | ISO `Z_R` | `σ_Hlim` of the pinion is used for both gears. | certain |
+| KI-04 | ISO `Z_R` | `σ_Hlim` of the pinion is used for both gears. | **fixed** |
 | KI-05 | ISO `K_v` | `N_S`: both branches evaluate to 0.85 (the formula `0.5+0.35·sqrt(F/100)` applies for loads ≥ 100 N/mm, the 0.85 for lower loads — the test is inverted). | verify |
 | KI-06 | ISO 1328 | `f_fβ` uses the `f_Hβ` formula. | **not a defect**: ISO 1328-1:1995 defines `f_fβ` with the same formula as `f_Hβ` |
 | KI-07 | ISO `c_γ` | `C_R`: rim thickness is divided by the module twice. | verify |

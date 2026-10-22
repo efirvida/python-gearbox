@@ -266,12 +266,9 @@ def velocity_factor(transmission: Transmission) -> float:
 
 
 def roughness_factor(transmission: Transmission) -> float:
-    """Roughness factor ``Z_R``.
-
-    KNOWN-ISSUE KI-04: the contact stress limit of the pinion is used for both gears.
-    """
+    """Roughness factor ``Z_R``, based on the lower contact stress limit of the pair."""
     p, w = transmission.pinion, transmission.wheel
-    weakest = p.material.contact_stress_limit
+    weakest = min(p.material.contact_stress_limit, w.material.contact_stress_limit)
     mean_roughness = (p.surface_roughness + w.surface_roughness) / 2.0
     relative_roughness = mean_roughness * (
         (10.0 / _relative_radius_of_curvature(transmission)) ** (1.0 / 3.0)
