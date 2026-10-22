@@ -39,3 +39,17 @@ def test_ki09_tooth_root_uses_the_tool_of_each_gear():
     assert after.stress_correction_factor_wheel != pytest.approx(
         before.stress_correction_factor_wheel, rel=1e-6
     )
+
+
+def test_ki11_slip_layer_of_normalized_steel_is_continuous():
+    from gearbox.standards.iso6336.bending import _slip_layer_thickness
+
+    base = scenario("spur_sr20").pinion
+
+    def thickness(limit: float) -> float:
+        material = replace(base.material, material_type="St", bending_stress_limit=limit)
+        return _slip_layer_thickness(replace(base, material=material))
+
+    assert thickness(300.0) == pytest.approx(0.0833)
+    assert thickness(400.0) == pytest.approx(0.0445)
+    assert thickness(350.0) == pytest.approx((0.0833 + 0.0445) / 2)

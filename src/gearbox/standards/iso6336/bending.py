@@ -379,10 +379,7 @@ def _relative_surface_factor(gear: Gear) -> float:
 
 
 def _slip_layer_thickness(gear: Gear) -> float:
-    """Slip-layer thickness ``rho'`` of the material [mm].
-
-    KNOWN-ISSUE KI-11: the upper value for ``St`` is 0.445 instead of 0.0445 (typo).
-    """
+    """Slip-layer thickness ``rho'`` of the material [mm]."""
     limit = gear.material.bending_stress_limit
     material = gear.material.material_type
     if material in (M.GREY_CAST_IRON, M.NODULAR_CAST_IRON_FERRITIC):
@@ -408,7 +405,7 @@ def _slip_layer_thickness(gear: Gear) -> float:
             return 0.0833
         if limit >= 400:
             return 0.0445
-        return float(interp(limit, [300, 400], [0.0833, 0.445]))
+        return float(interp(limit, [300, 400], [0.0833, 0.0445]))
     return 0.003  # case hardened / flame or induction hardened
 
 
