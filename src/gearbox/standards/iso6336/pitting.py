@@ -11,6 +11,11 @@ from gearbox.enums import MaterialType
 from gearbox.models import Gear
 from gearbox.standards._hertz import elasticity_coefficient
 from gearbox.standards.iso6336._load_factors import contact_ratio_factor, load_factors
+from gearbox.standards.iso6336._materials import (
+    DUCTILE_IRONS,
+    SURFACE_HARDENED,
+    THROUGH_HARDENED_STEELS,
+)
 from gearbox.transmission import Transmission
 
 
@@ -99,7 +104,7 @@ def calculate_pitting(transmission: Transmission) -> PittingResult:
         * z_beta
         * sqrt(
             (transmission.nominal_tangential_force * (ratio + 1))
-            / (p.reference_diameter * p.face_width * ratio)
+            / (p.reference_diameter * transmission.net_face_width * ratio)
         )
     )
     load_amplification = sqrt(
@@ -168,15 +173,26 @@ def zone_factor(transmission: Transmission) -> float:
 
 
 def single_pair_contact_factors(transmission: Transmission) -> tuple[float, float]:
-    """Single pair tooth contact factors ``(Z_B, Z_D)`` for pinion and wheel.
+    """Contact factors ``(Z_B, Z_D)`` of pinion and wheel, ISO 6336-2 clause 6.3.
 
-    KNOWN-ISSUE KI-01 (open part): the ``z1/z2 > 1.5 -> Z_D = 1`` rule that ISO 6336-2 gives for
-    spur gears is not applied; it still has to be checked against the standard.
+    * Spur gears: ``Z_B = max(M1, 1)`` and ``Z_D = max(M2, 1)`` (formulae 17-18).
+    * Helical gears with ``eps_beta >= 1``: ``Z_B = Z_D = sqrt(f_ZCa)`` (19), table 3.
+    * Helical gears with ``eps_beta < 1``: linear interpolation (20)-(23).
+
+    ``Z_D`` is only determined for ``u < 1.5``; above that ``M2`` is taken as 1.
+
+    Raises:
+        ValueError: If ``eps_alpha <= 1``, a case outside the scope of the standard.
     """
     p, w = transmission.pinion, transmission.wheel
     working = radians(transmission.working_pressure_angle)
     eps_alpha = transmission.transverse_contact_ratio
     eps_beta = transmission.overlap_ratio
+    if eps_alpha <= 1:
+        raise ValueError(
+            "ISO 6336-2 does not cover gears with a transverse contact ratio <= 1 "
+            f"(eps_alpha = {eps_alpha:.3f})"
+        )
 
     def _tip_term(gear: Gear) -> float:
         return sqrt((gear.tip_diameter**2 / gear.base_diameter**2) - 1)
@@ -189,14 +205,21 @@ def single_pair_contact_factors(transmission: Transmission) -> tuple[float, floa
         (_tip_term(w) - (2 * pi) / w.number_of_teeth)
         * (_tip_term(p) - (eps_alpha - 1) * (2 * pi) / p.number_of_teeth)
     )
-    if eps_alpha > 1 and eps_beta >= 1:
-        return 1.0, 1.0
-    if eps_alpha > 1 > eps_beta:
-        return (
-            max(m1 - eps_beta * (m1 - 1), 1.0),
-            max(m2 - eps_beta * (m2 - 1), 1.0),
-        )
-    return 0.0, 0.0
+    if transmission.gear_ratio > 1.5:
+        m2 = 1.0
+
+    root_f_zca = sqrt(float(transmission.flank_modification))
+    if eps_beta >= 1:
+        return root_f_zca, root_f_zca
+    if eps_beta == 0:
+        return max(m1, 1.0), max(m2, 1.0)
+
+    def _interpolate(m: float) -> float:
+        if m <= 1:
+            return 1 + eps_beta * (root_f_zca - 1)
+        return m + eps_beta * (root_f_zca - m)
+
+    return _interpolate(m1), _interpolate(m2)
 
 
 def life_factor(material_type: MaterialType, transmission: Transmission, speed_rpm: float) -> float:
@@ -243,7 +266,8 @@ def _lubricant_constant(transmission: Transmission) -> float:
 def lubricant_factor(transmission: Transmission) -> float:
     """Lubricant factor ``Z_L``."""
     c_zl = _lubricant_constant(transmission)
-    viscosity = transmission.lubricant.kinematic_viscosity_40c
+    # Above 500 mm^2/s the value of 500 mm^2/s applies (ISO 6336-2, 12.3.2.1.1).
+    viscosity = min(transmission.lubricant.kinematic_viscosity_40c, 500.0)
     return c_zl + 4.0 * (1.0 - c_zl) / (1.2 + 134.0 / viscosity) ** 2
 
 
@@ -272,21 +296,55 @@ def roughness_factor(transmission: Transmission) -> float:
 
 
 def work_hardening_factors(transmission: Transmission) -> tuple[float, float]:
-    """Work hardening factors ``(Z_W1, Z_W2)``."""
+    """Work hardening factors ``(Z_W1, Z_W2)`` for reference and long life stress.
+
+    ``Z_W`` takes into account the strengthening of a soft wheel meshing with a harder, smooth
+    pinion and therefore applies to the wheel only (ISO 6336-2, clause 13.3):
+
+    * surface-hardened steel pinion with through-hardened steel wheel: formulae (58)-(61);
+    * through-hardened steel pinion with through-hardened steel wheel: formulae (65)-(68);
+    * surface-hardened steel pinion with ductile iron wheel: formulae (69)-(71).
+
+    For every other combination ``Z_W = 1``.
+    """
     p, w = transmission.pinion, transmission.wheel
-    viscosity = transmission.lubricant.kinematic_viscosity_40c
-    relative_roughness = (
-        (p.surface_roughness * (10 / _relative_radius_of_curvature(transmission)) ** 0.33)
-        * (p.surface_roughness / w.surface_roughness) ** 0.66
-    ) / ((viscosity * transmission.pitch_line_velocity / 1500) ** 0.33)
-    relative_roughness = min(max(relative_roughness, 3), 16)
+    pinion_type, wheel_type = p.material.material_type, w.material.material_type
+    hardness = w.material.brinell_hardness
 
-    def _factor(hardness: float) -> float:
-        roughness_term = (3 / relative_roughness) ** 0.15
-        if hardness < 130:
-            return 1.2 * roughness_term
-        if hardness > 470:
-            return roughness_term
-        return (1.2 - (hardness - 130) / 1700) * roughness_term
+    if pinion_type in SURFACE_HARDENED and (
+        wheel_type in THROUGH_HARDENED_STEELS or wheel_type in DUCTILE_IRONS
+    ):
+        if wheel_type in THROUGH_HARDENED_STEELS:
+            viscosity = transmission.lubricant.kinematic_viscosity_40c
+            relative_roughness = (
+                (p.surface_roughness * (10 / _relative_radius_of_curvature(transmission)) ** 0.33)
+                * (p.surface_roughness / w.surface_roughness) ** 0.66
+            ) / ((viscosity * transmission.pitch_line_velocity / 1500) ** 0.33)  # (58)
+            relative_roughness = min(max(relative_roughness, 3), 16)
+            roughness_term = (3 / relative_roughness) ** 0.15
+            if hardness < 130:
+                factor = 1.2 * roughness_term  # (60)
+            elif hardness > 470:
+                factor = roughness_term  # (61)
+            else:
+                factor = (1.2 - (hardness - 130) / 1700) * roughness_term  # (59)
+        else:  # ductile iron wheel
+            if hardness < 162:
+                factor = 1.2  # (70)
+            elif hardness > 344:
+                factor = 1.0  # (71)
+            else:
+                factor = 1.2 - (1.87 * hardness - 303.6) / 1700  # (69)
+        return 1.0, max(factor, 1.0)  # Z_W < 1 is fixed at 1 (13.3.1.1)
 
-    return _factor(p.material.brinell_hardness), _factor(w.material.brinell_hardness)
+    if pinion_type in THROUGH_HARDENED_STEELS and wheel_type in THROUGH_HARDENED_STEELS:
+        hardness_ratio = p.material.brinell_hardness / hardness
+        ratio = min(transmission.gear_ratio, 20.0)
+        if hardness_ratio < 1.2:
+            return 1.0, 1.0  # (67)
+        if hardness_ratio <= 1.7:
+            slope = 0.00898 * hardness_ratio - 0.00829  # (66)
+            return 1.0, 1.0 + slope * (ratio - 1.0)  # (65)
+        return 1.0, 1.0 + 0.00698 * (ratio - 1.0)  # (68)
+
+    return 1.0, 1.0

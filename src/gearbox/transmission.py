@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from functools import cached_property
 from math import cos, pi, radians, sin, sqrt, tan
 
-from gearbox.enums import GearingType
+from gearbox.enums import FlankModification, GearingType
 from gearbox.mathutils import inverse_involute, involute
 from gearbox.models import Gear, Lubricant
 
@@ -27,6 +27,9 @@ class Transmission:
         min_safety_factor_bending: Minimum required safety factor against tooth breakage,
             ``S_Fmin``.
         gearing_type: Gear unit quality class, used by the AGMA mesh alignment factor.
+        flank_modification: Flank modifications of a helical pair (ISO 6336-2 table 3). Only used
+            for helical gears with ``eps_beta >= 1`` or a partial overlap; the default is the
+            conservative case without modifications.
     """
 
     pinion: Gear
@@ -39,6 +42,7 @@ class Transmission:
     min_safety_factor_pitting: float = 1.0
     min_safety_factor_bending: float = 1.0
     gearing_type: GearingType = GearingType.COMMERCIAL_ENCLOSED
+    flank_modification: FlankModification = FlankModification.NONE
 
     def __post_init__(self) -> None:
         if self.pinion.module != self.wheel.module:
@@ -51,6 +55,7 @@ class Transmission:
             if not getattr(self, name) > 0:
                 raise ValueError(f"Transmission.{name} must be positive")
         object.__setattr__(self, "gearing_type", GearingType(self.gearing_type))
+        object.__setattr__(self, "flank_modification", FlankModification(self.flank_modification))
 
     # --- kinematics ---------------------------------------------------------------------------
     @property
@@ -117,7 +122,7 @@ class Transmission:
         line_of_action = 0.5 * (
             sqrt(p.tip_diameter**2 - p.base_diameter**2)
             + sqrt(w.tip_diameter**2 - w.base_diameter**2)
-        ) - self.reference_center_distance * sin(radians(self.working_pressure_angle))
+        ) - self.working_center_distance * sin(radians(self.working_pressure_angle))
         transverse_base_pitch = (
             pi
             * self.module
@@ -129,7 +134,7 @@ class Transmission:
     @property
     def overlap_ratio(self) -> float:
         """``epsilon_beta``."""
-        return self.pinion.face_width * sin(radians(self.pinion.helix_angle)) / (self.module * pi)
+        return self.net_face_width * sin(radians(self.pinion.helix_angle)) / (self.module * pi)
 
     @property
     def total_contact_ratio(self) -> float:
@@ -155,4 +160,4 @@ class Transmission:
     @property
     def line_load(self) -> float:
         """``F_t K_A / b``, the load per unit face width as used by ISO 6336-1 method B [N/mm]."""
-        return self.application_factor * self.nominal_tangential_force / self.pinion.face_width
+        return self.application_factor * self.nominal_tangential_force / self.net_face_width

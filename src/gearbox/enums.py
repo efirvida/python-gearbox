@@ -98,6 +98,21 @@ class LeadModification(IntEnum):
     """``B1 = 0.7``, ``B2 = 0.7``."""
 
 
+class FlankModification(float, Enum):
+    """Profile and lead modification of helical gear sets: ``f_ZCa`` of ISO 6336-2, table 3.
+
+    The member value is ``f_ZCa``; ``Z_B = Z_D = sqrt(f_ZCa)`` for ``eps_beta >= 1``.
+    """
+
+    OPTIMIZED_BY_3D_ANALYSIS = 1.0
+    """Modifications designed with a 3D load distribution program; maximum stress near mid-height
+    of the flank and an essentially uniform stress distribution."""
+    SUITABLE_MODIFICATIONS = 1.07
+    """Suitable flank modifications according to the manufacturer's experience."""
+    NONE = 1.2
+    """Helical gear sets without flank modifications."""
+
+
 class Standard(str, Enum):
     """Calculation standard used by the optimisation helpers."""
 

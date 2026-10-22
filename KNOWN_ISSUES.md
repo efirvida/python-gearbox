@@ -11,7 +11,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 
 | ID | Where | Description | Status |
 |----|-------|-------------|--------|
-| KI-01 | ISO `Z_ε`, `Z_B`, `Z_D`, `K_Hα` | `epsilon_beta is 0` / `beta is 0` is never true for floats, so spur gears use the helical branch (`Z_ε = sqrt(1/ε_α)`) instead of `sqrt((4-ε_α)/3)`, and the `z1/z2 > 1.5` rule for `Z_D` is skipped. | **Z_ε fixed** (spur σ_H +12.7 %); the `Z_D` rule for `z1/z2 > 1.5` is still to verify |
+| KI-01 | ISO `Z_ε`, `Z_B`, `Z_D`, `K_Hα` | `epsilon_beta is 0` / `beta is 0` is never true for floats, so spur gears use the helical branch (`Z_ε = sqrt(1/ε_α)`) instead of `sqrt((4-ε_α)/3)`, and the `z1/z2 > 1.5` rule for `Z_D` is skipped. | **fixed** (`Z_ε` and the `Z_B`/`Z_D` rules of ISO 6336-2:2019, see KI-28) |
 | KI-02 | ISO `K_v` | Pinion rim thickness is used for the wheel too. | **fixed** |
 | KI-03 | ISO `K_v`, `K_Hα` | `f_pb` and `f_fα` are both taken from the profile form deviation `f_fα`; the pitch and profile terms of `K_v` are therefore identical. | **fixed** (ISO 6336-1:2019 formulae 15, 16, 18, 19: `f_pb` and `f_fα` handled separately) |
 | KI-04 | ISO `Z_R` | `σ_Hlim` of the pinion is used for both gears. | **fixed** |
@@ -37,6 +37,10 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-24 | ISO `c'`, `c_γα` | Virtual number of teeth for the stiffness: formula (81) is `z/cos³β` (the code used the bending-strength definition `z/(cosβ cos²β_b)`); `C_B` was fixed at 0.975 (formulae 88-89), no material combination (90-91) nor low-load (92) correction. | **fixed** |
 | KI-25 | ISO `B1`, `B2`; enums | Table 12 of 2019 has six lead-modification cases (the 2006 table had five); 0.1.x values 3, 4, 5 are now 4, 5, 6 and the new case 3 is `(0.5, 0.5)`. Enums `LeadModification` and `ShaftArrangement` renamed after table 12 and figure 13. | **fixed** (API change) |
 | KI-26 | ISO `K_Hβ`, `K_Hα` | `F_βx,min` of formula (58) missing; `y_β` of surface hardened steels lacked its 6 µm limit and `y_β <= F_βx`; the mean `y_β` was rounded to 0.1 µm; `F_m/b` and `F_tH/b` were limited to 100 N/mm (the standard limits only method C of `K_v` and `c'`). | **fixed** |
+| KI-27 | `Transmission.transverse_contact_ratio` | The path of contact used the reference centre distance `a` instead of the working one `a_w` (equal only when `x1 + x2 = 0`). | **fixed** (ε_α of the reference scenarios -2 %…, bending factors move up to 8 %) |
+| KI-28 | ISO `Z_B`, `Z_D` | ISO 6336-2:2019 clause 6.3: `Z_D` only for `u < 1.5` (the old rule had the ratio inverted), helical `eps_beta >= 1` gives `sqrt(f_ZCa)` (table 3; was 1, new `Transmission.flank_modification`, default without modifications = 1.2), partial overlap uses formulae 20-23; `eps_alpha <= 1` raises. | **fixed** |
+| KI-29 | ISO `Z_W` | Work hardening was applied to both gears for any material pair. ISO 6336-2:2019 clause 13.3 defines it for the wheel only and for three material combinations (formulae 58-71); `Z_W = 1` otherwise. | **fixed** |
+| KI-30 | ISO `Z_L` | Viscosities above 500 mm²/s were not limited. | **fixed** |
 
 Two behaviours that are *not* defects but were surprising and are now explicit:
 
