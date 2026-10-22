@@ -44,13 +44,16 @@ transmission = Transmission(
 )
 
 output = Path(__file__).parent / "output"
-fine_flank = ToothMeshSettings(flank_size=0.04, width_elements=24)
+fine_flank = ToothMeshSettings(flank_size=0.12)
 
 # three pinion teeth in 3D (hexahedra, twisted by the helix angle)
-single = mesh_gear(transmission.pinion, output, "pinion_sector", "3D", fine_flank, teeth=3,
-                   formats=("msh", "inp"))
-print(f"pinion sector: {single.element_count} hexahedra, min scaled Jacobian "
-      f"{single.min_quality:.2f}, groups {single.groups}")
+single = mesh_gear(
+    transmission.pinion, output, "pinion_sector", "3D", fine_flank, teeth=3, formats=("msh", "inp")
+)
+print(
+    f"pinion sector: {single.element_count} hexahedra, min scaled Jacobian "
+    f"{single.min_quality:.2f}, groups {single.groups}"
+)
 
 # pinion and wheel in meshing position, 2D
 pair = mesh_pair(transmission, output, "pair_2d", "2D", formats=("msh", "inp"))

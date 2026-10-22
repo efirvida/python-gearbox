@@ -186,3 +186,25 @@ def test_export_does_not_modify_the_gear(transmission, tmp_path):
     before = repr(transmission.pinion)
     mesh_gear(transmission.pinion, tmp_path, "x")
     assert repr(transmission.pinion) == before
+
+
+def test_default_layers_make_flank_elements_cubic(transmission, tmp_path):
+    settings = ToothMeshSettings(flank_size=0.2)
+    result = mesh_gear(transmission.pinion, tmp_path, "cubic", "3D", settings, teeth=1)
+    gmsh.initialize()
+    try:
+        gmsh.option.setNumber("General.Terminal", 0)
+        gmsh.open(str(result.paths["msh"]))
+        (dim, tag) = next(
+            g for g in gmsh.model.getPhysicalGroups() if gmsh.model.getPhysicalName(*g) == "FLANK"
+        )
+        aspects = []
+        for entity in gmsh.model.getEntitiesForPhysicalGroup(dim, tag):
+            _, _, nodes = gmsh.model.mesh.getElements(2, int(entity))
+            for quad in nodes[0].reshape(-1, 4):
+                xyz = np.array([gmsh.model.mesh.getNode(int(n))[0] for n in quad])
+                edges = [np.linalg.norm(xyz[i] - xyz[(i + 1) % 4]) for i in range(4)]
+                aspects.append(max(edges) / min(edges))
+    finally:
+        gmsh.finalize()
+    assert max(aspects) < 1.5

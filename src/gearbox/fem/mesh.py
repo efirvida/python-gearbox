@@ -64,7 +64,9 @@ class ToothMeshSettings:
             that keeps the rim elements at about four times longer than wide.
         cross_angle: Angle [deg] below the horizontal of the line that closes the flank block
             towards the tooth axis; it sets how deep the flank block reaches into the tooth.
-        width_elements: Elements across the face width (3D only).
+        width_elements: Elements across the face width (3D only). ``None`` makes the layers as
+            thick as the flank elements, so the elements at the flank are about cubic; this
+            multiplies the element count by ``face_width / flank element size``.
         order: Element order, 1 (linear) or 2 (quadratic, serendipity 8-node quads/20-node hexes).
         bore_diameter: Bore diameter [mm]. Defaults to the shaft diameter of the gear, or to half
             the root diameter if the gear has no shaft.
@@ -76,7 +78,7 @@ class ToothMeshSettings:
     tooth_elements: int = 10
     rim_elements: int | None = None
     cross_angle: float = 30.0
-    width_elements: int = 16
+    width_elements: int | None = None
     order: int = 1
     bore_diameter: float | None = None
 
@@ -296,7 +298,10 @@ def _run(
             builder.build()
             body_names.append(placement.prefix.rstrip("_") or "GEAR")
             if is_3d:
-                builder.extrude(wheel.data["b"], settings.width_elements)
+                layers = settings.width_elements or ceil(
+                    wheel.data["b"] / (settings.flank_size * wheel.data["m_n"])
+                )
+                builder.extrude(wheel.data["b"], layers)
             _merge(groups, builder.groups)
         gmsh.model.geo.synchronize()
 
