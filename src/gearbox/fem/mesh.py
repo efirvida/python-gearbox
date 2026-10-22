@@ -45,6 +45,7 @@ __all__ = ["GearMesh", "ToothMeshSettings", "mesh_gear", "mesh_pair"]
 _FORMATS = {"msh": ".msh", "inp": ".inp", "vtk": ".vtk"}
 _POINT_KEY_DECIMALS = 7
 _SEGMENTS = ("ROOT", "FILLET", "FLANK", "TIP")
+_VARIANTS = ("standard", "fillet_block")
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,12 @@ class ToothMeshSettings:
             root fillet towards the inside of the tooth. The elements are finest at the surface,
             where contact and root stresses peak; 1 keeps them uniform, 1.2-1.4 grades them
             noticeably.
+        variant: ``"standard"`` meshes the root and the fillet in one block; ``"fillet_block"``
+            gives the fillet a block of its own, split at the point where the profile tangent
+            makes ``fillet_angle`` with the tooth axis. The second variant controls the element
+            size in the critical root section independently, which suits bending analyses.
+        fillet_angle: Angle [deg] between the profile tangent and the tooth axis at the split
+            point of the ``"fillet_block"`` variant (30 is the ISO 6336-3 critical section).
         cross_angle: Angle [deg] below the horizontal of the line that closes the flank block
             towards the tooth axis; it sets how deep the flank block reaches into the tooth.
         width_elements: Elements across the face width (3D only). ``None`` makes the layers as
@@ -82,6 +89,8 @@ class ToothMeshSettings:
     tooth_elements: int = 10
     rim_elements: int | None = None
     surface_growth: float = 1.25
+    variant: str = "standard"
+    fillet_angle: float = 30.0
     cross_angle: float = 30.0
     width_elements: int | None = None
     order: int = 1
@@ -98,6 +107,10 @@ class ToothMeshSettings:
                 raise ValueError(f"{name} must be at least 1, got {value}")
         if self.surface_growth < 1:
             raise ValueError(f"surface_growth must be at least 1, got {self.surface_growth}")
+        if self.variant not in _VARIANTS:
+            raise ValueError(f"variant must be one of {_VARIANTS}, got {self.variant!r}")
+        if not 0 < self.fillet_angle < 80:
+            raise ValueError(f"fillet_angle must be in (0, 80) degrees, got {self.fillet_angle}")
         if not 0 < self.cross_angle < 80:
             raise ValueError(f"cross_angle must be in (0, 80) degrees, got {self.cross_angle}")
         if self.order not in (1, 2):
@@ -427,7 +440,9 @@ class _SectionBuilder:
             raise ValueError("bore diameter must be smaller than the root diameter")
         self.segments = self._profile_segments(module)
         self.base_divisions = sum(
-            count for name, (_, count) in self.segments.items() if name in ("ROOT", "FILLET")
+            count
+            for name, (_, count) in self.segments.items()
+            if name in ("ROOT", "FILLET", "FILLET_LOW")
         )
 
         self._points: dict[tuple[float, float], int] = {}
@@ -461,17 +476,42 @@ class _SectionBuilder:
             length = float(np.sum(np.hypot(*np.diff(piece, axis=0).T))) if end > start else 0.0
             if length < 1e-9:
                 continue
-            divisions = (
-                self.settings.tooth_elements
-                if name == "TIP"
-                else max(2, ceil(length / (sizes[name] * module)))
-            )
-            segments[name] = (_resample(piece, divisions), divisions)
+            if name == "FILLET" and self.settings.variant == "fillet_block":
+                split = self._fillet_split(piece)
+                for part, sub in (("FILLET_LOW", piece[: split + 1]), ("FILLET_UP", piece[split:])):
+                    segments[part] = self._sampled(sub, sizes["FILLET"] * module)
+                continue
+            if name == "TIP":
+                divisions = self.settings.tooth_elements
+                segments[name] = (_resample(piece, divisions), divisions)
+            else:
+                segments[name] = self._sampled(piece, sizes[name] * module)
         if "FLANK" not in segments or "TIP" not in segments:
             raise ValueError("the tooth form needs a flank and a tip circle to be meshed")
-        if "ROOT" not in segments and "FILLET" not in segments:
+        if not any(name.startswith("FILLET") for name in segments) and "ROOT" not in segments:
             raise ValueError("the tooth form needs a root circle or a fillet to be meshed")
         return segments
+
+    @staticmethod
+    def _sampled(piece: np.ndarray, size: float) -> tuple[np.ndarray, int]:
+        """Resample ``piece`` in elements of about ``size``; return ``(points, divisions)``."""
+        length = float(np.sum(np.hypot(*np.diff(piece, axis=0).T)))
+        divisions = max(2, ceil(length / size))
+        return _resample(piece, divisions), divisions
+
+    def _fillet_split(self, piece: np.ndarray) -> int:
+        """Return the index in the fillet ``piece`` where the tangent makes ``fillet_angle``.
+
+        The tangent turns from perpendicular to the tooth axis at the root towards the flank
+        direction. If it never reaches the requested angle, the middle of the fillet is used.
+        """
+        step = np.diff(piece, axis=0)
+        angle = np.degrees(np.arctan2(np.abs(step[:, 0]), np.abs(step[:, 1])))
+        below = np.nonzero(angle <= self.settings.fillet_angle)[0]
+        index = int(below[0]) if len(below) else len(piece) // 2
+        if not 1 <= index <= len(piece) - 2:
+            raise ValueError("the fillet is too short to be split for the 'fillet_block' variant")
+        return index
 
     def _transform(
         self, x: float, y: float, axis_angle: float, mirror: bool
@@ -564,6 +604,36 @@ class _SectionBuilder:
         e_point = self._point(*self._transform(*segments["TIP"][0][-1], axis, mirror))
         c_point = self._point(*self._transform(*c_xy, axis, mirror))
 
+        build = self._fillet_blocks if s.variant == "fillet_block" else self._standard_blocks
+        surfaces, bore_arc, gap_upper, gap_lower = build(
+            axis, half_pitch, curves, (a_point, c_point, d_point, e_point)
+        )
+        self.surfaces += surfaces
+
+        side = "CW" if mirror else "CCW"
+        fillet = [c for name in ("FILLET", "FILLET_LOW", "FILLET_UP") for c in curves.get(name, [])]
+        self._group("ROOT", 1, curves.get("ROOT", []))
+        self._group("FILLET", 1, fillet)
+        self._group("FLANK", 1, curves["FLANK"])
+        self._group("TIP", 1, curves["TIP"])
+        self._group(f"TOOTH{tooth + 1}_FLANK_{side}", 1, curves["FLANK"])
+        self._group("BORE", 1, [bore_arc])
+        self._group("GEAR", 2, surfaces)
+        if self.partial:
+            self._cut_groups(tooth, mirror, gap_upper, gap_lower)
+
+    def _standard_blocks(
+        self,
+        axis: float,
+        half_pitch: float,
+        curves: dict[str, list[int]],
+        corners: tuple[int, int, int, int],
+    ) -> tuple[list[int], int, int, int]:
+        """Build the tip, root-and-fillet and rim blocks; return them with the shared curves."""
+        s = self.settings
+        segments = self.segments
+        a_point, c_point, d_point, e_point = corners
+        c_xy = segments["FLANK"][0][0]
         f_radius = c_xy[1] - abs(c_xy[0]) * tan(radians(s.cross_angle))
         if f_radius <= self.bore_radius:
             raise ValueError("bore diameter too large for the tooth blocks of this gear")
@@ -611,16 +681,92 @@ class _SectionBuilder:
             [bore_arc, lines["IJ"], -lines["FJ"], lines["FH"]],
             [h_point, i_point, j_point, f_point],
         )
-        self.surfaces += [tip_surface, root_surface, rim_surface]
+        return [tip_surface, root_surface, rim_surface], bore_arc, lines["JA"], lines["IJ"]
 
-        side = "CW" if mirror else "CCW"
-        for name in ("ROOT", "FILLET", "FLANK", "TIP"):
-            self._group(name, 1, curves.get(name, []))
-        self._group(f"TOOTH{tooth + 1}_FLANK_{side}", 1, curves["FLANK"])
-        self._group("BORE", 1, [bore_arc])
-        self._group("GEAR", 2, [tip_surface, root_surface, rim_surface])
-        if self.partial:
-            self._cut_groups(tooth, mirror, lines["JA"], lines["IJ"])
+    def _fillet_blocks(
+        self,
+        axis: float,
+        half_pitch: float,
+        curves: dict[str, list[int]],
+        corners: tuple[int, int, int, int],
+    ) -> tuple[list[int], int, int, int]:
+        """Build the tip, fillet, root and rim blocks; return them with the shared curves.
+
+        Extra points: ``B`` where the profile tangent makes ``fillet_angle`` with the axis and
+        ``G`` on the axis, reached from ``B`` along the profile normal::
+
+            tip block     C-D-E-F    flank CD, tip DE, axis EF, cross line FC
+            fillet block  B-C-F-G    upper fillet BC, cross line CF, axis FG, normal GB
+            root block    A-B-G-J    root+lower fillet AB, normal BG, arc GJ, gap line JA
+            rim block     H-I-J-G    bore arc HI, gap line IJ, arc JG, axis GH
+        """
+        s = self.settings
+        segments = self.segments
+        a_point, c_point, d_point, e_point = corners
+        c_xy = segments["FLANK"][0][0]
+        b_xy = segments["FILLET_UP"][0][0]
+        b_point = self._point(*self._transform(*b_xy, axis, half_pitch < 0))
+
+        f_radius = c_xy[1] - abs(c_xy[0]) * tan(radians(s.cross_angle))
+        g_radius = b_xy[1] - abs(b_xy[0]) * tan(radians(s.fillet_angle))
+        if g_radius <= self.bore_radius:
+            raise ValueError("bore diameter too large for the tooth blocks of this gear")
+        if f_radius <= g_radius:
+            raise ValueError(
+                "the fillet block does not fit: reduce cross_angle or increase fillet_angle"
+            )
+        f_point = self._polar(f_radius, axis, 0.0)
+        g_point = self._polar(g_radius, axis, 0.0)
+        j_point = self._polar(g_radius, axis, half_pitch)
+        h_point = self._polar(self.bore_radius, axis, 0.0)
+        i_point = self._polar(self.bore_radius, axis, half_pitch)
+
+        lines = {
+            "EF": self._line(e_point, f_point),
+            "FC": self._line(f_point, c_point),
+            "CF": self._line(c_point, f_point),
+            "FG": self._line(f_point, g_point),
+            "GB": self._line(g_point, b_point),
+            "GJ": self._arc(g_point, j_point),
+            "JA": self._line(j_point, a_point),
+            "IJ": self._line(i_point, j_point),
+            "GH": self._line(g_point, h_point),
+        }
+        bore_arc = self._arc(h_point, i_point)
+        base = self.base_divisions + 1
+        across = s.tooth_elements + 1
+        rim_count = s.rim_elements or self._rim_elements(g_radius)
+        for key, count in (
+            ("EF", segments["FLANK"][1] + 1),
+            ("FG", segments["FILLET_UP"][1] + 1),
+            ("GJ", base),
+            ("IJ", rim_count + 1),
+            ("GH", rim_count + 1),
+        ):
+            self.geo.mesh.setTransfiniteCurve(abs(lines[key]), count)
+        # the lines ending on the flank, the fillet and the root are finest there
+        for key in ("FC", "GB", "JA"):
+            self._set_divisions(lines[key], across, s.surface_growth, from_start=False)
+        self.geo.mesh.setTransfiniteCurve(abs(bore_arc), base)
+
+        low = curves.get("ROOT", []) + curves["FILLET_LOW"]
+        tip = self._surface(
+            [*curves["FLANK"], *curves["TIP"], lines["EF"], lines["FC"]],
+            [c_point, d_point, e_point, f_point],
+        )
+        fillet = self._surface(
+            [*curves["FILLET_UP"], lines["CF"], lines["FG"], lines["GB"]],
+            [b_point, c_point, f_point, g_point],
+        )
+        root = self._surface(
+            [lines["JA"], *low, -lines["GB"], lines["GJ"]],
+            [a_point, b_point, g_point, j_point],
+        )
+        rim = self._surface(
+            [bore_arc, lines["IJ"], -lines["GJ"], lines["GH"]],
+            [h_point, i_point, j_point, g_point],
+        )
+        return [tip, fillet, root, rim], bore_arc, lines["JA"], lines["IJ"]
 
     def _set_divisions(self, curve: int, nodes: int, growth: float, from_start: bool) -> None:
         """Divide a curve in ``nodes - 1`` elements that grow by ``growth`` away from one end.

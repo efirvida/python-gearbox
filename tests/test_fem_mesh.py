@@ -240,3 +240,59 @@ def test_surface_growth_makes_the_first_layer_thinner(transmission, tmp_path):
     assert first_layer(1.3) < 0.5 * first_layer(1.0)
     with pytest.raises(ValueError):
         ToothMeshSettings(surface_growth=0.9)
+
+
+FILLET_BLOCK = ToothMeshSettings(variant="fillet_block")
+
+
+def test_fillet_block_variant_keeps_geometry_and_quality(transmission, tmp_path):
+    result = mesh_gear(transmission.pinion, tmp_path, "fb", settings=FILLET_BLOCK, teeth=1)
+    assert result.min_quality > 0.5
+    assert {"ROOT", "FILLET", "FLANK", "TIP", "BORE", "GEAR"} <= set(result.groups)
+    form = np.asarray(_build_wheel(transmission.pinion).formcoords)
+    dense = np.vstack([np.linspace(a, b, 40) for a, b in zip(form[:-1], form[1:], strict=True)])
+    tree = cKDTree(np.vstack([dense, dense * [-1, 1]]))
+    for group in ("ROOT", "FILLET", "FLANK", "TIP"):
+        distance, _ = tree.query(_nodes_of(result.paths["msh"], group)[:, :2])
+        assert distance.max() < 1e-3, group
+    radius = np.hypot(*_nodes_of(result.paths["msh"], "BORE")[:, :2].T)
+    assert np.allclose(radius, transmission.pinion.shaft_diameter / 2)
+
+
+def test_fillet_block_variant_adds_a_block_and_controls_fillet_size(transmission, tmp_path):
+    standard = mesh_gear(transmission.pinion, tmp_path, "s")
+    split = mesh_gear(transmission.pinion, tmp_path, "f", settings=FILLET_BLOCK)
+    assert split.element_count != standard.element_count
+    coarse = mesh_gear(
+        transmission.pinion,
+        tmp_path,
+        "c",
+        settings=ToothMeshSettings(variant="fillet_block", fillet_size=0.2),
+    )
+    fine = mesh_gear(
+        transmission.pinion,
+        tmp_path,
+        "d",
+        settings=ToothMeshSettings(variant="fillet_block", fillet_size=0.03),
+    )
+    assert fine.element_count > coarse.element_count
+
+
+def test_fillet_block_variant_works_in_3d_and_for_pairs(tmp_path):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        transmission = build_transmission(helix_angle=15.0)
+    settings = ToothMeshSettings(variant="fillet_block", width_elements=4)
+    single = mesh_gear(transmission.pinion, tmp_path, "g", "3D", settings, teeth=2)
+    assert _element_types(single.paths["msh"], 3) == {"Hexahedron 8"}
+    assert single.min_quality > 0.5
+    pair = mesh_pair(transmission, tmp_path, "p", "3D", settings, teeth=(1, 2))
+    assert pair.min_quality > 0.5
+
+
+@pytest.mark.parametrize(
+    "kwargs", [{"variant": "other"}, {"fillet_angle": 0.0}, {"fillet_angle": 90}]
+)
+def test_invalid_variant_settings_are_rejected(kwargs):
+    with pytest.raises(ValueError):
+        ToothMeshSettings(**kwargs)
