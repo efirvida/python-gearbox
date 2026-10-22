@@ -200,7 +200,6 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
     at the load point.
 
     The helix angle and base helix angle are those of the pinion (both gears share them).
-    KNOWN-ISSUE KI-10: ``involute`` (which expects degrees) receives radians in ``gamma_e``.
     """
     p = transmission.pinion
     module = p.module
@@ -244,8 +243,8 @@ def _tooth_root_geometry(transmission: Transmission, gear: Gear) -> ToothRootGeo
     load_point_pressure_angle = acos(normal_base_diameter / load_point_diameter)
     gamma_e = (
         ((0.5 * pi + 2.0 * tan(alpha) * shift) / virtual_teeth)
-        + degrees(involute(alpha))
-        - degrees(involute(load_point_pressure_angle))
+        + involute(degrees(alpha))
+        - involute(degrees(load_point_pressure_angle))
     )
     load_angle = load_point_pressure_angle - gamma_e
 
