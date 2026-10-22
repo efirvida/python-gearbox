@@ -84,6 +84,9 @@ class Material:
         contact_stress_limit: Allowable stress number for contact, ``sigma_Hlim`` [MPa].
         bending_stress_limit: Allowable stress number for bending, ``sigma_Flim`` [MPa].
         brinell_hardness: Hardness HB of the tooth flank.
+        allowable_contact_stress_number: AGMA ``s_ac`` [MPa] (AGMA 2001-D04 tables 3 to 6).
+            Optional; when given for both gears the AGMA pitting result includes the safety factor.
+        allowable_bending_stress_number: AGMA ``s_at`` [MPa]; same use for bending.
         yield_strength: Yield point ``sigma_S`` (normalized steel ``St``) or 0.2 % proof stress
             ``sigma_0.2`` (through-hardened steel and pearlitic ductile iron) [MPa]. Only needed
             for the static bending strength of those materials (ISO 6336-3 formulae 78 and 79).
@@ -98,6 +101,8 @@ class Material:
     material_type: MaterialType
     name: str = ""
     yield_strength: float | None = None
+    allowable_contact_stress_number: float | None = None
+    allowable_bending_stress_number: float | None = None
     elastic_modulus: float = 206000.0
     poissons_ratio: float = 0.3
     density: float = 7.83e-6

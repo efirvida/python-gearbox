@@ -27,6 +27,9 @@ class Transmission:
         min_safety_factor_bending: Minimum required safety factor against tooth breakage,
             ``S_Fmin``.
         gearing_type: Gear unit quality class, used by the AGMA mesh alignment factor.
+        temperature_factor: AGMA temperature factor ``K_T`` (1.0 up to 250 degF / 120 degC).
+        reliability_factor: AGMA reliability factor ``K_R``; see
+            :data:`gearbox.standards.agma2101.RELIABILITY_FACTORS`.
         limited_pitting_allowed: Whether limited pitting is acceptable (ISO 6336-2 clause 4). It
             selects the life factor curve ``Z_NT`` of through-hardened and case-hardened steels.
         mesh_load_factor: Mesh load factor ``K_gamma`` of ISO 6336-1 (uneven load sharing between
@@ -54,6 +57,8 @@ class Transmission:
     gearing_type: GearingType = GearingType.COMMERCIAL_ENCLOSED
     flank_modification: FlankModification = FlankModification.NONE
     agma_quality_number: int | None = None
+    temperature_factor: float = 1.0
+    reliability_factor: float = 1.0
     limited_pitting_allowed: bool = False
     mesh_load_factor: float = 1.0
     dynamic_factor_method: DynamicFactorMethod = DynamicFactorMethod.METHOD_B
