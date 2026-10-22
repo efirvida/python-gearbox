@@ -41,7 +41,7 @@ MESH_PROPERTIES = [
     "total_contact_ratio",
     "pitch_line_velocity",
     "nominal_tangential_force",
-    "specific_tangential_load",
+    "line_load",
     "profile_shift_sum",
 ]
 

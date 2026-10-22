@@ -153,7 +153,6 @@ class Transmission:
         )
 
     @property
-    def specific_tangential_load(self) -> float:
-        """``F_t K_A / b`` [N/mm], limited below to 100 N/mm as in ISO 6336-1."""
-        load = self.application_factor * self.nominal_tangential_force / self.pinion.face_width
-        return max(load, 100.0)
+    def line_load(self) -> float:
+        """``F_t K_A / b``, the load per unit face width as used by ISO 6336-1 method B [N/mm]."""
+        return self.application_factor * self.nominal_tangential_force / self.pinion.face_width

@@ -19,11 +19,6 @@ from gearbox.standards.iso6336._materials import (
 )
 from gearbox.transmission import Transmission
 
-# KNOWN-ISSUE KI-12: earlier releases compared the Material *object* (not its type) against the
-# material codes when computing y_alpha for K_v, K_H_alpha and K_F_alpha, so y_alpha was always 0.
-# Set to False to apply the allowance of ISO 6336-1 (this changes the numerical results).
-_LEGACY_ZERO_PROFILE_ALLOWANCE = True
-
 # (b1, b2) factors for each lead-modification case.
 _LEAD_MODIFICATION_FACTORS = {
     LeadModification.MODIFICATION_1: (1.0, 1.0),
@@ -129,48 +124,85 @@ def _lead_running_in_allowance(gear: Gear, speed: float, lead_deviation: float) 
     return allowance
 
 
-def _profile_running_in_allowance(gear: Gear, speed: float, pitch_deviation: float) -> float:
-    """``y_alpha`` of one gear: running-in allowance of the profile/pitch deviation [um]."""
+def _profile_running_in_allowance(gear: Gear, speed: float, deviation: float) -> float:
+    """Running-in allowance ``y_alpha`` (or ``y_f``) of one gear, ISO 6336-1 formulae (77)-(79).
+
+    Args:
+        gear: The gear (its material selects the formula).
+        speed: Pitch line velocity [m/s].
+        deviation: Base pitch deviation ``f_pb`` (for ``y_alpha``) or profile form deviation
+            ``f_f_alpha`` (for ``y_f``) [um].
+
+    Returns:
+        The allowance [um].
+    """
     group = gear.material.material_type
     limit = gear.material.contact_stress_limit
-    allowance = 0.0
     if group in STEELS_AND_PEARLITIC_IRONS:
-        allowance = 160 / (limit * pitch_deviation)
-        if 5 < speed <= 10 and allowance > 12800 / limit:
-            allowance = 12800 / limit
-        elif 10 < speed and allowance > 6400 / limit:
-            allowance = 6400 / limit
+        allowance = 160 / limit * deviation
+        if 5 < speed <= 10:
+            allowance = min(allowance, 12800 / limit)
+        elif speed > 10:
+            allowance = min(allowance, 6400 / limit)
     elif group in CAST_IRONS:
-        allowance = 0.275 * pitch_deviation
-        if 5 < speed <= 10 and allowance > 12800 / limit:
-            allowance = 22
-        elif 10 < speed and allowance > 6400 / limit:
-            allowance = 11
-    elif group in SURFACE_HARDENED:
-        allowance = min(0.075 * pitch_deviation, 3)
+        allowance = 0.275 * deviation
+        if 5 < speed <= 10:
+            allowance = min(allowance, 22.0)
+        elif speed > 10:
+            allowance = min(allowance, 11.0)
+    else:
+        allowance = min(0.075 * deviation, 3.0)
     return allowance
 
 
-def _mean_profile_running_in_allowance(transmission: Transmission) -> tuple[float, float]:
-    """Return ``(y_alpha, f_pb)`` of the pair: mean allowance and the governing deviation."""
+@dataclass(frozen=True)
+class ProfileDeviations:
+    """Effective deviations of the pair after running-in (ISO 6336-1, formulae 18 and 19)."""
+
+    base_pitch: float
+    """``f_pb``, the larger base pitch deviation (``f_pt`` may be used) [um]."""
+    base_pitch_allowance: float
+    """``y_p = y_alpha`` [um]."""
+    profile_form: float
+    """``f_f_alpha``, the larger profile form deviation [um]."""
+    profile_form_allowance: float
+    """``y_f`` [um]."""
+
+    @property
+    def effective_base_pitch(self) -> float:
+        """``f_pb,eff = f_pb - y_p``."""
+        return self.base_pitch - self.base_pitch_allowance
+
+    @property
+    def effective_profile_form(self) -> float:
+        """``f_f_alpha,eff = f_f_alpha - y_f``."""
+        return self.profile_form - self.profile_form_allowance
+
+
+def profile_deviations(transmission: Transmission) -> ProfileDeviations:
+    """Governing profile deviations of the pair and their running-in allowances."""
     p, w = transmission.pinion, transmission.wheel
-    # KNOWN-ISSUE KI-03: the profile form deviation f_f_alpha stands in for the base pitch
-    # deviation.
-    deviation = max(p.tolerances.profile_form_deviation, w.tolerances.profile_form_deviation)
-    if _LEGACY_ZERO_PROFILE_ALLOWANCE:
-        return 0.0, deviation
     speed = transmission.pitch_line_velocity
-    allowance = 0.5 * (
-        _profile_running_in_allowance(w, speed, deviation)
-        + _profile_running_in_allowance(p, speed, deviation)
+
+    def mean_allowance(deviation: float) -> float:
+        return 0.5 * (
+            _profile_running_in_allowance(p, speed, deviation)
+            + _profile_running_in_allowance(w, speed, deviation)
+        )
+
+    base_pitch = max(p.tolerances.single_pitch_deviation, w.tolerances.single_pitch_deviation)
+    profile_form = max(p.tolerances.profile_form_deviation, w.tolerances.profile_form_deviation)
+    # ISO 6336-1, 8.3.2 note: a larger profile form deviation replaces the base pitch deviation.
+    base_pitch = max(base_pitch, profile_form)
+    return ProfileDeviations(
+        base_pitch, mean_allowance(base_pitch), profile_form, mean_allowance(profile_form)
     )
-    return allowance, deviation
 
 
 def dynamic_factor(transmission: Transmission) -> float:
     """Dynamic factor ``K_v``, method B of ISO 6336-1."""
     p, w = transmission.pinion, transmission.wheel
-    specific_load = transmission.specific_tangential_load
+    line_load = transmission.line_load
     total_contact_ratio = transmission.total_contact_ratio
     stiffness = mesh_stiffness(transmission)
 
@@ -200,9 +232,9 @@ def dynamic_factor(transmission: Transmission) -> float:
     )
     resonance_ratio = transmission.pinion_speed_rpm / resonance_speed
 
-    # KNOWN-ISSUE KI-05: both branches yield 0.85 (the first one is meant for loads >= 100 N/mm).
-    if specific_load == 100:
-        subcritical_limit = 0.5 + 0.35 * sqrt(specific_load / 100)
+    # ISO 6336-1 formulae (11) and (12).
+    if line_load < 100:
+        subcritical_limit = 0.5 + 0.35 * sqrt(line_load / 100)
     else:
         subcritical_limit = 0.85
 
@@ -228,16 +260,15 @@ def dynamic_factor(transmission: Transmission) -> float:
         return 1.0 / 8 * (((gear.material.contact_stress_limit / 97.0) - 18.45) ** 2) + 1.5
 
     c_ay = 0.5 * (_allowance_coefficient(p) + _allowance_coefficient(w))
-    profile_allowance, deviation = _mean_profile_running_in_allowance(transmission)
-    effective_deviation = deviation - profile_allowance
-    # KNOWN-ISSUE KI-03: the pitch and the profile terms are computed from the same deviation.
-    pitch_term = stiffness.single_stiffness * effective_deviation / specific_load
-    profile_term = stiffness.single_stiffness * effective_deviation / specific_load
+    deviations = profile_deviations(transmission)
+    single = stiffness.single_stiffness
+    pitch_term = single * deviations.effective_base_pitch / line_load  # B_p, formula (15)
+    profile_term = single * deviations.effective_profile_form / line_load  # B_f, formula (16)
 
     if p.quality_grade >= 6:
         kb = 1.0
     else:
-        kb = abs(1 - (stiffness.single_stiffness * c_ay / specific_load))
+        kb = abs(1 - (single * c_ay / line_load))
 
     if resonance_ratio <= subcritical_limit:
         kv = resonance_ratio * (cv1 * pitch_term + cv2 * profile_term + cv3 * kb) + 1
@@ -249,13 +280,17 @@ def dynamic_factor(transmission: Transmission) -> float:
         supercritical = cv5 * pitch_term + cv6 * profile_term + cv7
         resonant = cv1 * pitch_term + cv2 * profile_term + cv4 * kb + 1
         kv = supercritical + ((resonant - supercritical) / 0.35) * (1.5 - resonance_ratio)
+    # ISO 6336-1, 6.2.6 and 6.3: K_v < 1 is taken as 1; K_v > 2 outside the resonance range as 2.
+    kv = max(kv, 1.0)
+    if resonance_ratio <= subcritical_limit or resonance_ratio >= 1.5:
+        kv = min(kv, 2.0)
     return kv
 
 
 def face_load_factor_contact(transmission: Transmission) -> float:
     """Face load factor for contact stress ``K_H_beta`` (ISO 6336-1, method C)."""
     p, w = transmission.pinion, transmission.wheel
-    specific_load = transmission.specific_tangential_load
+    specific_load = max(transmission.line_load, 100.0)
     kv = dynamic_factor(transmission)
     c_gamma_beta = mesh_stiffness(transmission).face_mesh_stiffness
     load_per_width = max(kv * specific_load, 100.0)
@@ -313,9 +348,9 @@ def _transverse_load_distribution(transmission: Transmission) -> float:
     kv = dynamic_factor(transmission)
     face_load_contact = face_load_factor_contact(transmission)
     mesh = mesh_stiffness(transmission).mesh_stiffness
-    profile_allowance, deviation = _mean_profile_running_in_allowance(transmission)
-    load_per_width = max(kv * transmission.specific_tangential_load, 100.0)
-    return (mesh * (deviation - profile_allowance)) / (load_per_width * face_load_contact)
+    effective_deviation = profile_deviations(transmission).effective_base_pitch
+    load_per_width = max(kv * transmission.line_load, 100.0)
+    return (mesh * effective_deviation) / (load_per_width * face_load_contact)
 
 
 def _transverse_load_factor(transmission: Transmission, upper_limit: float) -> float:

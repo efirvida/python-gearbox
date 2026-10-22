@@ -13,16 +13,16 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 |----|-------|-------------|--------|
 | KI-01 | ISO `Z_ε`, `Z_B`, `Z_D`, `K_Hα` | `epsilon_beta is 0` / `beta is 0` is never true for floats, so spur gears use the helical branch (`Z_ε = sqrt(1/ε_α)`) instead of `sqrt((4-ε_α)/3)`, and the `z1/z2 > 1.5` rule for `Z_D` is skipped. | **Z_ε fixed** (spur σ_H +12.7 %); the `Z_D` rule for `z1/z2 > 1.5` is still to verify |
 | KI-02 | ISO `K_v` | Pinion rim thickness is used for the wheel too. | **fixed** |
-| KI-03 | ISO `K_v`, `K_Hα` | `f_pb` and `f_fα` are both taken from the profile form deviation `f_fα`; the pitch and profile terms of `K_v` are therefore identical. | certain |
+| KI-03 | ISO `K_v`, `K_Hα` | `f_pb` and `f_fα` are both taken from the profile form deviation `f_fα`; the pitch and profile terms of `K_v` are therefore identical. | **fixed** (ISO 6336-1:2019 formulae 15, 16, 18, 19: `f_pb` and `f_fα` handled separately) |
 | KI-04 | ISO `Z_R` | `σ_Hlim` of the pinion is used for both gears. | **fixed** |
-| KI-05 | ISO `K_v` | `N_S`: both branches evaluate to 0.85 (the formula `0.5+0.35·sqrt(F/100)` applies for loads ≥ 100 N/mm, the 0.85 for lower loads — the test is inverted). | verify |
+| KI-05 | ISO `K_v` | `N_S`: both branches evaluate to 0.85 (the formula `0.5+0.35·sqrt(F/100)` applies for loads ≥ 100 N/mm, the 0.85 for lower loads — the test is inverted). | **fixed** (formulae 11 and 12; `K_v` uses the actual line load, limited to 1 ≤ K_v ≤ 2 outside resonance, 6.2.6 and 6.3) |
 | KI-06 | ISO 1328 | `f_fβ` uses the `f_Hβ` formula. | **not a defect**: ISO 1328-1:1995 defines `f_fβ` with the same formula as `f_Hβ` |
 | KI-07 | ISO `c_γ` | `C_R`: rim thickness is divided by the module twice. | verify |
 | KI-08 | ISO `Z_E` and AGMA `C_p` | For different materials `(1-ν)` is used instead of `(1-ν²)`. | **fixed** (shared `standards/_hertz.py`) |
 | KI-09 | ISO `Y_F`, `Y_S`, `Y_δ` | Tool, helix angle and base helix angle of the pinion are used for the wheel. | **fixed** |
 | KI-10 | ISO `Y_F` | `inv(α)` is evaluated with a radian argument in a function that expects degrees (`γ_e`). | **fixed** (Y_S, Y_F; bending safety factors -1 % to -7 %) |
 | KI-11 | ISO `Y_δrelT` | Slip-layer thickness of `St` steel: `0.445` should be `0.0445`. | **fixed** |
-| KI-12 | ISO `K_v`, `K_Hα`, `K_Fα` | The `Material` object (not its type) was compared against the material codes when computing `y_α`, so `y_α` was always 0. Flag `_LEGACY_ZERO_PROFILE_ALLOWANCE`. | certain |
+| KI-12 | ISO `K_v`, `K_Hα`, `K_Fα` | The `Material` object (not its type) was compared against the material codes when computing `y_α`, so `y_α` was always 0. Flag `_LEGACY_ZERO_PROFILE_ALLOWANCE`. | **fixed** (`y_α` now applied; ISO 6336-1:2019 formulae 77-79) |
 | KI-13 | AGMA | `web_thickness` (`b_s`) is used as the face width; the pitting formula takes it from the wheel, bending from the pinion. | **fixed** (`Transmission.net_face_width`) |
 | KI-14 | AGMA `C_ma` | `(c·b)²` is mis-parenthesised; the standard has `c·b²`. | **fixed** (verified against AGMA 2001-D04 eq. 42 and table 2; SI constants were already right) |
 | KI-15 | AGMA | **Dynamic factor**: the code uses `B = 0.25(A_v-5)^(2/3)` with `A_v` derived from ISO `f_pt`, while AGMA 2001-D04 eq. A.3 is `B = 0.25(12-Q_v)^(2/3)`; the ISO-grade → `Q_v` mapping needs a decision (proposal: let the user give `Q_v`). Also: both `5 < dt <= 400` branches are identical, pinion `f_pt` is used for both gears, `d_root ≈ d_a - 2m`. **Geometry factors I and J**: wheel J uses the pinion `ro2`, the iteration stops on a signed residual, pinion J = 1.045 (> 1) for `spur_sr0`; needs AGMA 908-B89. **Rim factor**: solid disc uses `d_f - d_shaft`. | verify |
@@ -33,6 +33,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-20 | `export` | Tool fillet radius and bottom clearance are exported as coefficients, not multiplied by the module. | verify |
 | KI-21 | edition | The code follows ISO 6336:2006 and AGMA 2101-D04 (metric edition of AGMA 2001-D04). ISO 6336:2019 changed several factors. | — |
 | KI-22 | AGMA `C_pf` | `F/(10d)` was not limited to a minimum of 0.05 (AGMA 2001-D04 clause 15.3). | **fixed** (only slender pinions change: `spur_grey_iron` σ_H +0.2 %) |
+| KI-23 | ISO `y_α` | Formula (77) was `160 / (σ_Hlim · f_pb)` instead of `160 / σ_Hlim · f_pb`; for cast irons the limits 22 µm and 11 µm were compared with `12 800/σ_Hlim` and `6 400/σ_Hlim`. | **fixed** (found while fixing KI-12) |
 
 Two behaviours that are *not* defects but were surprising and are now explicit:
 

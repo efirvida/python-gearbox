@@ -68,3 +68,62 @@ def test_ki08_elasticity_coefficient_for_dissimilar_materials():
     assert elasticity_coefficient(base, base) == pytest.approx(
         sqrt(206000.0 / (2 * pi * (1 - 0.3**2))), rel=1e-12
     )
+
+
+def _gear_with(material_type, contact_limit):
+    base = scenario("spur_sr20").pinion
+    return replace(
+        base,
+        material=replace(
+            base.material, material_type=material_type, contact_stress_limit=contact_limit
+        ),
+    )
+
+
+def test_ki12_running_in_allowance_follows_iso6336_1_formulae_77_to_79():
+    from gearbox.standards.iso6336._load_factors import _profile_running_in_allowance as y
+
+    steel = _gear_with("V", 1000.0)
+    assert y(steel, 3.0, 20.0) == pytest.approx(160 / 1000 * 20.0)  # (77)
+    assert y(steel, 7.0, 80.0) == pytest.approx(12800 / 1000)  # limit for 5 < v <= 10
+    assert y(steel, 12.0, 80.0) == pytest.approx(6400 / 1000)  # limit for v > 10
+
+    iron = _gear_with("GG", 300.0)
+    assert y(iron, 3.0, 20.0) == pytest.approx(0.275 * 20.0)  # (78)
+    assert y(iron, 7.0, 200.0) == pytest.approx(22.0)
+    assert y(iron, 12.0, 200.0) == pytest.approx(11.0)
+
+    hardened = _gear_with("Eh", 1500.0)
+    assert y(hardened, 3.0, 20.0) == pytest.approx(0.075 * 20.0)  # (79)
+    assert y(hardened, 3.0, 100.0) == pytest.approx(3.0)
+
+
+def test_ki03_pitch_and_profile_terms_use_different_deviations():
+    from gearbox.standards.iso6336._load_factors import profile_deviations
+
+    deviations = profile_deviations(scenario("helical_through_through"))
+    assert deviations.base_pitch >= deviations.profile_form
+    assert deviations.effective_base_pitch == pytest.approx(
+        deviations.base_pitch - deviations.base_pitch_allowance
+    )
+    assert deviations.effective_profile_form == pytest.approx(
+        deviations.profile_form - deviations.profile_form_allowance
+    )
+
+
+def test_ki05_lightly_loaded_gears_use_the_actual_line_load():
+    from gearbox.standards.iso6336._load_factors import dynamic_factor
+
+    base = scenario("spur_sr20")
+    light = replace(base, power_kw=1.0)
+    assert light.line_load < 100 < base.line_load
+    # K_v is computed with the actual (unclamped) load and never drops below 1
+    assert dynamic_factor(light) >= 1.0
+    assert dynamic_factor(light) != pytest.approx(dynamic_factor(base), rel=1e-6)
+
+
+def test_dynamic_factor_is_limited_to_two_outside_resonance():
+    from gearbox.standards.iso6336._load_factors import dynamic_factor
+
+    base = scenario("spur_sr20")
+    assert dynamic_factor(replace(base, power_kw=0.05)) <= 2.0
