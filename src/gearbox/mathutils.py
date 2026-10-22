@@ -24,27 +24,27 @@ def involute(angle: float) -> float:
     return tan(radians(angle)) - radians(angle)
 
 
-def inverse_involute(value: float, tolerance: float = 1e-5) -> float:
+def inverse_involute(value: float, tolerance: float = 0.0) -> float:
     """Return the angle whose involute function equals ``value``.
 
-    Solved by bisection on ``[0, pi/2]``. The default ``tolerance`` is the one historically used by
-    this library; it limits the result to roughly 5 significant digits. It is kept so that the
-    reference results of earlier releases are reproduced exactly.
+    Solved by bisection on ``[0, pi/2]``, down to machine precision unless a looser tolerance is
+    requested.
 
     Args:
         value: Involute function value (radians).
-        tolerance: Absolute tolerance on the involute function.
+        tolerance: Optional absolute tolerance on the involute function to stop earlier.
 
     Returns:
         The pressure angle in **degrees**.
     """
     lower = 0.0
     upper = pi / 2
-    difference = value
     angle = 0.0
-    while abs(difference) > tolerance:
+    for _ in range(100):
         angle = (lower + upper) / 2
         difference = tan(angle) - angle - value
+        if abs(difference) <= tolerance:
+            break
         if difference > 0:
             upper = angle
         else:

@@ -26,7 +26,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-13 | AGMA | `web_thickness` (`b_s`) is used as the face width; the pitting formula takes it from the wheel, bending from the pinion. | **fixed** (`Transmission.net_face_width`) |
 | KI-14 | AGMA `C_ma` | `(c·b)²` is mis-parenthesised; the standard has `c·b²`. | **fixed** (verified against AGMA 2001-D04 eq. 42 and table 2; SI constants were already right) |
 | KI-15 | AGMA | Dynamic factor (identical branches, `d_root ≈ d_a − 2m`, pinion `f_pt` for both gears); solid-disc rim thickness; J-factor loop stops on a signed residual; wheel J uses pinion `ro2`; pinion J = 1.045 (>1) for the `spur_sr0` case. | verify |
-| KI-16 | `inverse_involute` | Bisection tolerance `1e-5` limits `α_wt` (and everything derived from it) to ~5 digits. | certain |
+| KI-16 | `inverse_involute` | Bisection tolerance `1e-5` limits `α_wt` (and everything derived from it) to ~5 digits. | **fixed** (tolerance 1e-12; results move up to ~0.03 %) |
 | KI-17 | `optimization` | `minimum_contact_stress_profile_shifts` compares only the two ends of the interval, so it is only valid for monotonic stress; for the pair of `examples/03` it returns `x1 = -0.87` while a scan shows the minimum near `x1 = +0.3`. `maximum_tip_land_profile_shifts` does not converge for some helical pairs (now raises `RuntimeError` instead of looping forever). | certain |
 | KI-18 | `Gear.minimum_profile_shift_coefficient` | Formula `(1 - sqrt(z·sinα))/2` is not the usual undercut limit `(14 - z)/17`-type expression `h_a*(z_min - z)/z_min`, `z_min = 2/sin²α`. | verify |
 | KI-19 | `Gear.tolerances` | ISO 1328-1:1995 formulas; ISO 1328-1:2013 changed them. Intervals out of range used to return `None` (now `ValueError`). | verify |
