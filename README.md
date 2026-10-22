@@ -15,13 +15,14 @@ Strength calculation and finite-element geometry export for **spur and helical i
 > **Status:** version 0.2 is a refactor of the original code (Python ≥ 3.10, typed immutable models,
 > descriptive names, test suite) and an update of the ISO 6336 implementation from the 2006 to the
 > **2019 edition**. Numbers therefore differ from 0.1.x: every change is listed in
-> [KNOWN_ISSUES.md](KNOWN_ISSUES.md) with its effect. The ISO 1328 tolerance formulas still follow
-> the 1995 edition (KI-19); read the known issues before relying on the numbers.
+> [KNOWN_ISSUES.md](KNOWN_ISSUES.md) with its effect. Flank tolerances follow ISO 1328-1:2013. Read the
+> known issues before relying on the numbers.
 
 ## Scope
 
 | Standard | Implemented | Not implemented |
 |----------|-------------|-----------------|
+| ISO 1328-1:2013 | flank tolerances `f_pT`, `F_pT`, `F_αT`, `F_βT`, `f_fαT`, `f_HαT`, `f_HβT`, `f_fβT` (formulae 5-12) | runout, tooth thickness |
 | ISO 6336-1:2019 | `K_v` (method B), `K_Hβ`/`K_Fβ` (method C), `K_Hα`/`K_Fα` (method B), tooth stiffness `c'`, `c_γα`, `c_γβ` (method B) | methods A and C of `K_v`, `K_γ` ≠ 1, internal and double helical gears |
 | ISO 6336-2:2019 | pitting, method B (`Z_H`, `Z_E`, `Z_ε`, `Z_β`, `Z_B`, `Z_D`, `Z_NT`, `Z_L`, `Z_v`, `Z_R`, `Z_W`, `Z_X`) | static stress, limited-pitting `Z_NT` curve, `ε_α > 2` special case |
 | ISO 6336-3:2019 | tooth breakage, method B, external gears generated with a hob (`Y_F`, `Y_S`, `Y_β`, `Y_B`, `Y_DT`, `Y_NT`, `Y_δrelT`, `Y_RrelT`, `Y_X`) | shaper-cutter geometry, internal gears, notch factor `Y_Sg` |

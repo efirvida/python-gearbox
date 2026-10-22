@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import cached_property
-from math import atan, ceil, cos, degrees, floor, pi, radians, sin, sqrt, tan
+from math import atan, cos, degrees, pi, radians, sin, sqrt, tan
 
 from gearbox.enums import (
     AssemblyCondition,
@@ -127,47 +127,65 @@ class Lubricant:
 
 @dataclass(frozen=True)
 class GearTolerances:
-    """Gear tolerances of ISO 1328-1 for the gear's quality grade (values in micrometres)."""
+    """Flank tolerances of ISO 1328-1:2013 for the gear's tolerance class (micrometres)."""
 
     single_pitch_deviation: float
-    """``f_pt``, single pitch deviation."""
+    """``f_pT``, single pitch tolerance (formula 5)."""
     total_cumulative_pitch_deviation: float
-    """``F_p``."""
+    """``F_pT``, total cumulative pitch tolerance (6)."""
     profile_total_deviation: float
-    """``F_alpha``."""
+    """``F_alphaT``, total profile tolerance (9)."""
     helix_total_deviation: float
-    """``F_beta``."""
+    """``F_betaT``, total helix tolerance (12)."""
     profile_form_deviation: float
-    """``f_f_alpha``."""
+    """``f_falphaT``, profile form tolerance (8)."""
     profile_slope_deviation: float
-    """``f_H_alpha``."""
+    """``f_HalphaT``, profile slope tolerance (7)."""
     helix_slope_deviation: float
-    """``f_H_beta``."""
+    """``f_HbetaT``, helix slope tolerance (10)."""
     helix_form_deviation: float
-    """``f_f_beta``."""
+    """``f_fbetaT``, helix form tolerance (11)."""
     helix_slope_deviation_grade5: float
-    """``f_H_beta`` evaluated for quality grade 5 (needed by ISO 6336-1 ``K_H_beta``)."""
+    """``f_HbetaT`` of tolerance class 5 (``f_Hbeta5`` of ISO 6336-1 formula 55)."""
 
 
-def _geometric_mean_of_interval(bounds: list[float], value: float, name: str) -> float:
-    """Geometric mean of the ISO 1328 size interval containing ``value``."""
-    for lower, upper in zip(bounds, bounds[1:], strict=False):
-        if lower <= value < upper:
-            return sqrt(upper * lower)
-    raise ValueError(f"{name}={value} is outside the ISO 1328 range [{bounds[0]}, {bounds[-1]})")
+def _round_tolerance(value: float) -> float:
+    """Round a tolerance as ISO 1328-1:2013 clause 5.2.3 prescribes (micrometres)."""
+    if value > 10:
+        return float(round(value))
+    if value >= 5:
+        return round(value * 2) / 2
+    return round(value, 1)
 
 
-def _quality_grade_scaling(tolerance: float, quality_grade: float) -> float:
-    """Scale a grade-5 tolerance to ``quality_grade`` and round it as ISO 1328-1 prescribes."""
-    tolerance *= 2 ** (0.5 * (quality_grade - 5))
-    if tolerance >= 10:
-        return round(tolerance)
-    if 5 <= tolerance < 10:
-        fraction = tolerance % 1
-        if fraction <= 0.25 or 0.5 <= fraction <= 0.75:
-            return floor(tolerance * 2) * 0.5
-        return ceil(tolerance * 2) * 0.5
-    return round(tolerance, 1)
+def _compute_tolerances(
+    module: float, diameter: float, width: float, tolerance_class: float
+) -> GearTolerances:
+    """Evaluate formulae (5) to (12) of ISO 1328-1:2013 for ``tolerance_class`` (``A``).
+
+    The class ``A`` value is the class 5 value times ``sqrt(2)^(A - 5)`` (clause 5.2.2), rounded
+    only at the end; the total profile and helix tolerances combine the unrounded components.
+    """
+    step = sqrt(2) ** (tolerance_class - 5)
+    m, d, b = module, diameter, width
+    profile_slope = (0.4 * m + 0.001 * d + 4) * step  # (7)
+    profile_form = (0.55 * m + 5) * step  # (8)
+    helix_slope = (0.05 * sqrt(d) + 0.35 * sqrt(b) + 4) * step  # (10)
+    helix_form = (0.07 * sqrt(d) + 0.45 * sqrt(b) + 4) * step  # (11)
+    helix_slope_class5 = 0.05 * sqrt(d) + 0.35 * sqrt(b) + 4
+    return GearTolerances(
+        single_pitch_deviation=_round_tolerance((0.001 * d + 0.4 * m + 5) * step),  # (5)
+        total_cumulative_pitch_deviation=_round_tolerance(
+            (0.002 * d + 0.55 * sqrt(d) + 0.7 * m + 12) * step  # (6)
+        ),
+        profile_total_deviation=_round_tolerance(sqrt(profile_slope**2 + profile_form**2)),  # (9)
+        helix_total_deviation=_round_tolerance(sqrt(helix_slope**2 + helix_form**2)),  # (12)
+        profile_form_deviation=_round_tolerance(profile_form),
+        profile_slope_deviation=_round_tolerance(profile_slope),
+        helix_slope_deviation=_round_tolerance(helix_slope),
+        helix_form_deviation=_round_tolerance(helix_form),
+        helix_slope_deviation_grade5=_round_tolerance(helix_slope_class5),
+    )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -180,7 +198,7 @@ class Gear:
         number_of_teeth: Number of teeth ``z``.
         module: Normal module ``m_n`` [mm].
         face_width: Face width ``b`` [mm].
-        quality_grade: ISO 1328 accuracy grade (e.g. 6).
+        quality_grade: ISO 1328-1:2013 flank tolerance class (1 to 11, e.g. 6).
         surface_roughness: Mean peak-to-valley flank roughness ``Rz`` [micrometres].
         root_surface_roughness: Roughness ``Rz`` of the tooth root fillet [micrometres] used by the
             relative surface factor ``Y_R_relT``; defaults to ``surface_roughness``.
@@ -337,39 +355,24 @@ class Gear:
 
     @cached_property
     def tolerances(self) -> GearTolerances:
-        """ISO 1328-1 tolerances for this gear's size and quality grade."""
-        mean_module = _geometric_mean_of_interval(
-            [0, 0.5, 2.0, 3.5, 6.0, 25, 40, 70], self.module, "module"
-        )
-        mean_diameter = _geometric_mean_of_interval(
-            [0, 5, 20, 50, 125, 280, 560, 1000, 1600, 2500, 4000, 6000, 8000, 10000],
-            self.reference_diameter,
-            "reference_diameter",
-        )
-        mean_width = _geometric_mean_of_interval(
-            [0, 4, 10, 20, 40, 80, 160, 250, 400, 650, 1000], self.face_width, "face_width"
-        )
-        m, d, b = mean_module, mean_diameter, mean_width
-        grade = self.quality_grade
-        helix_slope = 0.07 * sqrt(d) + 0.45 * sqrt(b) + 3.0
-        return GearTolerances(
-            single_pitch_deviation=_quality_grade_scaling(0.3 * (m + 0.4 * sqrt(d)) + 4.0, grade),
-            total_cumulative_pitch_deviation=_quality_grade_scaling(
-                0.3 * m + 1.25 * sqrt(d) + 7.0, grade
-            ),
-            profile_total_deviation=_quality_grade_scaling(
-                3.2 * sqrt(m) + 0.22 * sqrt(d) + 0.27, grade
-            ),
-            helix_total_deviation=_quality_grade_scaling(
-                0.1 * sqrt(d) + 0.63 * sqrt(b) + 4.2, grade
-            ),
-            profile_form_deviation=_quality_grade_scaling(
-                2.5 * sqrt(m) + 0.17 * sqrt(d) + 0.5, grade
-            ),
-            profile_slope_deviation=_quality_grade_scaling(
-                2 * sqrt(m) + 0.14 * sqrt(d) + 0.5, grade
-            ),
-            helix_slope_deviation=_quality_grade_scaling(helix_slope, grade),
-            helix_form_deviation=_quality_grade_scaling(helix_slope, grade),
-            helix_slope_deviation_grade5=_quality_grade_scaling(helix_slope, 5),
+        """ISO 1328-1:2013 flank tolerances for this gear's size and tolerance class.
+
+        Raises:
+            ValueError: If the gear is outside the range of the standard (5 <= z <= 1000,
+                5 <= d <= 15000 mm, 0.5 <= m_n <= 70 mm, 4 <= b <= 1200 mm, beta <= 45 deg).
+        """
+        ranges = {
+            "number_of_teeth": (self.number_of_teeth, 5, 1000),
+            "reference_diameter": (self.reference_diameter, 5, 15000),
+            "module": (self.module, 0.5, 70),
+            "face_width": (self.face_width, 4, 1200),
+            "helix_angle": (self.helix_angle, 0, 45),
+        }
+        for name, (value, low, high) in ranges.items():
+            if not low <= value <= high:
+                raise ValueError(
+                    f"Gear.{name}={value:g} is outside the range [{low}, {high}] of ISO 1328-1:2013"
+                )
+        return _compute_tolerances(
+            self.module, self.reference_diameter, self.face_width, self.quality_grade
         )
