@@ -12,7 +12,7 @@ Strength calculation and finite-element geometry export for **spur and helical i
 * Tooth bending analysis with **CalculiX** (`gearbox.fem.solve_bending`); CalculiX is an external
   program: `conda install -c conda-forge calculix`, then put `ccx` on the `PATH` or set `GEARBOX_CCX`.
 
-> **Status:** version 0.2 is a refactor of the original code (Python ≥ 3.10, typed immutable models,
+> **Status:** version 0.2 is a refactor of the original code (Python ≥ 3.11, typed immutable models,
 > descriptive names, test suite) and an update of the ISO 6336 implementation from the 2006 to the
 > **2019 edition**. Numbers therefore differ from 0.1.x: every change is listed in
 > [KNOWN_ISSUES.md](KNOWN_ISSUES.md) with its effect. Flank tolerances follow ISO 1328-1:2013. Read the

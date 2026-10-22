@@ -9,13 +9,12 @@ description = "Strength calculation (ISO 6336, AGMA 2001) and geometry export fo
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Eduardo M. Firvida Donestevez", email = "efirvida@gmail.com" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 keywords = ["gearbox", "gear", "agma", "iso", "iso-6336", "gear transmission", "engineering"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -51,7 +50,7 @@ extend-exclude = ["tests/golden", "demo", "docs_sphinx_old"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "D"]
-ignore = ["D203", "D213", "D105"]
+ignore = ["D203", "D213", "D105", "UP042"]  # UP042: StrEnum would change str() of the enums
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

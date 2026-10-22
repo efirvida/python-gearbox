@@ -23,7 +23,7 @@ pytest -q
 ruff check . && ruff format --check src tests
 ```
 
-Python 3.10 or newer. CalculiX is optional (its test is skipped when `ccx` is not installed).
+Python 3.11 or newer. CalculiX is optional (its test is skipped when `ccx` is not installed).
 
 ## Rules for changes
 

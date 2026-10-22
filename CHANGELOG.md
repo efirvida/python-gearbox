@@ -18,7 +18,7 @@ All notable changes are documented here. The format follows
 * Contact ratio limited by the base circle, ISO 6336-2 formula (33) (KI-40).
 
 ### Changed
-* Complete refactor: Python >= 3.10, immutable typed dataclasses, descriptive names, test suite.
+* Complete refactor: Python >= 3.11, immutable typed dataclasses, descriptive names, test suite.
 * ISO 6336 updated from the 2006 to the **2019** edition. **Numbers differ from 0.1.x**; see
   [KNOWN_ISSUES.md](KNOWN_ISSUES.md) (KI-01 to KI-37) for every change and its effect.
 * AGMA geometry factors `I` and `J` verified against the AGMA 908-B89 tables.
