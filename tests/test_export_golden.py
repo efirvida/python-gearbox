@@ -84,3 +84,17 @@ def test_invalid_options_raise_value_error(tmp_path):
         export_gear(transmission.pinion, "comsol", tmp_path, dimension="4D")
     with pytest.raises(ValueError, match="dimension"):
         export_pair(transmission, "comsol", tmp_path, dimension="x")
+
+
+@pytest.mark.parametrize("role", ["pinion", "wheel"])
+def test_exported_tooth_has_the_modelled_root_and_tip_diameters(role):
+    """The profile engine takes the fillet radius and clearance in mm, not as tool coefficients."""
+    from gearbox.export.exporters import _build_wheel
+
+    gear = getattr(scenario("spur_sr0"), role)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        data = _build_wheel(gear).data
+    assert data["d_f"] == pytest.approx(gear.root_diameter, rel=1e-9)
+    assert data["d_a"] == pytest.approx(gear.tip_diameter, rel=1e-9)
+    assert data["rho_f"] == pytest.approx(gear.root_fillet_radius, rel=1e-12)

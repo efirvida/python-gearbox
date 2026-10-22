@@ -217,9 +217,8 @@ def _pair_gears(transmission: Transmission | Sequence[Gear]) -> tuple[Gear, Gear
 def _build_wheel(gear: Gear) -> CylindricalGearWheel:
     """Generate the tooth geometry of ``gear`` as a fresh object.
 
-    Note:
-        As in earlier releases, the fillet radius and bottom clearance are passed as the tool
-        *coefficients* (not multiplied by the module).
+    The profile engine takes the root fillet radius and the bottom clearance in millimetres, so the
+    dimensionless tool coefficients are multiplied by the normal module.
     """
     gear_data = {
         "m_n": gear.module,
@@ -227,9 +226,9 @@ def _build_wheel(gear: Gear) -> CylindricalGearWheel:
         "beta": gear.helix_angle,
         "alpha_n": gear.pressure_angle,
         "x": gear.profile_shift_coefficient,
-        "rho_f": gear.tool.root_fillet_radius_coefficient,
+        "rho_f": gear.tool.root_fillet_radius_coefficient * gear.module,
         "d_s": gear.shaft_diameter,
-        "c": gear.tool.bottom_clearance_coefficient,
+        "c": gear.tool.bottom_clearance_coefficient * gear.module,
         "b": gear.face_width,
     }
     return GearExport(gear_data).gear
