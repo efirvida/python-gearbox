@@ -55,3 +55,17 @@ Two behaviours that are *not* defects but were surprising and are now explicit:
   for ISO bending; in 0.2 `0.0` raises in ISO bending (it is not a valid rim) and AGMA treats it as
   solid.
 * `Transmission` now rejects pairs with different module, pressure angle or helix angle.
+
+## Out of scope (not implemented)
+
+* **Internal gears** (ISO 6336 and AGMA): the geometry model (`Gear`, `Transmission`, contact ratio,
+  tooth root, `I` and `J`) is written for external gears. AGMA 908-B89 does not give `J` for
+  internal gears either.
+* **Double helical gears**: face width, overlap ratio and `f_sh` (formula 60) would need a separate
+  half-width model.
+* **`Z_B`, `Z_D` for `ε_α > 2`** (ISO 6336-2 clause 6.4): the standard states the principle only.
+* **Methods A and C of `K_Hβ`**, multi-mesh dynamic analysis (idler gears, planetary stages).
+* **Cast iron** `Z_N`, `Y_N` of AGMA 2001-D04, and the lower (critical service) edge of its `Z_N`
+  zone, for which the standard gives no equation.
+* **Allowable stress number tables** of AGMA 2001-D04 (`s_ac`, `s_at`): the numbers are inputs.
+

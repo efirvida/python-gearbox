@@ -23,10 +23,10 @@ Strength calculation and finite-element geometry export for **spur and helical i
 | Standard | Implemented | Not implemented |
 |----------|-------------|-----------------|
 | ISO 1328-1:2013 | flank tolerances `f_pT`, `F_pT`, `F_αT`, `F_βT`, `f_fαT`, `f_HαT`, `f_HβT`, `f_fβT` (formulae 5-12) | runout, tooth thickness |
-| ISO 6336-1:2019 | `K_v` (method B), `K_Hβ`/`K_Fβ` (method C), `K_Hα`/`K_Fα` (method B), tooth stiffness `c'`, `c_γα`, `c_γβ` (method B) | methods A and C of `K_v`, `K_γ` ≠ 1, internal and double helical gears |
-| ISO 6336-2:2019 | pitting, method B (`Z_H`, `Z_E`, `Z_ε`, `Z_β`, `Z_B`, `Z_D`, `Z_NT`, `Z_L`, `Z_v`, `Z_R`, `Z_W`, `Z_X`) | static stress, limited-pitting `Z_NT` curve, `ε_α > 2` special case |
-| ISO 6336-3:2019 | tooth breakage, method B, external gears generated with a hob (`Y_F`, `Y_S`, `Y_β`, `Y_B`, `Y_DT`, `Y_NT`, `Y_δrelT`, `Y_RrelT`, `Y_X`) | shaper-cutter geometry, internal gears, notch factor `Y_Sg` |
-| AGMA 2001-D04 / 908-B89 | pitting and bending stress, `I` and `J` geometry factors (checked against the 908-B89 tables), `K_v`, `K_s`, `K_m`, `K_B` | `K_o`, `K_T`, `K_R`, allowable stress numbers, internal gears |
+| ISO 6336-1:2019 | `K_A`, `K_γ` (given), `K_v` by method B, method C or a measured value (A), `K_Hβ`/`K_Fβ` (method C), `K_Hα`/`K_Fα` (method B), tooth stiffness `c'`, `c_γα`, `c_γβ` (method B) | method A/B of `K_Hβ`, internal and double helical gears, multi-mesh resonance (idlers, planets) |
+| ISO 6336-2:2019 | pitting, method B, reference, limited-life and static stress (`Z_H`, `Z_E`, `Z_ε`, `Z_β`, `Z_B`, `Z_D`, `Z_NT` with and without limited pitting, `Z_L`, `Z_v`, `Z_R`, `Z_W`, `Z_X`) | internal gears; the standard gives no formula for `Z_B`/`Z_D` when `ε_α > 2` (clause 6.4), which raises no error but is outside the validated range |
+| ISO 6336-3:2019 | tooth breakage, method B, external gears cut with a hob or a shaper cutter; reference, limited-life and static stress; `Y_Sg` for grinding notches | internal gears, the graphical `Y_δrelT` for static stress of `St` without a yield point |
+| AGMA 2001-D04 / 908-B89 | pitting and bending stress, `I` and `J` (checked against the 908-B89 tables), `K_v`, `K_s`, `K_m`, `K_B`, `K_o`; allowable stresses and safety factors with `Z_N`, `Y_N`, `C_H`, `K_T`, `K_R` when `s_ac`/`s_at` are given | internal gears, cast-iron stress cycle factors, the critical-service curves of `Z_N`, `s_ac`/`s_at` tables (the numbers must be supplied) |
 
 ## Install
 
