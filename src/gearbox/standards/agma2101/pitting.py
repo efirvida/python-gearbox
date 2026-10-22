@@ -49,8 +49,7 @@ def calculate_pitting(transmission: Transmission) -> PittingResult:
         A :class:`PittingResult` with the stress and every factor.
     """
     diameter = transmission.pinion.reference_diameter
-    # KNOWN-ISSUE KI-13: the web thickness of the wheel is used as the face width.
-    width = transmission.wheel.web_thickness
+    width = transmission.net_face_width
 
     elastic_coefficient = elasticity_coefficient(
         transmission.pinion.material, transmission.wheel.material

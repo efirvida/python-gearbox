@@ -23,7 +23,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-10 | ISO `Y_F` | `inv(α)` is evaluated with a radian argument in a function that expects degrees (`γ_e`). | **fixed** (Y_S, Y_F; bending safety factors -1 % to -7 %) |
 | KI-11 | ISO `Y_δrelT` | Slip-layer thickness of `St` steel: `0.445` should be `0.0445`. | **fixed** |
 | KI-12 | ISO `K_v`, `K_Hα`, `K_Fα` | The `Material` object (not its type) was compared against the material codes when computing `y_α`, so `y_α` was always 0. Flag `_LEGACY_ZERO_PROFILE_ALLOWANCE`. | certain |
-| KI-13 | AGMA | `web_thickness` (`b_s`) is used as the face width; the pitting formula takes it from the wheel, bending from the pinion. | certain |
+| KI-13 | AGMA | `web_thickness` (`b_s`) is used as the face width; the pitting formula takes it from the wheel, bending from the pinion. | **fixed** (`Transmission.net_face_width`) |
 | KI-14 | AGMA `C_ma` | `(c·b)²` is mis-parenthesised; the standard has `c·b²`. | verify |
 | KI-15 | AGMA | Dynamic factor (identical branches, `d_root ≈ d_a − 2m`, pinion `f_pt` for both gears); solid-disc rim thickness; J-factor loop stops on a signed residual; wheel J uses pinion `ro2`; pinion J = 1.045 (>1) for the `spur_sr0` case. | verify |
 | KI-16 | `inverse_involute` | Bisection tolerance `1e-5` limits `α_wt` (and everything derived from it) to ~5 digits. | certain |

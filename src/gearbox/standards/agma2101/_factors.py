@@ -87,8 +87,7 @@ def load_distribution_factor(transmission: Transmission) -> float:
     crowning_factors = [1, 0.8]
     alignment_improvement = [0.8, 1]
 
-    # KNOWN-ISSUE KI-13: the legacy code uses the web thickness ``bs`` as the face width.
-    width = p.web_thickness
+    width = transmission.net_face_width
     diameter = p.reference_diameter
 
     if width <= 25:

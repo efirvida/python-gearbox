@@ -54,8 +54,7 @@ def calculate_bending(transmission: Transmission) -> BendingResult:
     tangential_load = transmission.nominal_tangential_force
     application_factor = transmission.application_factor
 
-    # KNOWN-ISSUE KI-13: the web thickness of the pinion is used as the face width.
-    width = pinion.web_thickness
+    width = transmission.net_face_width
     transverse_module = pinion.module / cos(radians(pinion.helix_angle))
 
     dynamic = dynamic_factor(transmission)

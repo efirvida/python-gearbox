@@ -74,6 +74,11 @@ class Transmission:
         return self.pinion_speed_rpm / self.gear_ratio
 
     @property
+    def net_face_width(self) -> float:
+        """Face width of the narrower gear [mm] (``F`` in AGMA 2001)."""
+        return min(self.pinion.face_width, self.wheel.face_width)
+
+    @property
     def profile_shift_sum(self) -> float:
         """``x1 + x2``."""
         return self.pinion.profile_shift_coefficient + self.wheel.profile_shift_coefficient
