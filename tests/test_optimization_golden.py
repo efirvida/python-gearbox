@@ -1,30 +1,26 @@
-"""Profile shift optimisation must reproduce the original results."""
-
-import json
-from pathlib import Path
-
-import pytest
+"""Profile shift optimisation must reproduce tests/golden/reference.json."""
 
 from gearbox.optimization import (
     maximum_tip_land_profile_shifts,
     minimum_contact_stress_profile_shifts,
 )
+from tests.reference import REFERENCE, assert_matches
 from tests.scenarios import scenario
 
-BASELINE = json.loads((Path(__file__).parent / "golden" / "baseline_original.json").read_text())[
-    "spur_sr20"
-]
+REFERENCE = REFERENCE["spur_sr20"]
 
 
-def test_maximum_tip_land_profile_shifts_matches_original():
-    assert tuple(maximum_tip_land_profile_shifts(scenario("spur_sr20"))) == pytest.approx(
-        BASELINE["opt_bending"], rel=1e-9
+def test_maximum_tip_land_profile_shifts():
+    assert_matches(
+        list(maximum_tip_land_profile_shifts(scenario("spur_sr20"))),
+        REFERENCE["maximum_tip_land_profile_shifts"],
     )
 
 
-def test_minimum_contact_stress_profile_shifts_matches_original():
-    assert tuple(minimum_contact_stress_profile_shifts(scenario("spur_sr20"))) == pytest.approx(
-        BASELINE["opt_pitting_iso"], rel=1e-9
+def test_minimum_contact_stress_profile_shifts():
+    assert_matches(
+        list(minimum_contact_stress_profile_shifts(scenario("spur_sr20"))),
+        REFERENCE["minimum_contact_stress_profile_shifts"],
     )
 
 
