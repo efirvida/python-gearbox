@@ -174,13 +174,14 @@ def dynamic_factor(transmission: Transmission) -> float:
     total_contact_ratio = transmission.total_contact_ratio
     stiffness = mesh_stiffness(transmission)
 
-    # KNOWN-ISSUE KI-02: the pinion rim thickness is used for both gears.
-    rim = p.rim_thickness
     mean_diameter = {g: (g.tip_diameter + g.root_diameter) / 2 for g in (p, w)}
     inner_ratio = {
-        g: 0.0 if rim is None else (g.root_diameter - 2 * rim) / mean_diameter[g] for g in (p, w)
+        g: 0.0
+        if g.rim_thickness is None
+        else (g.root_diameter - 2 * g.rim_thickness) / mean_diameter[g]
+        for g in (p, w)
     }
-    rim_factor = {g: 1.0 if rim == 0 else 1 / (1 - inner_ratio[g] ** 4) for g in (p, w)}
+    rim_factor = {g: 1.0 if g.rim_thickness == 0 else 1 / (1 - inner_ratio[g] ** 4) for g in (p, w)}
 
     dm1 = mean_diameter[p]
     equivalent_mass = (
