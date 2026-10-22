@@ -169,9 +169,8 @@ def zone_factor(transmission: Transmission) -> float:
 def single_pair_contact_factors(transmission: Transmission) -> tuple[float, float]:
     """Single pair tooth contact factors ``(Z_B, Z_D)`` for pinion and wheel.
 
-    KNOWN-ISSUE KI-01: spur gears must use the dedicated spur branch of ISO 6336-2 (including the
-    ``z1/z2 > 1.5`` rule for ``Z_D``); the helical branch is used for every gear, as in earlier
-    releases.
+    KNOWN-ISSUE KI-01 (open part): the ``z1/z2 > 1.5 -> Z_D = 1`` rule that ISO 6336-2 gives for
+    spur gears is not applied; it still has to be checked against the standard.
     """
     p, w = transmission.pinion, transmission.wheel
     working = radians(transmission.working_pressure_angle)

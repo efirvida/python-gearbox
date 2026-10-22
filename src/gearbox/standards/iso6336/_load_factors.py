@@ -332,12 +332,14 @@ def _transverse_load_factor(transmission: Transmission, upper_limit: float) -> f
 def contact_ratio_factor(transmission: Transmission) -> float:
     """Contact ratio factor ``Z_epsilon`` (ISO 6336-2).
 
-    KNOWN-ISSUE KI-01: spur gears (``epsilon_beta = 0``) must use ``sqrt((4 - eps_alpha) / 3)``;
-    earlier releases applied the helical branch because of an ``is 0`` comparison.
+    ``sqrt((4 - eps_alpha) / 3)`` for spur gears, ``sqrt(1 / eps_alpha)`` for ``eps_beta >= 1`` and
+    a linear blend of both in between.
     """
     eps_alpha = transmission.transverse_contact_ratio
     eps_beta = transmission.overlap_ratio
-    if 0 < eps_beta < 1:
+    if eps_beta == 0:
+        return sqrt((4 - eps_alpha) / 3)
+    if eps_beta < 1:
         return sqrt(((4 - eps_alpha) / 3) * (1 - eps_beta) + (eps_beta / eps_alpha))
     return sqrt(1 / eps_alpha)
 

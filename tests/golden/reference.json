@@ -344,9 +344,9 @@
    "transverse_load_factor": 1.0
   },
   "iso6336_pitting": {
-   "contact_ratio_factor": 0.7681964089114454,
-   "contact_stress_pinion": 958.1814330779761,
-   "contact_stress_wheel": 938.883450394195,
+   "contact_ratio_factor": 0.8766310202622903,
+   "contact_stress_pinion": 1093.4333427382087,
+   "contact_stress_wheel": 1071.4113571459316,
    "dynamic_factor": 1.0605569487498547,
    "elasticity_factor": 189.8117004375665,
    "face_load_factor": 1.0525354791611394,
@@ -357,8 +357,8 @@
    "permissible_contact_stress_pinion": 444.31983885451587,
    "permissible_contact_stress_wheel": 447.7707815946018,
    "roughness_factor": 0.9575924393216612,
-   "safety_factor_pinion": 0.463711593144967,
-   "safety_factor_wheel": 0.4769183879070431,
+   "safety_factor_pinion": 0.406352926591608,
+   "safety_factor_wheel": 0.41792611083327647,
    "single_pair_contact_factor_pinion": 1.0205541834566139,
    "single_pair_contact_factor_wheel": 1.0,
    "size_factor": 1.0,
@@ -465,9 +465,9 @@
    "error": "ValueError: External gears require: rim_thickness / tooth_height > 0.5"
   },
   "iso6336_pitting": {
-   "contact_ratio_factor": 0.800887578570486,
-   "contact_stress_pinion": 1293.815928145235,
-   "contact_stress_wheel": 1293.7252343548241,
+   "contact_ratio_factor": 0.9020275942428247,
+   "contact_stress_pinion": 1457.2053560138731,
+   "contact_stress_wheel": 1457.103208966315,
    "dynamic_factor": 1.032205908934822,
    "elasticity_factor": 189.8117004375665,
    "face_load_factor": 1.1636746453329694,
@@ -478,8 +478,8 @@
    "permissible_contact_stress_pinion": 1280.0740671861715,
    "permissible_contact_stress_wheel": 1294.7601105154292,
    "roughness_factor": 0.972620472849807,
-   "safety_factor_pinion": 0.9893788129670322,
-   "safety_factor_wheel": 1.0007999195912114,
+   "safety_factor_pinion": 0.8784445252711415,
+   "safety_factor_wheel": 0.888585038141496,
    "single_pair_contact_factor_pinion": 1.0000701028224561,
    "single_pair_contact_factor_wheel": 1.0,
    "size_factor": 1.0,
@@ -611,9 +611,9 @@
    "transverse_load_factor": 1.0
   },
   "iso6336_pitting": {
-   "contact_ratio_factor": 0.800887578570486,
-   "contact_stress_pinion": 1294.050531978766,
-   "contact_stress_wheel": 1293.9598217431171,
+   "contact_ratio_factor": 0.9020275942428247,
+   "contact_stress_pinion": 1457.4695867713758,
+   "contact_stress_wheel": 1457.367421201794,
    "dynamic_factor": 1.0325356137111203,
    "elasticity_factor": 189.8117004375665,
    "face_load_factor": 1.1637249807017371,
@@ -624,8 +624,8 @@
    "permissible_contact_stress_pinion": 1280.0740671861715,
    "permissible_contact_stress_wheel": 1294.7601105154292,
    "roughness_factor": 0.972620472849807,
-   "safety_factor_pinion": 0.9891994443437826,
-   "safety_factor_wheel": 1.0006184803877713,
+   "safety_factor_pinion": 0.87828526838891,
+   "safety_factor_wheel": 0.8884239428432719,
    "single_pair_contact_factor_pinion": 1.0000701028224561,
    "single_pair_contact_factor_wheel": 1.0,
    "size_factor": 1.0,
@@ -654,8 +654,8 @@
    "working_pressure_angle": 21.192626953124996
   },
   "minimum_contact_stress_profile_shifts": [
-   0.525306973712778,
-   -0.275306973712778
+   0.5607409056749626,
+   -0.3107409056749626
   ],
   "pinion": {
    "addendum": 3.8125,
@@ -765,9 +765,9 @@
    "transverse_load_factor": 1.0
   },
   "iso6336_pitting": {
-   "contact_ratio_factor": 0.7674077777189263,
-   "contact_stress_pinion": 1104.72955188611,
-   "contact_stress_wheel": 1056.314962202484,
+   "contact_ratio_factor": 0.875968266175232,
+   "contact_stress_pinion": 1261.0088902599748,
+   "contact_stress_wheel": 1205.7453844497895,
    "dynamic_factor": 1.0443706199271674,
    "elasticity_factor": 189.8117004375665,
    "face_load_factor": 1.1076188078679552,
@@ -778,8 +778,8 @@
    "permissible_contact_stress_pinion": 1510.1990596362791,
    "permissible_contact_stress_wheel": 1551.303156607039,
    "roughness_factor": 0.9651627671316861,
-   "safety_factor_pinion": 1.3670305615142722,
-   "safety_factor_wheel": 1.4685990562629854,
+   "safety_factor_pinion": 1.1976117466744665,
+   "safety_factor_wheel": 1.2865926559734961,
    "single_pair_contact_factor_pinion": 1.0458334790436732,
    "single_pair_contact_factor_wheel": 1.0,
    "size_factor": 1.0,
