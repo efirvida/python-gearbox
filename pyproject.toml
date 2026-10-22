@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "python-gearbox"
+version = "0.2.0.dev0"
+description = "Strength calculation (ISO 6336, AGMA 2101) and geometry export for spur and helical gears"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Eduardo M. Firvida Donestevez", email = "efirvida@gmail.com" }]
+requires-python = ">=3.10"
+keywords = ["gearbox", "gear", "agma", "iso", "gear transmission", "engineering"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Manufacturing",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = ["numpy>=1.24", "scipy>=1.10", "jinja2>=3.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/efirvida/python-gearbox"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gearbox"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+extend-exclude = ["tests/golden", "demo", "docs_sphinx_old"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "D"]
+ignore = ["D203", "D213", "D105"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+"examples/**" = ["D", "E501"]

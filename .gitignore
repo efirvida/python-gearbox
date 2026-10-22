@@ -5,3 +5,11 @@ dist
 python_gearbox*
 .vscode
 build
+*.egg-info
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+demo/output
+docs/*.pdf
+examples/output
