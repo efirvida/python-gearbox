@@ -63,8 +63,9 @@ class ToothMeshSettings:
         rim_elements: Elements through the rim, in the radial direction. ``None`` chooses a number
             that keeps the rim elements at about four times longer than wide.
         surface_growth: Ratio between consecutive element sizes moving from the flank and the
-            root fillet towards the inside of the tooth. 1 keeps the elements uniform; values such
-            as 1.2-1.4 make them finest at the surface, where contact and root stresses peak.
+            root fillet towards the inside of the tooth. The elements are finest at the surface,
+            where contact and root stresses peak; 1 keeps them uniform, 1.2-1.4 grades them
+            noticeably.
         cross_angle: Angle [deg] below the horizontal of the line that closes the flank block
             towards the tooth axis; it sets how deep the flank block reaches into the tooth.
         width_elements: Elements across the face width (3D only). ``None`` makes the layers as
@@ -80,7 +81,7 @@ class ToothMeshSettings:
     flank_size: float = 0.08
     tooth_elements: int = 10
     rim_elements: int | None = None
-    surface_growth: float = 1.0
+    surface_growth: float = 1.25
     cross_angle: float = 30.0
     width_elements: int | None = None
     order: int = 1
