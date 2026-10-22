@@ -635,9 +635,9 @@
    "work_hardening_factor_wheel": 1.0105970327088298,
    "zone_factor": 2.4170783937296045
   },
-  "maximum_tip_land_profile_shifts": [
-   1.039219815200643,
-   -0.7892198152006431
+  "maximum_profile_shifts": [
+   1.023030932773053,
+   -0.7730309327730529
   ],
   "mesh": {
    "gear_ratio": 1.8181818181818181,
@@ -654,8 +654,8 @@
    "working_pressure_angle": 21.190471108211366
   },
   "minimum_contact_stress_profile_shifts": [
-   -0.28675556284562065,
-   0.5367555628456206
+   0.5253919387892267,
+   -0.27539193878922674
   ],
   "pinion": {
    "addendum": 3.8125,

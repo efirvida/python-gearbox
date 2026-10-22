@@ -1,13 +1,17 @@
 """Distribute a fixed sum of profile shifts between pinion and wheel.
 
-The optimisation helpers of :mod:`gearbox.optimization` are heuristic (see KNOWN_ISSUES.md), so this
-example also shows the robust alternative: scan the design space yourself with ``replace``.
+The pair is first scanned by hand with ``dataclasses.replace``; then the optimisation helpers of
+:mod:`gearbox.optimization` find the same optimum automatically, respecting the geometric limits
+(no undercut, tip land >= 0.2 m, contact ratio >= 1.2).
 """
 
 from dataclasses import replace
 
 from gearbox import Gear, Lubricant, Material, MaterialType, Tool, Transmission
-from gearbox.optimization import maximum_tip_land_profile_shifts
+from gearbox.optimization import (
+    maximum_profile_shifts,
+    minimum_contact_stress_profile_shifts,
+)
 from gearbox.standards import iso6336
 
 tool = Tool(
@@ -69,5 +73,7 @@ for step in range(-2, 9):
         f"{candidate.transverse_contact_ratio:9.3f}"
     )
 
-x1, x2 = maximum_tip_land_profile_shifts(transmission)
-print(f"\nLargest shift keeping a 0.2 m tip land: x1={x1:+.3f}, x2={x2:+.3f}")
+x1, x2 = minimum_contact_stress_profile_shifts(transmission)
+print(f"\nMinimum contact stress (ISO): x1={x1:+.3f}, x2={x2:+.3f}")
+x1, x2 = maximum_profile_shifts(transmission)
+print(f"Largest geometrically feasible pinion shift: x1={x1:+.3f}, x2={x2:+.3f}")

@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 
 from gearbox import Gear  # noqa: E402
 from gearbox.optimization import (  # noqa: E402
-    maximum_tip_land_profile_shifts,
+    maximum_profile_shifts,
     minimum_contact_stress_profile_shifts,
 )
 from gearbox.standards import agma2101, iso6336  # noqa: E402
@@ -81,8 +81,8 @@ def build_reference() -> dict:
             ),
         }
         if name == "spur_sr20":
-            entry["maximum_tip_land_profile_shifts"] = _guard(
-                lambda: list(maximum_tip_land_profile_shifts(transmission))
+            entry["maximum_profile_shifts"] = _guard(
+                lambda: list(maximum_profile_shifts(transmission))
             )
             entry["minimum_contact_stress_profile_shifts"] = _guard(
                 lambda: list(minimum_contact_stress_profile_shifts(transmission))
