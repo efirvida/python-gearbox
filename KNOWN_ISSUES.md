@@ -16,7 +16,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-03 | ISO `K_v`, `K_Hα` | `f_pb` and `f_fα` are both taken from the profile form deviation `f_fα`; the pitch and profile terms of `K_v` are therefore identical. | certain |
 | KI-04 | ISO `Z_R` | `σ_Hlim` of the pinion is used for both gears. | certain |
 | KI-05 | ISO `K_v` | `N_S`: both branches evaluate to 0.85 (the formula `0.5+0.35·sqrt(F/100)` applies for loads ≥ 100 N/mm, the 0.85 for lower loads — the test is inverted). | verify |
-| KI-06 | ISO 1328 | `f_fβ` uses the `f_Hβ` formula. | certain |
+| KI-06 | ISO 1328 | `f_fβ` uses the `f_Hβ` formula. | **not a defect**: ISO 1328-1:1995 defines `f_fβ` with the same formula as `f_Hβ` |
 | KI-07 | ISO `c_γ` | `C_R`: rim thickness is divided by the module twice. | verify |
 | KI-08 | ISO `Z_E` and AGMA `C_p` | For different materials `(1-ν)` is used instead of `(1-ν²)`. | certain |
 | KI-09 | ISO `Y_F`, `Y_S`, `Y_δ` | Tool, helix angle and base helix angle of the pinion are used for the wheel. | certain |

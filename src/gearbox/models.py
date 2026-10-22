@@ -350,7 +350,6 @@ class Gear:
                 2 * sqrt(m) + 0.14 * sqrt(d) + 0.5, grade
             ),
             helix_slope_deviation=_quality_grade_scaling(helix_slope, grade),
-            # KNOWN-ISSUE KI-06: f_f_beta reuses the f_H_beta formula (kept for reproducibility).
             helix_form_deviation=_quality_grade_scaling(helix_slope, grade),
             helix_slope_deviation_grade5=_quality_grade_scaling(helix_slope, 5),
         )
