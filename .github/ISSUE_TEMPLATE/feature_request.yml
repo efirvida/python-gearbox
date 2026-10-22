@@ -1,0 +1,20 @@
+name: Feature request
+description: Support another gear type, standard, clause or output
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What do you need
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Standard, edition and clause
+      description: Formulas must come from a published standard. Check KNOWN_ISSUES.md for what is out of scope.
+  - type: textarea
+    id: validation
+    attributes:
+      label: How could it be validated
+      description: A worked example, a table, a limit case or a reference result.

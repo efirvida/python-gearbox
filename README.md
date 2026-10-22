@@ -150,6 +150,11 @@ The standards themselves are not distributed with the repository. The calculatio
 against ISO 6336-1/-2/-3:2019, AGMA 2001-D04 and ISO 6336-5:2016; see `KNOWN_ISSUES.md` for what is
 still pending.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), the [Code of Conduct](CODE_OF_CONDUCT.md) and the
+[security policy](SECURITY.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+
 ## License
 
 LGPL 2.1 — see [LICENSE](LICENSE).

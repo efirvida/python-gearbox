@@ -1,0 +1,31 @@
+name: Bug report
+description: A crash, or a result that disagrees with the standard
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happens
+      description: Error message, or the number you get and the number you expect.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: A short script with the `Gear`, `Tool`, `Material` and `Transmission` inputs.
+      render: python
+    validations:
+      required: true
+  - type: input
+    id: standard
+    attributes:
+      label: Standard, edition and clause
+      description: For a wrong number. Example, "ISO 6336-3:2019 formula (62)".
+  - type: input
+    id: version
+    attributes:
+      label: python-gearbox version and Python version
+      placeholder: "0.2.0, Python 3.12"
+    validations:
+      required: true

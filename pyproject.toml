@@ -5,13 +5,20 @@ build-backend = "hatchling.build"
 [project]
 name = "python-gearbox"
 version = "0.2.0.dev0"
-description = "Strength calculation (ISO 6336, AGMA 2101) and geometry export for spur and helical gears"
+description = "Strength calculation (ISO 6336, AGMA 2001) and geometry export for spur, helical, double helical and internal gears"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Eduardo M. Firvida Donestevez", email = "efirvida@gmail.com" }]
 requires-python = ">=3.10"
-keywords = ["gearbox", "gear", "agma", "iso", "gear transmission", "engineering"]
+keywords = ["gearbox", "gear", "agma", "iso", "iso-6336", "gear transmission", "engineering"]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Intended Audience :: Developers",
     "Intended Audience :: Manufacturing",
     "Intended Audience :: Science/Research",
@@ -27,6 +34,8 @@ dev = ["pytest>=8", "pytest-cov", "ruff", "gmsh>=4.11"]
 
 [project.urls]
 Homepage = "https://github.com/efirvida/python-gearbox"
+Issues = "https://github.com/efirvida/python-gearbox/issues"
+Changelog = "https://github.com/efirvida/python-gearbox/blob/master/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/gearbox"]

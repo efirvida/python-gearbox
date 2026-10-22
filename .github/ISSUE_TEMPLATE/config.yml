@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Known issues and scope
+    url: https://github.com/efirvida/python-gearbox/blob/master/KNOWN_ISSUES.md
+    about: Check what is verified, what deviates from the standard and what is out of scope.
