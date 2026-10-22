@@ -697,8 +697,12 @@ class _SectionBuilder:
 
             tip block     C-D-E-F    flank CD, tip DE, axis EF, cross line FC
             fillet block  B-C-F-G    upper fillet BC, cross line CF, axis FG, normal GB
-            root block    A-B-G-J    root+lower fillet AB, normal BG, arc GJ, gap line JA
-            rim block     H-I-J-G    bore arc HI, gap line IJ, arc JG, axis GH
+            root block    A-B-G-J    root+lower fillet AB, normal BG, line GJ, gap line JA
+            rim block     H-I-J-G    bore arc HI, gap line IJ, line JG, axis GH
+
+        ``GJ`` runs from ``G`` to the gap line at the bisector of the axis and the normal ``GB``,
+        so ``J`` lies deeper than ``G`` and the element layers under the root curve smoothly
+        along the fillet instead of running along a circle.
         """
         s = self.settings
         segments = self.segments
@@ -715,9 +719,12 @@ class _SectionBuilder:
             raise ValueError(
                 "the fillet block does not fit: reduce cross_angle or increase fillet_angle"
             )
+        mirror = half_pitch < 0
         f_point = self._polar(f_radius, axis, 0.0)
         g_point = self._polar(g_radius, axis, 0.0)
-        j_point = self._polar(g_radius, axis, half_pitch)
+        j_point = self._point(
+            *self._transform(*self._gap_point(g_radius, abs(half_pitch)), axis, mirror)
+        )
         h_point = self._polar(self.bore_radius, axis, 0.0)
         i_point = self._polar(self.bore_radius, axis, half_pitch)
 
@@ -727,7 +734,7 @@ class _SectionBuilder:
             "CF": self._line(c_point, f_point),
             "FG": self._line(f_point, g_point),
             "GB": self._line(g_point, b_point),
-            "GJ": self._arc(g_point, j_point),
+            "GJ": self._line(g_point, j_point),
             "JA": self._line(j_point, a_point),
             "IJ": self._line(i_point, j_point),
             "GH": self._line(g_point, h_point),
@@ -767,6 +774,24 @@ class _SectionBuilder:
             [h_point, i_point, j_point, g_point],
         )
         return [tip, fillet, root, rim], bore_arc, lines["JA"], lines["IJ"]
+
+    def _gap_point(self, g_radius: float, half_pitch: float) -> tuple[float, float]:
+        """Return the point where the root block meets the gap line, in the tooth frame.
+
+        The line leaves ``G`` (on the axis at ``g_radius``) at ``(90 + fillet_angle) / 2`` degrees
+        from the axis, pointing away from the bore, and meets the line through the gap centre.
+        """
+        slope = radians((90.0 - self.settings.fillet_angle) / 2)  # below the horizontal
+        gap = np.array([-sin(half_pitch), cos(half_pitch)])
+        direction = np.array([-cos(slope), -sin(slope)])
+        # g + s * direction = t * gap
+        s_value, t_value = np.linalg.solve(
+            np.column_stack([direction, -gap]), np.array([0.0, -g_radius])
+        )
+        if s_value <= 0 or t_value <= self.bore_radius:
+            raise ValueError("bore diameter too large for the tooth blocks of this gear")
+        point = t_value * gap
+        return float(point[0]), float(point[1])
 
     def _set_divisions(self, curve: int, nodes: int, growth: float, from_start: bool) -> None:
         """Divide a curve in ``nodes - 1`` elements that grow by ``growth`` away from one end.
