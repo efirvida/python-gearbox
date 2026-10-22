@@ -217,8 +217,9 @@ def _pair_gears(transmission: Transmission | Sequence[Gear]) -> tuple[Gear, Gear
 def _build_wheel(gear: Gear) -> CylindricalGearWheel:
     """Generate the tooth geometry of ``gear`` as a fresh object.
 
-    The profile engine takes the root fillet radius and the bottom clearance in millimetres, so the
-    dimensionless tool coefficients are multiplied by the normal module.
+    The profile engine takes the tool tip radius and the bottom clearance in millimetres, so the
+    dimensionless tool coefficients are multiplied by the normal module. The root fillet is the
+    curve the rack generates with that tip radius.
 
     Raises:
         ValueError: For an internal gear (the profile engine only generates external teeth).
@@ -231,7 +232,7 @@ def _build_wheel(gear: Gear) -> CylindricalGearWheel:
         "beta": gear.helix_angle,
         "alpha_n": gear.pressure_angle,
         "x": gear.profile_shift_coefficient,
-        "rho_f": gear.tool.root_fillet_radius_coefficient * gear.module,
+        "rho_fP": gear.tool.root_fillet_radius_coefficient * gear.module,
         "d_s": gear.shaft_diameter,
         "c": gear.tool.bottom_clearance_coefficient * gear.module,
         "b": gear.face_width,

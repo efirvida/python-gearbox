@@ -644,7 +644,10 @@ class _SectionBuilder:
         segments = self.segments
         a_point, c_point, d_point, e_point = corners
         c_xy = segments["FLANK"][0][0]
-        f_radius = c_xy[1] - abs(c_xy[0]) * tan(radians(s.cross_angle))
+        drop = abs(c_xy[0]) * tan(radians(s.cross_angle))
+        # J, on the gap line at the radius of F, must lie below the root as deep as F lies below
+        # C, or the root block degenerates when the flank starts high above the root
+        f_radius = min(c_xy[1], self.root_radius) - drop
         if f_radius <= self.bore_radius:
             raise ValueError("bore diameter too large for the tooth blocks of this gear")
         f_point = self._polar(f_radius, axis, 0.0)

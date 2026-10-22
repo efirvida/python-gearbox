@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import warnings
+from dataclasses import replace
 from math import atan2, degrees, radians, tan
 
 import numpy as np
@@ -296,3 +297,24 @@ def test_fillet_block_variant_works_in_3d_and_for_pairs(tmp_path):
 def test_invalid_variant_settings_are_rejected(kwargs):
     with pytest.raises(ValueError):
         ToothMeshSettings(**kwargs)
+
+
+@pytest.mark.parametrize(
+    ("teeth", "shift", "helix", "refine"),
+    [(17, 0.0, 20.0, 2.0), (17, -0.2, 0.0, 1.0), (22, -0.4, 0.0, 2.0), (40, -0.4, 0.0, 1.0)],
+)
+def test_standard_root_block_stays_valid_when_the_flank_starts_high(
+    tmp_path, teeth, shift, helix, refine
+):
+    # the generated fillet can start the involute well above the root circle; the root block
+    # inverted its elements when its gap-line corner followed the start of the flank
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # some of these gears are undercut
+        base = build_transmission().pinion
+        gear = replace(
+            base, number_of_teeth=teeth, profile_shift_coefficient=shift, helix_angle=helix
+        )
+        bore = 0.5 * _build_wheel(gear).data["d_f"]
+        settings = ToothMeshSettings(bore_diameter=bore).refined(refine)
+        result = mesh_gear(gear, tmp_path, "high", "2D", settings)
+    assert result.min_quality > 0.2
