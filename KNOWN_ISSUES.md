@@ -17,7 +17,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-04 | ISO `Z_R` | `σ_Hlim` of the pinion is used for both gears. | **fixed** |
 | KI-05 | ISO `K_v` | `N_S`: both branches evaluate to 0.85 (the formula `0.5+0.35·sqrt(F/100)` applies for loads ≥ 100 N/mm, the 0.85 for lower loads — the test is inverted). | **fixed** (formulae 11 and 12; `K_v` uses the actual line load, limited to 1 ≤ K_v ≤ 2 outside resonance, 6.2.6 and 6.3) |
 | KI-06 | ISO 1328 | `f_fβ` uses the `f_Hβ` formula. | **not a defect**: ISO 1328-1:1995 defines `f_fβ` with the same formula as `f_Hβ` |
-| KI-07 | ISO `c_γ` | `C_R`: rim thickness is divided by the module twice. | verify |
+| KI-07 | ISO `c_γ` | `C_R`: rim thickness is divided by the module twice. | **fixed** (ISO 6336-1:2019 formula 87) |
 | KI-08 | ISO `Z_E` and AGMA `C_p` | For different materials `(1-ν)` is used instead of `(1-ν²)`. | **fixed** (shared `standards/_hertz.py`) |
 | KI-09 | ISO `Y_F`, `Y_S`, `Y_δ` | Tool, helix angle and base helix angle of the pinion are used for the wheel. | **fixed** |
 | KI-10 | ISO `Y_F` | `inv(α)` is evaluated with a radian argument in a function that expects degrees (`γ_e`). | **fixed** (Y_S, Y_F; bending safety factors -1 % to -7 %) |
@@ -34,6 +34,7 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-21 | edition | The code follows ISO 6336:2006 and AGMA 2101-D04 (metric edition of AGMA 2001-D04). ISO 6336:2019 changed several factors. | — |
 | KI-22 | AGMA `C_pf` | `F/(10d)` was not limited to a minimum of 0.05 (AGMA 2001-D04 clause 15.3). | **fixed** (only slender pinions change: `spur_grey_iron` σ_H +0.2 %) |
 | KI-23 | ISO `y_α` | Formula (77) was `160 / (σ_Hlim · f_pb)` instead of `160 / σ_Hlim · f_pb`; for cast irons the limits 22 µm and 11 µm were compared with `12 800/σ_Hlim` and `6 400/σ_Hlim`. | **fixed** (found while fixing KI-12) |
+| KI-24 | ISO `c'`, `c_γα` | Virtual number of teeth for the stiffness: formula (81) is `z/cos³β` (the code used the bending-strength definition `z/(cosβ cos²β_b)`); `C_B` was fixed at 0.975 (formulae 88-89), no material combination (90-91) nor low-load (92) correction. | **fixed** |
 
 Two behaviours that are *not* defects but were surprising and are now explicit:
 

@@ -65,10 +65,46 @@ class LoadFactors:
     """``K_F_alpha``."""
 
 
+_STEEL_ELASTIC_MODULUS = 206000.0
+"""``E_St`` [MPa], reference modulus of formula (90)."""
+
+
+def _gear_blank_factor(gear: Gear) -> float:
+    """Gear blank factor ``C_R``, formulae (86) and (87); 1 for a solid disc."""
+    if gear.rim_thickness is None:
+        return 1.0
+    web_ratio = min(max(gear.web_thickness / gear.face_width, 0.2), 1.2)
+    rim_in_modules = max(gear.rim_thickness / gear.module, 1.0)
+    return 1 + log(web_ratio) / (5 * exp(rim_in_modules / 5))
+
+
+def _basic_rack_factor(transmission: Transmission) -> float:
+    """Basic rack factor ``C_B``, formulae (88) and (89), averaged over both tools."""
+
+    def factor(gear: Gear) -> float:
+        return (1.0 + 0.5 * (1.2 - gear.tool.dedendum_coefficient)) * (
+            1.0 - 0.02 * (20.0 - gear.pressure_angle)
+        )
+
+    return 0.5 * (factor(transmission.pinion) + factor(transmission.wheel))
+
+
 def mesh_stiffness(transmission: Transmission) -> MeshStiffness:
-    """Mesh stiffness according to ISO 6336-1 (approximation by the polynomial of ``q'``)."""
+    """Single and mesh stiffness, method B of ISO 6336-1 (clause 9.3).
+
+    ``c' = c'_th C_M C_R C_B cos(beta)`` (82), extended to dissimilar materials by (90)-(91) and to
+    line loads below 100 N/mm by (92); ``c_gamma_alpha = c' (0.75 eps_alpha + 0.25)`` (93) and
+    ``c_gamma_beta = 0.85 c_gamma_alpha`` (94). ``C_R`` is taken from the pinion.
+
+    Args:
+        transmission: The gear pair.
+
+    Returns:
+        The :class:`MeshStiffness` of the pair.
+    """
     p, w = transmission.pinion, transmission.wheel
-    zn1, zn2 = p.virtual_number_of_teeth, w.virtual_number_of_teeth
+    helix = cos(radians(p.helix_angle))
+    zn1, zn2 = p.number_of_teeth / helix**3, w.number_of_teeth / helix**3  # formula (81)
     x1, x2 = p.profile_shift_coefficient, w.profile_shift_coefficient
     minimum_flexibility = (
         0.04723
@@ -81,24 +117,21 @@ def mesh_stiffness(transmission: Transmission) -> MeshStiffness:
         + 0.00529 * x1**2
         + 0.00182 * x2**2
     )
-    web_ratio = min(max(p.web_thickness / p.face_width, 0.2), 1.2)
-    # KNOWN-ISSUE KI-07: the rim thickness is divided by the module twice.
-    rim_ratio = 1.0 if p.rim_thickness is None else max(p.rim_thickness / p.module, 1.0)
-
-    theoretical_stiffness = 1 / minimum_flexibility
-    correction_blank = 0.8
-    correction_rim = 1 + log(web_ratio) / (5 * exp(rim_ratio / (5 * p.module)))
-    correction_basic_rack = 0.975
     single = (
-        theoretical_stiffness
-        * correction_blank
-        * correction_rim
-        * correction_basic_rack
-        * cos(radians(p.helix_angle))
+        (1 / minimum_flexibility)
+        * 0.8  # C_M, formula (85)
+        * _gear_blank_factor(p)
+        * _basic_rack_factor(transmission)
+        * helix
     )
+    e1, e2 = p.material.elastic_modulus, w.material.elastic_modulus
+    single *= (2 * e1 * e2 / (e1 + e2)) / _STEEL_ELASTIC_MODULUS  # formulae (90) and (91)
+    if transmission.line_load < 100:
+        single *= (transmission.line_load / 100) ** 0.25  # formula (92)
+
     mesh = single * (0.75 * transmission.transverse_contact_ratio + 0.25)
     if transmission.transverse_contact_ratio < 1.2:
-        mesh *= 0.9
+        mesh *= 0.9  # up to 10 % less for spur gears with eps_alpha < 1.2 (9.3.3.1)
     return MeshStiffness(single, mesh, 0.85 * mesh)
 
 

@@ -127,3 +127,37 @@ def test_dynamic_factor_is_limited_to_two_outside_resonance():
 
     base = scenario("spur_sr20")
     assert dynamic_factor(replace(base, power_kw=0.05)) <= 2.0
+
+
+def test_ki07_gear_blank_factor_formula_87():
+    from math import exp, log
+
+    from gearbox.standards.iso6336._load_factors import _gear_blank_factor
+
+    base = scenario("spur_sr20").pinion  # m = 2.5, b = 34
+    webbed = replace(base, web_thickness=17.0, rim_thickness=10.0)  # b_s/b = 0.5, s_R/m = 4
+    assert _gear_blank_factor(webbed) == pytest.approx(1 + log(0.5) / (5 * exp(4 / 5)), rel=1e-12)
+    thin_rim = replace(base, web_thickness=17.0, rim_thickness=1.0)  # s_R/m < 1 -> 1
+    assert _gear_blank_factor(thin_rim) == pytest.approx(1 + log(0.5) / (5 * exp(1 / 5)), rel=1e-12)
+    assert _gear_blank_factor(replace(base, rim_thickness=None)) == 1.0
+
+
+def test_basic_rack_factor_matches_the_standard_rack():
+    from gearbox.standards.iso6336._load_factors import _basic_rack_factor
+
+    assert _basic_rack_factor(scenario("spur_sr20")) == pytest.approx(0.975)  # hfP = 1.25 m
+
+
+def test_single_stiffness_scales_with_material_and_low_load():
+    from gearbox.standards.iso6336._load_factors import mesh_stiffness
+
+    base = scenario("spur_sr20")
+    reference = mesh_stiffness(base).single_stiffness
+    grey = replace(base.wheel.material, elastic_modulus=118000.0)
+    mixed = replace(base, wheel=replace(base.wheel, material=grey))
+    ratio = (2 * 206000 * 118000 / (206000 + 118000)) / 206000  # formulae (90), (91)
+    assert mesh_stiffness(mixed).single_stiffness == pytest.approx(reference * ratio, rel=1e-12)
+
+    light = replace(base, power_kw=base.power_kw / 20)  # line load ~ 18 N/mm < 100
+    expected = (light.line_load / 100) ** 0.25  # formula (92)
+    assert mesh_stiffness(light).single_stiffness == pytest.approx(reference * expected, rel=1e-12)
