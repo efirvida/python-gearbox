@@ -31,7 +31,6 @@ class _Mesh:
     mf: float
     mn: float
     c_psi: float
-    ro2: float
 
 
 def geometry_factors(transmission: Transmission) -> GeometryFactors:
@@ -41,6 +40,7 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
 
     * ``n1, n2``: numbers of teeth; ``nc``: teeth of the generating cutter.
     * ``mn``: normal module, later reused as the load sharing ratio ``m_N``.
+    * ``cr``: operating centre distance over the module (eq. 3.7).
     * ``fi_n, fi, fi_r, fi_nr, fi_nl``: normal, transverse, operating transverse, operating
       normal and load-application pressure angles; ``psi, psi_b, psi_r``: reference, base and
       operating helix angles. All in radians.
@@ -74,7 +74,7 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
     mg = transmission.gear_ratio
     r1 = n1 / (2 * cos(psi))
     r2 = r1 * mg
-    cr = r1 + r2
+    cr = transmission.working_center_distance / mn  # operating centre distance, eq. 3.7
     fi = atan(tan(fi_n) / cos(psi))
     rb1 = r1 * cos(fi)
     rb2 = rb1 * mg
@@ -152,8 +152,6 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
     else:
         pitting = (cos(fi_r) * c_psi**2.0) / ((1.0 / rho_1 - 1.0 / rho_2) * d * mn)
 
-    # KNOWN-ISSUE KI-15: ``mn`` (reused above as the load sharing ratio) and ``ro2`` are shared
-    # by both J factors, so the wheel J factor is evaluated with the pinion outside radius.
     mesh = _Mesh(
         psi=psi,
         fi_n=fi_n,
@@ -162,13 +160,23 @@ def geometry_factors(transmission: Transmission) -> GeometryFactors:
         mf=mf,
         mn=mn,
         c_psi=c_psi,
-        ro2=ro2,
     )
     j1 = _bending_geometry_factor(
-        mesh, p, n1, mg, ro1, r1, r2, rb1, c4, p.profile_shift_coefficient, p.backlash
+        mesh, p, n1, mg, ro1, ro2, r1, r2, rb1, c4, p.profile_shift_coefficient, p.backlash
     )
     j2 = _bending_geometry_factor(
-        mesh, w, n2, 1.0 / mg, ro2, r2, r1, rb2, c6 - c2, w.profile_shift_coefficient, w.backlash
+        mesh,
+        w,
+        n2,
+        1.0 / mg,
+        ro2,
+        ro1,
+        r2,
+        r1,
+        rb2,
+        c6 - c2,
+        w.profile_shift_coefficient,
+        w.backlash,
     )
     return GeometryFactors(pitting=pitting, bending=(j1, j2))
 
@@ -179,6 +187,7 @@ def _bending_geometry_factor(
     n1: int,
     mg: float,
     ro1: float,
+    mate_ro: float,
     r1: float,
     r2: float,
     rb1: float,
@@ -202,6 +211,7 @@ def _bending_geometry_factor(
         n1: Number of teeth of the gear.
         mg: Gear ratio seen from this gear (1 for the pinion).
         ro1: Outside radius over module.
+        mate_ro: Outside radius over module of the mating gear.
         r1: Pitch radius over module.
         r2: Pitch radius over module of the mate.
         rb1: Base radius over module.
@@ -213,10 +223,12 @@ def _bending_geometry_factor(
         The geometry factor ``J``.
     """
     psi, fi_n, fi_nr, psi_r = mesh.psi, mesh.fi_n, mesh.fi_nr, mesh.psi_r
-    mf, mn, c_psi, ro2 = mesh.mf, mesh.mn, mesh.c_psi, mesh.ro2
+    mf, mn, c_psi = mesh.mf, mesh.mn, mesh.c_psi
     tool = gear.tool
     nc = tool.cutter_teeth
-    hao = tool.addendum_coefficient
+    # Nominal addendum of the generating tool (eq. 5.36): the tool tooth reaches the dedendum of the
+    # gear it generates, h_ao = h_fP (1.25 for the standard rack).
+    hao = tool.dedendum_coefficient
     xo = tool.profile_shift_coefficient
     rho_ao = tool.tool_edge_radius_coefficient
     delta_ao = tool.tool_tip_displacement
@@ -228,7 +240,7 @@ def _bending_geometry_factor(
         if mf <= 1:
             rn2 = rn * mg
             rnb2 = rnb * mg
-            rna2 = rn2 + ro2 - r2
+            rna2 = rn2 + mate_ro - r2
             cn6 = (rnb2 + rnb) * tan(fi_nr)
             cn1 = cn6 - sqrt(rna2**2 - rnb2**2)
             cn4 = cn1 + pi * cos(fi_n)
@@ -262,7 +274,7 @@ def _bending_geometry_factor(
     rn_2 = rn * cos(fi_n) / cos(fi_n_2)
     rno_2 = rno * cos(fi_n) / cos(fi_n_2)
     alpha_n = pi / 4
-    while True:
+    for _ in range(100):
         mi_no = acos(rno_2 * cos(alpha_n) / r_s_no) - alpha_n
         ks = rno_2 * sin(alpha_n) - r_s_no * sin(alpha_n + mi_no)
         kf = ks - rho_ao
@@ -285,22 +297,22 @@ def _bending_geometry_factor(
         )
         alpha_n1 = alpha_n - y / y_
 
-        # KNOWN-ISSUE KI-15: the convergence test is on the signed residual (``y <= 1e-6``), not
-        # its absolute value, so the loop may stop on a negative, unconverged residual.
-        if y <= 1e-6:
+        if abs(y) <= 1e-9:
             break
         alpha_n = alpha_n1
+    else:
+        raise ArithmeticError("AGMA 908 critical point iteration did not converge")
 
     rho_f = rho_ao + ((rno_2 - r_s_no) ** 2) / ((rn_2 * rno_2 / (rn_2 + rno_2)) - (rno_2 - r_s_no))
     omega = degrees(atan(tan(psi) * sin(fi_n)))
     sf = 2.0 * xi_nf
     h = 0.331 - 0.436 * fi_n
     l = 0.324 - 0.492 * fi_n  # noqa: E741
-    m = 0.261 - 0.545 * fi_n
+    m = 0.261 + 0.545 * fi_n  # eq. 5.76
     kf = h + ((sf / rho_f) ** l) * ((sf / hf) ** m)
 
     if mf > 1:
-        ch = 1.0 / (1.0 - sqrt((omega / 100.0) * (1.0 - omega / 100.0)))
+        ch = 1.0 / (1.0 - sqrt((omega / 100.0) * (1.0 - omega / 100.0)))  # eq. 5.70
         k_psi = cos(psi_r) * cos(psi)
     else:
         ch = 1.0
@@ -308,6 +320,4 @@ def _bending_geometry_factor(
 
     y = k_psi / ((cos(fi_nl) / cos(fi_nr)) * ((6.0 * hf / ((sf**2.0) * ch)) - tan(fi_nl) / sf))
 
-    # KNOWN-ISSUE KI-15: for the pinion of the "spur_sr0"/"spur_sr20" scenarios J exceeds 1
-    # (1.045); AGMA 908-B89 J factors of external spur gears are normally below 1.
     return y * c_psi / (kf * mn)

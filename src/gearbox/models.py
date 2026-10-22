@@ -42,9 +42,11 @@ class Tool:
         root_fillet_radius_coefficient: Tool tip radius (``rho_fP*``), e.g. 0.38.
         bottom_clearance_coefficient: Bottom clearance (``c*``), 0.25 by default.
         profile_shift_coefficient: Profile shift of the tool (``x_0``, AGMA 908 geometry factor).
-        tool_edge_radius_coefficient: Tool edge radius ``rho_a0`` used by the AGMA geometry factor.
+        tool_edge_radius_coefficient: Tool tip radius ``rho_a0`` of the AGMA geometry factor;
+            defaults to the root fillet radius coefficient of the tool.
         tool_tip_displacement: ``delta_a0`` of the AGMA geometry factor (AGMA 908 notation).
-        cutter_teeth: Number of teeth of the generating cutter (``N_c``), AGMA geometry factor.
+        cutter_teeth: Number of teeth of the generating cutter (``n_c``), AGMA 908-B89 clause 5.5;
+            10 000 represents a hob or rack cutter (the default), a smaller number a shaper cutter.
         residual_fillet_undercut_coefficient: Residual fillet undercut ``s_pr`` left by a
             protuberance tool, in modules (ISO 6336-3 formula 26); 0 when the gear is not undercut.
     """
@@ -54,12 +56,16 @@ class Tool:
     root_fillet_radius_coefficient: float
     bottom_clearance_coefficient: float = 0.25
     profile_shift_coefficient: float = 0.0
-    tool_edge_radius_coefficient: float = 0.0
+    tool_edge_radius_coefficient: float | None = None
     tool_tip_displacement: float = 0.0
-    cutter_teeth: float = 10.0
+    cutter_teeth: float = 10_000.0
     residual_fillet_undercut_coefficient: float = 0.0
 
     def __post_init__(self) -> None:
+        if self.tool_edge_radius_coefficient is None:
+            object.__setattr__(
+                self, "tool_edge_radius_coefficient", self.root_fillet_radius_coefficient
+            )
         _require_positive(
             "Tool",
             addendum_coefficient=self.addendum_coefficient,

@@ -2,10 +2,10 @@
  "helical15_sr20": {
   "agma2101_bending": {
    "application_factor": 1.3,
-   "bending_geometry_factor_pinion": 0.6620242927812475,
-   "bending_geometry_factor_wheel": 0.563287145929911,
-   "bending_stress_pinion": 269.9497407426892,
-   "bending_stress_wheel": 317.26853256455627,
+   "bending_geometry_factor_pinion": 0.5954662475143367,
+   "bending_geometry_factor_wheel": 0.48526212536036434,
+   "bending_stress_pinion": 300.1232848170074,
+   "bending_stress_wheel": 368.2819590936429,
    "dynamic_factor": 1.1259230237720084,
    "load_distribution_factor": 1.1611958649876566,
    "rim_thickness_factor_pinion": 1.0,
@@ -15,11 +15,11 @@
   },
   "agma2101_pitting": {
    "application_factor": 1.3,
-   "contact_stress": 1237.9904610918109,
+   "contact_stress": 1294.1619731164633,
    "dynamic_factor": 1.1259230237720084,
    "elastic_coefficient": 189.81170043756651,
    "load_distribution_factor": 1.1611958649876566,
-   "pitting_geometry_factor": 0.19096137048427278,
+   "pitting_geometry_factor": 0.17474423240859824,
    "size_factor": 1,
    "surface_condition_factor": 1,
    "tangential_load": 9252.827280092006
@@ -149,10 +149,10 @@
  "helical_through_through": {
   "agma2101_bending": {
    "application_factor": 1.3,
-   "bending_geometry_factor_pinion": 0.6040434000068237,
-   "bending_geometry_factor_wheel": 0.623009729820142,
-   "bending_stress_pinion": 214.02283565908633,
-   "bending_stress_wheel": 207.5073231487701,
+   "bending_geometry_factor_pinion": 0.506627067718173,
+   "bending_geometry_factor_wheel": 0.5329080242612173,
+   "bending_stress_pinion": 255.17602506491355,
+   "bending_stress_wheel": 242.59173336682014,
    "dynamic_factor": 1.121221404704736,
    "load_distribution_factor": 1.2168929016568752,
    "rim_thickness_factor_pinion": 1.0,
@@ -162,11 +162,11 @@
   },
   "agma2101_pitting": {
    "application_factor": 1.3,
-   "contact_stress": 1032.4343804795726,
+   "contact_stress": 1098.78957162824,
    "dynamic_factor": 1.121221404704736,
    "elastic_coefficient": 189.81170043756651,
    "load_distribution_factor": 1.2168929016568752,
-   "pitting_geometry_factor": 0.22998298128019093,
+   "pitting_geometry_factor": 0.20304465340878836,
    "size_factor": 1,
    "surface_condition_factor": 1,
    "tangential_load": 10052.532101544628
@@ -296,10 +296,10 @@
  "spur_grey_iron": {
   "agma2101_bending": {
    "application_factor": 1.3,
-   "bending_geometry_factor_pinion": 0.5958734937686065,
-   "bending_geometry_factor_wheel": 0.6588647397888583,
-   "bending_stress_pinion": 237.0587449981056,
-   "bending_stress_wheel": 214.39457005346802,
+   "bending_geometry_factor_pinion": 0.41256571726406205,
+   "bending_geometry_factor_wheel": 0.45516481786027096,
+   "bending_stress_pinion": 342.3867197380606,
+   "bending_stress_wheel": 310.3425771668192,
    "dynamic_factor": 1.1427783977865924,
    "load_distribution_factor": 1.1505129088000001,
    "rim_thickness_factor_pinion": 1.0,
@@ -313,7 +313,7 @@
    "dynamic_factor": 1.1427783977865924,
    "elastic_coefficient": 189.81170043756651,
    "load_distribution_factor": 1.1505129088000001,
-   "pitting_geometry_factor": 0.09257538912425117,
+   "pitting_geometry_factor": 0.09257538912425119,
    "size_factor": 1,
    "surface_condition_factor": 1,
    "tangential_load": 7024.769901987105
@@ -443,10 +443,10 @@
  "spur_sr0": {
   "agma2101_bending": {
    "application_factor": 1.3,
-   "bending_geometry_factor_pinion": 1.0454500262363697,
-   "bending_geometry_factor_wheel": 0.583314928721473,
-   "bending_stress_pinion": 183.25881000781953,
-   "bending_stress_wheel": 328.44681028591015,
+   "bending_geometry_factor_pinion": 0.4880151364120254,
+   "bending_geometry_factor_wheel": 0.3523278281065754,
+   "bending_stress_pinion": 392.5860356285454,
+   "bending_stress_wheel": 543.7774494291933,
    "dynamic_factor": 1.123936642054005,
    "load_distribution_factor": 1.1635129088,
    "rim_thickness_factor_pinion": 1.0,
@@ -456,11 +456,11 @@
   },
   "agma2101_pitting": {
    "application_factor": 1.3,
-   "contact_stress": 1707.5623763917888,
+   "contact_stress": 1688.4292970158385,
    "dynamic_factor": 1.123936642054005,
    "elastic_coefficient": 189.81170043756651,
    "load_distribution_factor": 1.1635129088,
-   "pitting_geometry_factor": 0.10760644020315722,
+   "pitting_geometry_factor": 0.11005902479711341,
    "size_factor": 1,
    "surface_condition_factor": 1,
    "tangential_load": 9579.23168452787
@@ -565,10 +565,10 @@
  "spur_sr20": {
   "agma2101_bending": {
    "application_factor": 1.3,
-   "bending_geometry_factor_pinion": 1.0454500262363697,
-   "bending_geometry_factor_wheel": 0.583314928721473,
-   "bending_stress_pinion": 183.25881000781953,
-   "bending_stress_wheel": 328.44681028591015,
+   "bending_geometry_factor_pinion": 0.4880151364120254,
+   "bending_geometry_factor_wheel": 0.3523278281065754,
+   "bending_stress_pinion": 392.5860356285454,
+   "bending_stress_wheel": 543.7774494291933,
    "dynamic_factor": 1.123936642054005,
    "load_distribution_factor": 1.1635129088,
    "rim_thickness_factor_pinion": 1.0,
@@ -578,11 +578,11 @@
   },
   "agma2101_pitting": {
    "application_factor": 1.3,
-   "contact_stress": 1707.5623763917888,
+   "contact_stress": 1688.4292970158385,
    "dynamic_factor": 1.123936642054005,
    "elastic_coefficient": 189.81170043756651,
    "load_distribution_factor": 1.1635129088,
-   "pitting_geometry_factor": 0.10760644020315722,
+   "pitting_geometry_factor": 0.11005902479711341,
    "size_factor": 1,
    "surface_condition_factor": 1,
    "tangential_load": 9579.23168452787
@@ -720,10 +720,10 @@
  "spur_through": {
   "agma2101_bending": {
    "application_factor": 1.3,
-   "bending_geometry_factor_pinion": 0.5844513935533122,
-   "bending_geometry_factor_wheel": 0.6631190234369724,
-   "bending_stress_pinion": 288.35200229397475,
-   "bending_stress_wheel": 254.1440127914224,
+   "bending_geometry_factor_pinion": 0.39884698342703534,
+   "bending_geometry_factor_wheel": 0.4649882209897522,
+   "bending_stress_pinion": 422.5373052255558,
+   "bending_stress_wheel": 362.43440579178804,
    "dynamic_factor": 1.1314071835248518,
    "load_distribution_factor": 1.1553529088,
    "rim_thickness_factor_pinion": 1.0,
@@ -733,11 +733,11 @@
   },
   "agma2101_pitting": {
    "application_factor": 1.3,
-   "contact_stress": 1530.295912123716,
+   "contact_stress": 1530.2959121237157,
    "dynamic_factor": 1.1314071835248518,
    "elastic_coefficient": 189.81170043756651,
    "load_distribution_factor": 1.1553529088,
-   "pitting_geometry_factor": 0.10371139710773476,
+   "pitting_geometry_factor": 0.10371139710773478,
    "size_factor": 1,
    "surface_condition_factor": 1,
    "tangential_load": 8429.723882384527

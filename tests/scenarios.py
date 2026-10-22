@@ -64,7 +64,6 @@ def build_transmission(
         addendum_coefficient=1,
         dedendum_coefficient=1.25,
         root_fillet_radius_coefficient=0.38,
-        cutter_teeth=10.0,
     )
     material = Material(
         name="m",
