@@ -7,7 +7,7 @@ The pair is first scanned by hand with ``dataclasses.replace``; then the optimis
 
 from dataclasses import replace
 
-from gearbox import Gear, Lubricant, Material, MaterialType, Tool, Transmission
+from gearbox import Gear, Lubricant, Material, MaterialType, ShaftArrangement, Tool, Transmission
 from gearbox.optimization import (
     maximum_profile_shifts,
     minimum_contact_stress_profile_shifts,
@@ -33,7 +33,7 @@ pinion = Gear(
     quality_grade=6,
     surface_roughness=3.67,
     shaft_diameter=35.0,
-    shaft_arrangement=3,
+    shaft_arrangement=ShaftArrangement.BETWEEN_BEARINGS_TOWARDS_TORQUED_END,
     bearing_span=60.0,
     offset=15.0,
     rim_thickness=20.0,

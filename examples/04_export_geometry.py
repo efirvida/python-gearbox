@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from gearbox import Gear, Lubricant, Material, MaterialType, Tool, Transmission
+from gearbox import Gear, Lubricant, Material, MaterialType, ShaftArrangement, Tool, Transmission
 from gearbox.export import ExportTarget, export_gear, export_pair
 
 tool = Tool(
@@ -27,7 +27,7 @@ def make_gear(teeth: int, shift: float, shaft: float) -> Gear:
         quality_grade=6,
         surface_roughness=3.67,
         shaft_diameter=shaft,
-        shaft_arrangement=3,
+        shaft_arrangement=ShaftArrangement.BETWEEN_BEARINGS_TOWARDS_TORQUED_END,
         bearing_span=60.0,
         offset=15.0,
     )

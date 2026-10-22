@@ -1,8 +1,8 @@
 """Load factors of ISO 6336-1 (method B): dynamic, face and transverse load factors.
 
 The functions here are shared by the pitting (ISO 6336-2) and bending (ISO 6336-3) calculations.
-Entries marked ``KNOWN-ISSUE KI-nn`` reproduce behaviour of earlier releases that deviates from the
-standard; they are listed in ``KNOWN_ISSUES.md`` and will be corrected in dedicated changes.
+Formula numbers refer to ISO 6336-1:2019. Entries marked ``KNOWN-ISSUE KI-nn`` reproduce behaviour
+of earlier releases that still deviates from the standard (see ``KNOWN_ISSUES.md``).
 """
 
 from __future__ import annotations
@@ -10,30 +10,27 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import cos, exp, log, pi, radians, sin, sqrt
 
-from gearbox.enums import LeadModification
+from gearbox.enums import LeadModification, ShaftArrangement
 from gearbox.models import Gear
-from gearbox.standards.iso6336._materials import (
-    CAST_IRONS,
-    STEELS_AND_PEARLITIC_IRONS,
-    SURFACE_HARDENED,
-)
+from gearbox.standards.iso6336._materials import CAST_IRONS, STEELS_AND_PEARLITIC_IRONS
 from gearbox.transmission import Transmission
 
-# (b1, b2) factors for each lead-modification case.
+# (B1, B2) of table 12 for each lead modification.
 _LEAD_MODIFICATION_FACTORS = {
-    LeadModification.MODIFICATION_1: (1.0, 1.0),
-    LeadModification.MODIFICATION_2: (1.0, 0.5),
-    LeadModification.MODIFICATION_3: (0.1, 1.0),
-    LeadModification.MODIFICATION_4: (0.1, 0.5),
-    LeadModification.MODIFICATION_5: (0.7, 0.7),
+    LeadModification.NONE: (1.0, 1.0),
+    LeadModification.CENTRAL_CROWNING: (1.0, 0.5),
+    LeadModification.CENTRAL_CROWNING_WITH_SHAFT_DEFLECTION: (0.5, 0.5),
+    LeadModification.HELIX_CORRECTION: (0.1, 1.0),
+    LeadModification.HELIX_CORRECTION_AND_CENTRAL_CROWNING: (0.1, 0.5),
+    LeadModification.END_RELIEF: (0.7, 0.7),
 }
-# K' constant per shaft arrangement: (d/dsh < 1.15, d/dsh >= 1.15)
+# K' of figure 13 per shaft arrangement: (d/dsh < 1.15 "without stiffening", d/dsh >= 1.15).
 _SHAFT_STIFFNESS_CONSTANT = {
-    1: (0.8, 0.48),
-    2: (-0.8, -0.48),
-    3: (1.33, 1.33),
-    4: (-0.6, -0.36),
-    5: (-1.0, -0.6),
+    ShaftArrangement.BETWEEN_BEARINGS_TOWARDS_TORQUED_END: (0.8, 0.48),
+    ShaftArrangement.BETWEEN_BEARINGS_AWAY_FROM_TORQUED_END: (-0.8, -0.48),
+    ShaftArrangement.OVERHUNG: (1.33, 1.33),
+    ShaftArrangement.TWO_GEAR_SHAFT_TORQUE_ON_SAME_SIDE: (-0.6, -0.36),
+    ShaftArrangement.TWO_GEAR_SHAFT_TORQUE_ON_OPPOSITE_SIDES: (-1.0, -0.6),
 }
 
 
@@ -135,26 +132,31 @@ def mesh_stiffness(transmission: Transmission) -> MeshStiffness:
     return MeshStiffness(single, mesh, 0.85 * mesh)
 
 
-def _lead_running_in_allowance(gear: Gear, speed: float, lead_deviation: float) -> float:
-    """``y_beta`` of one gear: running-in allowance of the helix misalignment [um]."""
+def _lead_running_in_allowance(gear: Gear, speed: float, misalignment: float) -> float:
+    """Running-in allowance ``y_beta`` of one gear [um], ISO 6336-1 formulae (46), (48) and (50).
+
+    Args:
+        gear: The gear (its material selects the formula).
+        speed: Pitch line velocity [m/s].
+        misalignment: Initial equivalent misalignment ``F_beta_x`` [um].
+    """
     group = gear.material.material_type
     limit = gear.material.contact_stress_limit
-    allowance = 0.0
     if group in STEELS_AND_PEARLITIC_IRONS:
-        allowance = (320.0 / limit) * lead_deviation
-        if 5 < speed <= 10 and allowance > 25600.0 / limit:
-            allowance = 25600.0 / limit
-        elif speed > 10 and allowance > 12800.0 / limit:
-            allowance = 12800.0 / limit
+        allowance = (320.0 / limit) * misalignment
+        if 5 < speed <= 10:
+            allowance = min(allowance, 25600.0 / limit)
+        elif speed > 10:
+            allowance = min(allowance, 12800.0 / limit)
     elif group in CAST_IRONS:
-        allowance = 0.55 * lead_deviation
-        if 5 < speed <= 10 and allowance > 45:
-            allowance = 45
-        elif speed > 10 and allowance > 22:
-            allowance = 22
-    elif group in SURFACE_HARDENED:
-        allowance = 0.15 * lead_deviation
-    return allowance
+        allowance = 0.55 * misalignment
+        if 5 < speed <= 10:
+            allowance = min(allowance, 45.0)
+        elif speed > 10:
+            allowance = min(allowance, 22.0)
+    else:
+        allowance = min(0.15 * misalignment, 6.0)
+    return min(allowance, misalignment)
 
 
 def _profile_running_in_allowance(gear: Gear, speed: float, deviation: float) -> float:
@@ -321,50 +323,58 @@ def dynamic_factor(transmission: Transmission) -> float:
 
 
 def face_load_factor_contact(transmission: Transmission) -> float:
-    """Face load factor for contact stress ``K_H_beta`` (ISO 6336-1, method C)."""
+    """Face load factor for contact stress ``K_H_beta``, method C of ISO 6336-1 (clause 7.5).
+
+    The initial equivalent misalignment ``F_beta_x`` is built from the shaft deformation ``f_sh``
+    (59) and the mesh misalignment ``f_ma`` (66) with formulae (54) or (55), bounded below by
+    ``F_beta_x,min`` (58); running-in (45)-(53) gives ``F_beta_y`` and formulae (41)-(44) the
+    factor.
+
+    Args:
+        transmission: The gear pair.
+
+    Returns:
+        ``K_H_beta`` (>= 1).
+    """
     p, w = transmission.pinion, transmission.wheel
-    specific_load = max(transmission.line_load, 100.0)
     kv = dynamic_factor(transmission)
     c_gamma_beta = mesh_stiffness(transmission).face_mesh_stiffness
-    load_per_width = max(kv * specific_load, 100.0)
+    load_per_width = kv * transmission.line_load  # F_m / b = F_t K_A K_gamma K_v / b
 
     b1, b2 = _LEAD_MODIFICATION_FACTORS[p.lead_modification]
     stiffness_ratio = p.reference_diameter / p.shaft_diameter
-    shaft_constant = _SHAFT_STIFFNESS_CONSTANT[int(p.shaft_arrangement)][
+    shaft_constant = _SHAFT_STIFFNESS_CONSTANT[p.shaft_arrangement][
         0 if stiffness_ratio < 1.15 else 1
     ]
     shaft_term = (stiffness_ratio**4) * ((p.bearing_span * p.offset) / (p.reference_diameter**2))
-    shaft_deformation = (
+    shaft_deformation = (  # f_sh, formula (59) with B* = 1
         load_per_width
         * 0.023
         * (abs(1 + shaft_constant * shaft_term - 0.3) + 0.3)
         * ((p.face_width / p.reference_diameter) ** 2)
     )
-    manufacturing_deviation = sqrt(
-        p.tolerances.helix_slope_deviation**2 + w.tolerances.helix_slope_deviation**2
-    )
+    helix_slope = (p.tolerances.helix_slope_deviation, w.tolerances.helix_slope_deviation)
+    mesh_misalignment = sqrt(helix_slope[0] ** 2 + helix_slope[1] ** 2)  # f_ma, formula (66)
     reference_deviation = max(
         p.tolerances.helix_slope_deviation_grade5, w.tolerances.helix_slope_deviation_grade5
     )
     if p.favorable_contact:
-        equivalent_misalignment = abs(1.33 * b1 * shaft_deformation - reference_deviation)
+        initial_misalignment = abs(1.33 * b1 * shaft_deformation - reference_deviation)  # (55)
     else:
-        equivalent_misalignment = 1.33 * b1 * shaft_deformation + b2 * manufacturing_deviation
+        initial_misalignment = 1.33 * b1 * shaft_deformation + b2 * mesh_misalignment  # (54)
+    minimum_misalignment = max(0.005 * load_per_width, 0.5 * max(helix_slope))  # (58)
+    initial_misalignment = max(initial_misalignment, minimum_misalignment)
 
-    running_in = round(
-        0.5
-        * (
-            _lead_running_in_allowance(p, transmission.pitch_line_velocity, equivalent_misalignment)
-            + _lead_running_in_allowance(
-                w, transmission.pitch_line_velocity, equivalent_misalignment
-            )
-        ),
-        1,
+    speed = transmission.pitch_line_velocity
+    running_in = 0.5 * (  # formulae (46)-(53)
+        _lead_running_in_allowance(p, speed, initial_misalignment)
+        + _lead_running_in_allowance(w, speed, initial_misalignment)
     )
-    effective_misalignment = equivalent_misalignment - running_in
-    if effective_misalignment * c_gamma_beta / (2 * load_per_width) >= 1:
-        return sqrt((2.0 * effective_misalignment * c_gamma_beta) / load_per_width)
-    return 1 + (effective_misalignment * c_gamma_beta) / (2 * load_per_width)
+    effective_misalignment = initial_misalignment - running_in  # F_beta_y, formula (45)
+    ratio = effective_misalignment * c_gamma_beta / (2 * load_per_width)
+    if ratio >= 1:
+        return sqrt((2.0 * effective_misalignment * c_gamma_beta) / load_per_width)  # (41)
+    return 1 + ratio  # (43)
 
 
 def face_load_factor_root(transmission: Transmission) -> float:
@@ -382,8 +392,8 @@ def _transverse_load_distribution(transmission: Transmission) -> float:
     face_load_contact = face_load_factor_contact(transmission)
     mesh = mesh_stiffness(transmission).mesh_stiffness
     effective_deviation = profile_deviations(transmission).effective_base_pitch
-    load_per_width = max(kv * transmission.line_load, 100.0)
-    return (mesh * effective_deviation) / (load_per_width * face_load_contact)
+    tangential_load_per_width = kv * transmission.line_load * face_load_contact  # F_tH / b
+    return (mesh * effective_deviation) / tangential_load_per_width
 
 
 def _transverse_load_factor(transmission: Transmission, upper_limit: float) -> float:

@@ -57,31 +57,45 @@ class GearingType(IntEnum):
 
 
 class ShaftArrangement(IntEnum):
-    """Gear position on its shaft: selects the ``K'`` constant of ISO 6336-1 (method C of ``F_sh``).
+    """Position of the pinion on its shaft: selects the constant ``K'`` (ISO 6336-1, figure 13).
 
-    The numeric values are those of earlier releases. Descriptive member names are still pending
-    verification against the figure of ISO 6336-1 and are therefore deliberately neutral.
+    The numeric values are those of earlier releases. ``s`` is the pinion offset from the
+    mid-span and ``l`` the bearing span; the figure applies for ``s/l < 0.3``.
     """
 
-    ARRANGEMENT_1 = 1  # K' = 0.80 (d/dsh < 1.15) / 0.48
-    ARRANGEMENT_2 = 2  # K' = -0.80 / -0.48
-    ARRANGEMENT_3 = 3  # K' = 1.33 / 1.33
-    ARRANGEMENT_4 = 4  # K' = -0.60 / -0.36
-    ARRANGEMENT_5 = 5  # K' = -1.00 / -0.60
+    BETWEEN_BEARINGS_TOWARDS_TORQUED_END = 1
+    """Figure 13 a): ``K' = 0.48`` with stiffening, ``0.8`` without."""
+    BETWEEN_BEARINGS_AWAY_FROM_TORQUED_END = 2
+    """Figure 13 b): ``K' = -0.48`` with stiffening, ``-0.8`` without."""
+    OVERHUNG = 3
+    """Figure 13 c): pinion outside the bearing span, ``K' = 1.33``."""
+    TWO_GEAR_SHAFT_TORQUE_ON_SAME_SIDE = 4
+    """Figure 13 d): two gears on the shaft, torque paths on the same side,
+    ``K' = -0.36`` with stiffening, ``-0.6`` without."""
+    TWO_GEAR_SHAFT_TORQUE_ON_OPPOSITE_SIDES = 5
+    """Figure 13 e): two gears on the shaft, torque paths on opposite sides,
+    ``K' = -0.6`` with stiffening, ``-1.0`` without."""
 
 
 class LeadModification(IntEnum):
-    """Helix (lead) modification case: selects factors ``b1`` and ``b2`` of ISO 6336-1.
+    """Helix (lead) modification of the mesh: selects ``B1`` and ``B2`` (ISO 6336-1, table 12).
 
-    Descriptive member names are pending verification against the standard; values are those of
-    earlier releases.
+    The numbering is that of the 2019 edition, which added case 3; the 0.1.x values 3, 4 and 5
+    are now 4, 5 and 6.
     """
 
-    MODIFICATION_1 = 1  # b1 = 1.0, b2 = 1.0
-    MODIFICATION_2 = 2  # b1 = 1.0, b2 = 0.5
-    MODIFICATION_3 = 3  # b1 = 0.1, b2 = 1.0
-    MODIFICATION_4 = 4  # b1 = 0.1, b2 = 0.5
-    MODIFICATION_5 = 5  # b1 = 0.7, b2 = 0.7
+    NONE = 1
+    """``B1 = 1.0``, ``B2 = 1.0``."""
+    CENTRAL_CROWNING = 2
+    """Central crowning only, ``C_beta = 0.5 f_ma``: ``B1 = 1.0``, ``B2 = 0.5``."""
+    CENTRAL_CROWNING_WITH_SHAFT_DEFLECTION = 3
+    """Central crowning only, ``C_beta = 0.5 (f_ma + f_sh)``: ``B1 = 0.5``, ``B2 = 0.5``."""
+    HELIX_CORRECTION = 4
+    """Helix correction only: ``B1 = 0.1``, ``B2 = 1.0``."""
+    HELIX_CORRECTION_AND_CENTRAL_CROWNING = 5
+    """``B1 = 0.1``, ``B2 = 0.5``."""
+    END_RELIEF = 6
+    """``B1 = 0.7``, ``B2 = 0.7``."""
 
 
 class Standard(str, Enum):

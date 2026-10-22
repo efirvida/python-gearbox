@@ -5,7 +5,7 @@ Run with::
     python examples/01_basic_calculation.py
 """
 
-from gearbox import Gear, Lubricant, Material, MaterialType, Tool, Transmission
+from gearbox import Gear, Lubricant, Material, MaterialType, ShaftArrangement, Tool, Transmission
 from gearbox.standards import agma2101, iso6336
 
 # Basic rack of the generating tool (standard ISO 53 profile).
@@ -39,7 +39,7 @@ def make_gear(teeth: int, profile_shift: float, shaft_diameter: float, offset: f
         quality_grade=6,  # ISO 1328
         surface_roughness=3.67,  # Rz, micrometres
         shaft_diameter=shaft_diameter,
-        shaft_arrangement=3,
+        shaft_arrangement=ShaftArrangement.BETWEEN_BEARINGS_TOWARDS_TORQUED_END,
         bearing_span=60.0,
         offset=offset,
         rim_thickness=None,  # solid disc

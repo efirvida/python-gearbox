@@ -161,3 +161,61 @@ def test_single_stiffness_scales_with_material_and_low_load():
     light = replace(base, power_kw=base.power_kw / 20)  # line load ~ 18 N/mm < 100
     expected = (light.line_load / 100) ** 0.25  # formula (92)
     assert mesh_stiffness(light).single_stiffness == pytest.approx(reference * expected, rel=1e-12)
+
+
+def test_lead_modification_follows_table_12_of_the_2019_edition():
+    from gearbox.enums import LeadModification as L
+    from gearbox.standards.iso6336._load_factors import _LEAD_MODIFICATION_FACTORS as TABLE
+
+    assert TABLE[L.NONE] == (1.0, 1.0)
+    assert TABLE[L.CENTRAL_CROWNING] == (1.0, 0.5)
+    assert TABLE[L.CENTRAL_CROWNING_WITH_SHAFT_DEFLECTION] == (0.5, 0.5)
+    assert TABLE[L.HELIX_CORRECTION] == (0.1, 1.0)
+    assert TABLE[L.HELIX_CORRECTION_AND_CENTRAL_CROWNING] == (0.1, 0.5)
+    assert TABLE[L.END_RELIEF] == (0.7, 0.7)
+    assert [int(member) for member in L] == [1, 2, 3, 4, 5, 6]
+
+
+def test_shaft_stiffness_constants_follow_figure_13():
+    from gearbox.enums import ShaftArrangement as S
+    from gearbox.standards.iso6336._load_factors import _SHAFT_STIFFNESS_CONSTANT as TABLE
+
+    # (without stiffening, with stiffening)
+    assert TABLE[S.BETWEEN_BEARINGS_TOWARDS_TORQUED_END] == (0.8, 0.48)
+    assert TABLE[S.BETWEEN_BEARINGS_AWAY_FROM_TORQUED_END] == (-0.8, -0.48)
+    assert TABLE[S.OVERHUNG] == (1.33, 1.33)
+    assert TABLE[S.TWO_GEAR_SHAFT_TORQUE_ON_SAME_SIDE] == (-0.6, -0.36)
+    assert TABLE[S.TWO_GEAR_SHAFT_TORQUE_ON_OPPOSITE_SIDES] == (-1.0, -0.6)
+
+
+def test_lead_running_in_allowance_limits():
+    from gearbox.standards.iso6336._load_factors import _lead_running_in_allowance as y
+
+    steel = _gear_with("V", 1000.0)
+    assert y(steel, 3.0, 50.0) == pytest.approx(0.32 * 50.0)  # (46)
+    assert y(steel, 7.0, 500.0) == pytest.approx(25600 / 1000)
+    assert y(steel, 12.0, 500.0) == pytest.approx(12800 / 1000)
+    iron = _gear_with("GG", 300.0)
+    assert y(iron, 3.0, 50.0) == pytest.approx(0.55 * 50.0)  # (48)
+    assert y(iron, 12.0, 500.0) == pytest.approx(22.0)
+    hardened = _gear_with("Eh", 1500.0)
+    assert y(hardened, 3.0, 20.0) == pytest.approx(0.15 * 20.0)  # (50)
+    assert y(hardened, 3.0, 100.0) == pytest.approx(6.0)  # upper limit of 6 um
+    assert y(_gear_with("V", 200.0), 3.0, 10.0) <= 10.0  # y_beta <= F_beta_x
+
+
+def test_face_load_factor_has_the_minimum_misalignment_of_formula_58():
+    from gearbox.enums import LeadModification
+    from gearbox.standards.iso6336._load_factors import face_load_factor_contact
+
+    base = scenario("spur_sr20")
+    perfect = replace(
+        base,
+        pinion=replace(
+            base.pinion, favorable_contact=True, lead_modification=LeadModification.HELIX_CORRECTION
+        ),
+        wheel=replace(
+            base.wheel, favorable_contact=True, lead_modification=LeadModification.HELIX_CORRECTION
+        ),
+    )
+    assert face_load_factor_contact(perfect) > 1.0  # never exactly 1 thanks to F_beta_x,min

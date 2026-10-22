@@ -5,7 +5,7 @@ Compares a spur and a helical version of the same pair, then sweeps the power.
 
 from dataclasses import replace
 
-from gearbox import Gear, Lubricant, Material, MaterialType, Tool, Transmission
+from gearbox import Gear, Lubricant, Material, MaterialType, ShaftArrangement, Tool, Transmission
 from gearbox.standards import iso6336
 
 tool = Tool(
@@ -26,7 +26,7 @@ gear = Gear(
     quality_grade=6,
     surface_roughness=3.0,
     shaft_diameter=45.0,
-    shaft_arrangement=3,
+    shaft_arrangement=ShaftArrangement.BETWEEN_BEARINGS_TOWARDS_TORQUED_END,
     bearing_span=100.0,
     offset=0.0,
 )

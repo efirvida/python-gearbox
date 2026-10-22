@@ -35,6 +35,8 @@ suspected deviation from the standard; to be confirmed against the 2019 editions
 | KI-22 | AGMA `C_pf` | `F/(10d)` was not limited to a minimum of 0.05 (AGMA 2001-D04 clause 15.3). | **fixed** (only slender pinions change: `spur_grey_iron` σ_H +0.2 %) |
 | KI-23 | ISO `y_α` | Formula (77) was `160 / (σ_Hlim · f_pb)` instead of `160 / σ_Hlim · f_pb`; for cast irons the limits 22 µm and 11 µm were compared with `12 800/σ_Hlim` and `6 400/σ_Hlim`. | **fixed** (found while fixing KI-12) |
 | KI-24 | ISO `c'`, `c_γα` | Virtual number of teeth for the stiffness: formula (81) is `z/cos³β` (the code used the bending-strength definition `z/(cosβ cos²β_b)`); `C_B` was fixed at 0.975 (formulae 88-89), no material combination (90-91) nor low-load (92) correction. | **fixed** |
+| KI-25 | ISO `B1`, `B2`; enums | Table 12 of 2019 has six lead-modification cases (the 2006 table had five); 0.1.x values 3, 4, 5 are now 4, 5, 6 and the new case 3 is `(0.5, 0.5)`. Enums `LeadModification` and `ShaftArrangement` renamed after table 12 and figure 13. | **fixed** (API change) |
+| KI-26 | ISO `K_Hβ`, `K_Hα` | `F_βx,min` of formula (58) missing; `y_β` of surface hardened steels lacked its 6 µm limit and `y_β <= F_βx`; the mean `y_β` was rounded to 0.1 µm; `F_m/b` and `F_tH/b` were limited to 100 N/mm (the standard limits only method C of `K_v` and `c'`). | **fixed** |
 
 Two behaviours that are *not* defects but were surprising and are now explicit:
 

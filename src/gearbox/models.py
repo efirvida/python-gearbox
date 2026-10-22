@@ -208,7 +208,7 @@ class Gear:
     backlash: float = 0.0
     crowning: Crowning = Crowning.UNCROWNED
     assembly_condition: AssemblyCondition = AssemblyCondition.NOT_IMPROVED
-    lead_modification: LeadModification = LeadModification.MODIFICATION_1
+    lead_modification: LeadModification = LeadModification.NONE
     favorable_contact: bool = False
 
     def __post_init__(self) -> None:
