@@ -40,6 +40,7 @@ class ProfileShifts(NamedTuple):
 
 
 def _with_profile_shifts(transmission: Transmission, pinion: float, wheel: float) -> Transmission:
+    """Copy of ``transmission`` with the given profile shift coefficients."""
     return replace(
         transmission,
         pinion=replace(transmission.pinion, profile_shift_coefficient=pinion),
@@ -48,6 +49,7 @@ def _with_profile_shifts(transmission: Transmission, pinion: float, wheel: float
 
 
 def _candidate(transmission: Transmission, pinion_shift: float) -> Transmission:
+    """Copy of ``transmission`` with ``x1 = pinion_shift`` and the same sum ``x1 + x2``."""
     return _with_profile_shifts(
         transmission, pinion_shift, transmission.profile_shift_sum - pinion_shift
     )
@@ -114,6 +116,7 @@ def feasible_pinion_profile_shift_range(
         )
 
     def margin(x: float) -> float:
+        """Smallest geometric margin at ``x1 = x``; negative when a constraint is violated."""
         return _geometry_margin(transmission, x, minimum_tip_land, minimum_contact_ratio)
 
     grid = linspace(lower, upper, _GRID_POINTS)
@@ -204,6 +207,7 @@ def minimum_contact_stress_profile_shifts(
     )
 
     def stress(x: float) -> float:
+        """Contact stress of the pair with ``x1 = x``."""
         return _contact_stress(_candidate(transmission, x), standard)
 
     samples = [float(x) for x in linspace(low, high, 41)]

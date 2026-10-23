@@ -26,6 +26,7 @@ from gearbox.enums import (
 
 
 def _require_positive(owner: str, **values: float) -> None:
+    """Raise ``ValueError`` naming the first of ``values`` that is not positive."""
     for name, value in values.items():
         if not value > 0:
             raise ValueError(f"{owner}.{name} must be positive, got {value!r}")

@@ -79,6 +79,7 @@ def _basic_rack_factor(transmission: Transmission) -> float:
     """Basic rack factor ``C_B``, formulae (88) and (89), averaged over both tools."""
 
     def factor(gear: Gear) -> float:
+        """``C_B`` of one gear, formula (88), with its tool dedendum and pressure angle."""
         return (1.0 + 0.5 * (1.2 - gear.tool.dedendum_coefficient)) * (
             1.0 - 0.02 * (20.0 - gear.pressure_angle)
         )
@@ -222,6 +223,7 @@ def profile_deviations(transmission: Transmission) -> ProfileDeviations:
     speed = transmission.pitch_line_velocity
 
     def mean_allowance(deviation: float) -> float:
+        """Running-in allowance of a profile deviation, averaged over both gears [um]."""
         return 0.5 * (
             _profile_running_in_allowance(p, speed, deviation)
             + _profile_running_in_allowance(w, speed, deviation)
@@ -278,6 +280,7 @@ def dynamic_factor_method_c(transmission: Transmission) -> float:
     k3 = 2.0 if speed_term <= 0.2 else -0.357 * speed_term + 2.071  # (37), (38)
 
     def value(k1: float, k2: float) -> float:
+        """``K_v`` of formula (36) for the constants ``K_1`` and ``K_2``."""
         return 1 + (k1 / line_load + k2) * speed_term * k3  # (36)
 
     spur = value(_K1_SPUR[tolerance_class], _K2_SPUR)
@@ -488,6 +491,7 @@ def _transverse_load_distribution(transmission: Transmission) -> float:
 
 
 def _transverse_load_factor(transmission: Transmission, upper_limit: float) -> float:
+    """Transverse load factor of method B, limited to ``[1, upper_limit]``."""
     eps_gamma = transmission.total_contact_ratio
     distribution = _transverse_load_distribution(transmission)
     if eps_gamma <= 2:

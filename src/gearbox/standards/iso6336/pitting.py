@@ -209,6 +209,7 @@ def single_pair_contact_factors(transmission: Transmission) -> tuple[float, floa
         )
 
     def _tip_term(gear: Gear) -> float:
+        """``sqrt(d_a^2 / d_b^2 - 1)`` of the auxiliary quantities ``M_1`` and ``M_2``."""
         return sqrt((gear.tip_diameter**2 / gear.base_diameter**2) - 1)
 
     z1, z2 = p.signed_number_of_teeth, w.signed_number_of_teeth  # z2 < 0 for an internal wheel
@@ -231,6 +232,7 @@ def single_pair_contact_factors(transmission: Transmission) -> tuple[float, floa
         return max(m1, 1.0), max(m2, 1.0)
 
     def _interpolate(m: float) -> float:
+        """Interpolate ``Z_B`` or ``Z_D`` of helical gears with ``eps_beta < 1`` (clause 6.3)."""
         if m <= 1:
             return 1 + eps_beta * (root_f_zca - 1)
         return m + eps_beta * (root_f_zca - m)

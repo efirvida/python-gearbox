@@ -460,6 +460,7 @@ def solve_contact(
     scale = target / torque
 
     def root_stress(prefix: str) -> float:
+        """Largest first principal stress at the fillet nodes of one gear, scaled."""
         nodes = [n for n in mesh.node_sets[f"{prefix}FILLET"] if n in stresses]
         return scale * max(_principal_max(stresses[n]) for n in nodes)
 

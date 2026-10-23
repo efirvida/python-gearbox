@@ -155,7 +155,15 @@ class LineOfAction:
         return p["B"] <= position <= p["D"]
 
     def hertz_pressure(self, position: float | np.ndarray, load: float) -> float | np.ndarray:
-        """Hertzian pressure at ``position`` for a normal ``load`` per unit width [N/mm]."""
+        """Hertzian pressure of two cylinders with the radii of curvature of the flanks.
+
+        Args:
+            position: Position, or array of positions, on the line of action [mm].
+            load: Normal load per unit face width carried by the pair [N/mm].
+
+        Returns:
+            The maximum contact pressure ``sqrt(w E* / (pi rho))`` [MPa].
+        """
         rho_1 = self.pitch_curvature[0] + np.asarray(position)
         rho_2 = self.pitch_curvature[1] - np.asarray(position)
         radius = 1 / (1 / rho_1 + 1 / rho_2)
@@ -236,6 +244,16 @@ def _patches(
     line: LineOfAction,
     tolerance: float,
 ) -> list[ContactPatch]:
+    """Group the contact nodes of the pinion by tooth; see :func:`contact_patches`.
+
+    Args:
+        mesh: The mesh of the result.
+        positions: Node coordinates, displaced to where the contact happens.
+        pressures: Contact pressure per pinion flank node.
+        scale: Factor applied to the pressures (to the requested torque).
+        line: The line of action of the pair.
+        tolerance: See :func:`contact_patches`.
+    """
     patches = []
     for group in sorted(g for g in mesh.node_sets if g.startswith("PINION_TOOTH")):
         touching = [n for n in mesh.node_sets[group] if n in pressures]
@@ -253,6 +271,7 @@ def _patches(
 def _patch(
     tooth: str, point: Sequence[float], pressure: float, line: LineOfAction, tolerance: float
 ) -> ContactPatch:
+    """Place a contact point on the line of action and decide whether it is on the path."""
     position, offset = line.coordinates(point)
     on_path = (
         abs(offset) <= tolerance
@@ -330,7 +349,17 @@ def stress_field(
 
 
 def plot_mesh(ax: Any, mesh: MeshData, linewidth: float = 0.25, **style: Any) -> Any:
-    """Draw the elements of a 2D mesh; returns the ``PolyCollection``."""
+    """Draw the elements of a 2D mesh.
+
+    Args:
+        ax: Matplotlib axes.
+        mesh: A 2D mesh (:func:`gearbox.fem._mesh_io.read_mesh`).
+        linewidth: Line width of the element edges.
+        **style: Further ``PolyCollection`` options (``facecolor``, ``edgecolor``, ...).
+
+    Returns:
+        The ``PolyCollection`` added to the axes.
+    """
     from matplotlib.collections import PolyCollection
 
     polygons = [
@@ -554,6 +583,11 @@ def _solve_position(
     stored: Path,
     options: dict[str, Any],
 ) -> None:
+    """Solve one position of :func:`contact_sweep` and store its summary in ``stored``.
+
+    The nodal stresses and coordinates are kept at the requested torque and in the displaced
+    position; the solver files are removed.
+    """
     folder = stored.with_suffix("")
     options = {"initial_rotation": previous_rotation, **options}
     result = solve_contact(
@@ -592,6 +626,11 @@ def _solve_position(
 
 
 def _load_position(stored: Path, line: LineOfAction) -> SweepPoint:
+    """Read a position stored by :func:`_solve_position`.
+
+    Raises:
+        RuntimeError: If no tooth was in contact.
+    """
     data = np.load(stored)
     position = float(data["position"])
     patches = [

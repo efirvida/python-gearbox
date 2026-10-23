@@ -870,6 +870,10 @@ class _SectionBuilder:
 
         The 2D groups are replaced by the 3D ones: the lateral surfaces generated from each
         boundary curve inherit the name of the curve group.
+
+        Args:
+            width: Face width [mm], along +z.
+            elements: Element layers across the face width.
         """
         gmsh = self.gmsh
         curve_groups = {k: v for k, v in self.groups.items() if v[0][0] == 1}

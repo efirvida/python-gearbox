@@ -31,6 +31,7 @@ _THROUGH_HARDENED = {M.NORMALIZED_STEEL, M.THROUGH_HARDENED_STEEL}
 
 
 def _require_steel(gear: Gear) -> None:
+    """Raise ``ValueError`` unless the gear is steel (AGMA 2001-D04 figures 17 and 18)."""
     if gear.material.material_type not in _STEELS:
         raise ValueError(
             "The stress cycle factors of AGMA 2001-D04 (figures 17 and 18) are defined for steel "
