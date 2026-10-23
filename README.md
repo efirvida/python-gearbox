@@ -1,6 +1,7 @@
 # python-gearbox
 
 [![CI](https://github.com/efirvida/python-gearbox/actions/workflows/ci.yml/badge.svg)](https://github.com/efirvida/python-gearbox/actions/workflows/ci.yml)
+[![Docs](https://github.com/efirvida/python-gearbox/actions/workflows/docs.yml/badge.svg)](https://efirvida.github.io/python-gearbox/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://github.com/efirvida/python-gearbox/blob/master/pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/efirvida/python-gearbox/blob/master/LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3660526.svg)](https://doi.org/10.5281/zenodo.3660526)
@@ -28,6 +29,25 @@ What you can do with it:
 Lengths are in mm, angles in degrees, stresses in MPa, power in kW and speeds in rpm.
 
 <br clear="right">
+
+## Documentation
+
+**[Documentation](https://efirvida.github.io/python-gearbox/)** — start with the illustrated
+engineering guide, or go directly to the section you need:
+
+* [Gear geometry](https://efirvida.github.io/python-gearbox/geometry/index.html): generated teeth,
+  involutes, meshing and the contact path.
+* [Strength theory](https://efirvida.github.io/python-gearbox/theory/index.html): contact and bending
+  foundations, ISO 6336, AGMA and a reproducible comparison.
+* [Finite elements](https://efirvida.github.io/python-gearbox/fem/index.html): 2D and 3D models,
+  contact and root-stress results, assumptions and validation limits.
+* [Optimization](https://efirvida.github.io/python-gearbox/optimization.html) and
+  [API reference](https://efirvida.github.io/python-gearbox/api/index.html).
+
+The `Docs` workflow builds and publishes this site after every push to `master`; pull requests
+build the guide without publishing. In repository **Settings → Pages**, the source is
+**GitHub Actions**, not a `gh-pages` branch. The workflow can also be run manually from `master`
+with `publish=true`. Failed documentation builds do not reach the deployment job.
 
 ## Install
 

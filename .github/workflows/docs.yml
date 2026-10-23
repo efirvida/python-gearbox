@@ -1,0 +1,55 @@
+name: Docs
+
+# Builds documentation on pull requests and master pushes (warnings are errors).
+# Every master push publishes the successful build; pull requests never publish.
+# Manual publication remains available from master with publish=true.
+# One-time setup: Settings > Pages > Source: "GitHub Actions".
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    paths: ["docs/**", "src/**", "pyproject.toml", ".github/workflows/docs.yml"]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish documentation from master to GitHub Pages"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[docs]"
+      - run: sphinx-build -W --keep-going -b html docs docs/_build/html
+      - run: touch docs/_build/html/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
