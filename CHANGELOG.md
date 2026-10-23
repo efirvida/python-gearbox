@@ -21,8 +21,10 @@ All notable changes are documented here. The format follows
     2D/3D, linear or quadratic elements, surface grading, `fillet_block` (default) and `standard`
     block layouts, any mesh position of the pair with `pinion_rotation`) with named node and
     element sets;
-  * tooth bending (`solve_bending`) and tooth contact of a pair (`solve_contact`, frictionless
-    penalty contact under the nominal torque) with the external CalculiX solver. In 2D the root
+  * tooth bending (`solve_bending`, loaded like ISO 6336-3 at the outer point of single pair
+    contact with the nominal force of the transmission) and tooth contact of a pair
+    (`solve_contact`, frictionless penalty contact under the nominal torque) with the external
+    CalculiX solver. In 2D the root
     stress is checked against ISO 6336-3 method B (within 2-12 %) and the contact pressure at the
     pitch point against Hertz (within 3 %);
   * `gearbox.fem.post`: line of action, contact sweeps along the path of contact, contact per

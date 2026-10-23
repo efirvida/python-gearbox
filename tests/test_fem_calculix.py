@@ -126,19 +126,8 @@ def test_root_stress_agrees_with_iso6336_3(tmp_path, shift):
         * bending._form_factor(transmission, root)
         * bending._stress_correction_factor(root, gear)
     )
-    alpha = radians(gear.pressure_angle)
-    reference = gear.module * gear.number_of_teeth
-    tip = reference + 2 * gear.module * (gear.tool.addendum_coefficient + shift)
-    base = reference * cos(alpha)
-    pitch = pi * base / gear.number_of_teeth
-    single_contact = hypot(
-        sqrt(tip**2 - base**2) / 2 - pitch * (transmission.transverse_contact_ratio - 1), base / 2
-    )
-    band = 0.1 * gear.module
-    result = solve_bending(
-        gear, tmp_path, FORCE, "iso", "2D", teeth=3,
-        load_radius=single_contact + band / 2, load_height=band, ccx=CCX,
-    )  # fmt: skip
+    # the transmission puts the band on the outer point of single pair contact
+    result = solve_bending(transmission, tmp_path, FORCE, "iso", "2D", ccx=CCX)
     assert result.max_principal_stress == pytest.approx(iso, rel=0.15)
 
 
@@ -213,3 +202,38 @@ def test_contact_sweep_follows_the_line_of_action_and_caches(tmp_path):
     again = contact_sweep(transmission, tmp_path, positions, FORCE, settings=coarse, ccx=missing)
     assert [p.followed.pressure for p in again] == [p.followed.pressure for p in points]
     assert not list(tmp_path.glob("**/*.frd"))
+
+
+def test_bending_of_a_transmission_loads_the_outer_point_of_single_contact(tmp_path):
+    # with a transmission, the force is its nominal tangential force and the band is centred on
+    # the outer point of single pair contact of the gear: D for the pinion, B for the wheel, where
+    # ISO 6336-3 loads the tooth (the radius of D is the r_en of ISO 6336-3 formula 18)
+    from gearbox.fem.post import LineOfAction
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        transmission = build_transmission(x1=0.525, x2=0.0)
+    line = LineOfAction.of(transmission)
+    pinion = solve_bending(transmission, tmp_path, dimension="2D", ccx=CCX)
+    pinion_gear = transmission.pinion
+    alpha_t = radians(pinion_gear.transverse_pressure_angle)
+    expected = transmission.nominal_tangential_force / pinion_gear.face_width / cos(alpha_t)
+    assert pinion.applied_force == pytest.approx(expected)
+    point_d = line.point(line.points()["D"])
+    assert pinion.load_radius == pytest.approx(hypot(*point_d), abs=0.15)
+    wheel = solve_bending(
+        transmission, tmp_path, model_name="w", dimension="2D", member="wheel", ccx=CCX
+    )
+    point_b = line.point(line.points()["B"]) - (0.0, transmission.working_center_distance)
+    assert wheel.load_radius == pytest.approx(hypot(*point_b), abs=0.15)
+    # a smaller force on request
+    half = solve_bending(transmission, tmp_path, transmission.nominal_tangential_force / 2,
+                         "h", "2D", ccx=CCX)  # fmt: skip
+    assert half.max_principal_stress == pytest.approx(pinion.max_principal_stress / 2, rel=1e-4)
+
+
+def test_a_bare_gear_needs_a_force(tmp_path):
+    with pytest.raises(ValueError, match="tangential_force"):
+        solve_bending(_gear(), tmp_path, dimension="2D", ccx=CCX)
+    with pytest.raises(ValueError, match="member"):
+        solve_bending(build_transmission(), tmp_path, member="idler", ccx=CCX)

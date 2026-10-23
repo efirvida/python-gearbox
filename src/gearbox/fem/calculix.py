@@ -118,9 +118,9 @@ def find_ccx(path: str | Path | None = None) -> Path:
 
 
 def solve_bending(
-    gear: Gear,
+    subject: Transmission | Gear,
     output_dir: str | Path,
-    tangential_force: float,
+    tangential_force: float | None = None,
     model_name: str = "bending",
     dimension: Dimension | str | int = Dimension.THREE_D,
     settings: ToothMeshSettings | None = None,
@@ -129,9 +129,17 @@ def solve_bending(
     load_radius: float | None = None,
     load_height: float | None = None,
     material: ElasticMaterial | None = None,
+    member: str = "pinion",
     ccx: str | Path | None = None,
 ) -> BendingResult:
     """Bending of a tooth loaded on its flank, with the bore fixed.
+
+    Given a :class:`~gearbox.transmission.Transmission`, the tooth of its pinion (or of its wheel,
+    see ``member``) carries the nominal tangential force of the transmission at the outer point of
+    single pair contact, where ISO 6336-3 loads it: the point ``D`` of the line of action for the
+    pinion, ``B`` for the wheel (see :class:`gearbox.fem.post.LineOfAction`). Given a bare
+    :class:`~gearbox.models.Gear`, there is no mesh to take these from: the force is required and
+    the band ends at the tooth tip unless ``load_radius`` says otherwise.
 
     A sector of ``teeth`` consecutive teeth is meshed and the middle tooth is loaded by a uniform
     pressure normal to the flank, on the faces overlapping a band of height ``load_height`` that
@@ -142,17 +150,22 @@ def solve_bending(
     modelled: the band is a circle of constant radius across the face width.
 
     Args:
-        gear: Gear to analyse (never modified).
+        subject: A transmission, or a single gear (never modified).
         output_dir: Folder for the mesh, the deck and the results, created if missing.
-        tangential_force: Nominal tangential force ``Ft`` over the face width [N].
+        tangential_force: Nominal tangential force ``Ft`` over the face width [N]; the
+            ``nominal_tangential_force`` of a transmission by default, required for a gear.
         model_name: Base name of the files; spaces are replaced by underscores.
         dimension: ``"3D"`` (hexahedra) or ``"2D"`` (plane strain, quadrilaterals).
         settings: Mesh settings, :class:`ToothMeshSettings` defaults if omitted.
         teeth: Teeth in the sector, 3 or more recommended.
         side: ``"ccw"`` or ``"cw"``, the flank of the middle tooth that is loaded.
-        load_radius: Radius where the loaded band ends [mm]; the tooth tip by default.
-        load_height: Radial height of the loaded band [mm]; 0.15 modules by default.
+        load_radius: Radius where the loaded band ends [mm]. By default the band is centred on
+            the outer point of single pair contact for a transmission and ends at the tip for a
+            gear.
+        load_height: Radial height of the loaded band [mm]; 0.1 modules for a transmission,
+            0.15 for a gear by default.
         material: Elastic properties, steel by default.
+        member: ``"pinion"`` or ``"wheel"``, the gear of a transmission that is analysed.
         ccx: Location of the CalculiX executable, see :func:`find_ccx`.
 
     Returns:
@@ -163,6 +176,13 @@ def solve_bending(
         ValueError: For an invalid argument or if the band contains no mesh faces.
         RuntimeError: If CalculiX fails.
     """
+    if member not in ("pinion", "wheel"):
+        raise ValueError(f"member must be 'pinion' or 'wheel', got {member!r}")
+    gear, single_contact = _bending_subject(subject, member)
+    if tangential_force is None:
+        if single_contact is None:
+            raise ValueError("tangential_force is needed when a single gear is given")
+        tangential_force = subject.nominal_tangential_force
     if tangential_force <= 0:
         raise ValueError(f"tangential_force must be positive, got {tangential_force}")
     if side.lower() not in ("ccw", "cw"):
@@ -191,9 +211,12 @@ def solve_bending(
 
     loaded = teeth // 2
     group = f"TOOTH{loaded + 1}_FLANK_{side.upper()}"
-    tip = data["d_a"] / 2
-    height = load_height or 0.15 * data["m_n"]
-    top = load_radius if load_radius is not None else tip
+    if single_contact is not None:
+        height = load_height or 0.1 * data["m_n"]
+        top = load_radius if load_radius is not None else single_contact + height / 2
+    else:
+        height = load_height or 0.15 * data["m_n"]
+        top = load_radius if load_radius is not None else data["d_a"] / 2
     patch = []
     for face in mesh.faces[group]:
         radii = [np.hypot(*mesh.nodes[tag][:2]) for tag in face.corners]
@@ -558,6 +581,19 @@ def _write_contact_deck(
         "*END STEP",
     ]
     path.write_text("\n".join(lines) + "\n")
+
+
+def _bending_subject(subject: Transmission | Gear, member: str) -> tuple[Gear, float | None]:
+    """The gear to load and, for a transmission, the radius of its outer single contact point."""
+    if not hasattr(subject, "pinion"):
+        return subject, None
+    from gearbox.fem.post import LineOfAction  # post builds on this module
+
+    line = LineOfAction.of(subject)
+    if member == "pinion":
+        return subject.pinion, float(np.hypot(*line.point(line.points()["D"])))
+    point = line.point(line.points()["B"]) - np.array([0.0, sum(line.pitch_radii)])
+    return subject.wheel, float(np.hypot(*point))
 
 
 def _angle_from(point: tuple[float, float, float], axis: float) -> float:
