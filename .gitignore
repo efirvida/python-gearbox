@@ -15,3 +15,5 @@ docs/*.pdf
 examples/output
 docs/scribd/
 .playwright-mcp/
+docs/figures/work/
+docs/figures/cache/

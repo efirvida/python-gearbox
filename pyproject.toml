@@ -39,6 +39,9 @@ Changelog = "https://github.com/efirvida/python-gearbox/blob/master/CHANGELOG.md
 [tool.hatch.build.targets.wheel]
 packages = ["src/gearbox"]
 
+[tool.hatch.build.targets.sdist]
+exclude = ["docs", "examples/output"]  # README figures and standards (several MB), not needed
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
@@ -58,3 +61,4 @@ convention = "google"
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D"]
 "examples/**" = ["D", "E501"]
+"docs/**" = ["D", "E501"]
