@@ -1,9 +1,8 @@
 # python-gearbox
 
-[![PyPI](https://img.shields.io/pypi/v/python-gearbox)](https://pypi.org/project/python-gearbox/)
-[![Python](https://img.shields.io/pypi/pyversions/python-gearbox)](https://pypi.org/project/python-gearbox/)
 [![CI](https://github.com/efirvida/python-gearbox/actions/workflows/ci.yml/badge.svg)](https://github.com/efirvida/python-gearbox/actions/workflows/ci.yml)
-[![License](https://img.shields.io/pypi/l/python-gearbox)](https://github.com/efirvida/python-gearbox/blob/master/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://github.com/efirvida/python-gearbox/blob/master/pyproject.toml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/efirvida/python-gearbox/blob/master/LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3660527.svg)](https://doi.org/10.5281/zenodo.3660527)
 
 **Check whether a pair of spur or helical gears will survive, and see why.**
