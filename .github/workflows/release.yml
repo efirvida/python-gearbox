@@ -1,8 +1,9 @@
 name: Release
 
 # Every push to the release branch (normally a merge from master) publishes the version in
-# src/gearbox/__init__.py to PyPI, tags it and creates the GitHub release, unless that version is
-# already on PyPI. To release: bump __version__, date its section in CHANGELOG.md, merge into
+# src/gearbox/__init__.py to PyPI (unless it is already there), tags it and creates the GitHub
+# release (or updates its files if it exists). Note that the Zenodo integration of the repository
+# archives every new GitHub release under a new DOI version. To release: bump __version__, date its section in CHANGELOG.md, merge into
 # release.
 #
 # PyPI accepts the upload through Trusted Publishing (no token is stored). It has to be set up once
@@ -84,7 +85,10 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
 
   github-release:
+    # also when PyPI is skipped (version already there) or fails: the tag and the GitHub release
+    # do not depend on PyPI, and the PyPI upload can be repeated later
     needs: [build, pypi]
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -105,5 +109,10 @@ jobs:
             keep && /^## \[/ { exit }
             keep { print }
           ' CHANGELOG.md > notes.md
-          gh release create "v$VERSION" dist/* --target "$GITHUB_SHA" \
-            --title "python-gearbox $VERSION" --notes-file notes.md
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            echo "::notice::release v$VERSION already exists; its files are updated"
+            gh release upload "v$VERSION" dist/* --clobber
+          else
+            gh release create "v$VERSION" dist/* --target "$GITHUB_SHA" \
+              --title "python-gearbox $VERSION" --notes-file notes.md
+          fi
