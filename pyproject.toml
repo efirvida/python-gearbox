@@ -28,8 +28,8 @@ classifiers = [
 dependencies = ["numpy>=2.2.6", "scipy>=1.15.3", "jinja2>=3.1.6"]
 
 [project.optional-dependencies]
-fem = ["gmsh>=4.15.2"]
-dev = ["pytest>=9.1.1", "pytest-cov", "ruff", "gmsh>=4.15.2"]
+fem = ["gmsh>=4.15.2", "matplotlib>=3.10"]
+dev = ["pytest>=9.1.1", "pytest-cov", "ruff", "gmsh>=4.15.2", "matplotlib>=3.10"]
 
 [project.urls]
 Homepage = "https://github.com/efirvida/python-gearbox"

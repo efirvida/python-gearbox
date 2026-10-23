@@ -186,3 +186,30 @@ def test_contact_pressure_agrees_with_hertz(contact):
 def test_contact_needs_a_force_for_bare_gears(tmp_path):
     with pytest.raises(ValueError, match="tangential_force"):
         solve_contact((_gear(), _gear()), tmp_path, ccx=CCX)
+
+
+def test_contact_sweep_follows_the_line_of_action_and_caches(tmp_path):
+    from gearbox.fem.post import LineOfAction, contact_sweep
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        transmission = build_transmission(x1=0.0, x2=0.0)
+    line = LineOfAction.of(transmission)
+    coarse = ToothMeshSettings(flank_size=0.05, tooth_elements=8)
+    positions = [line.points()["A"] + 0.5, 0.0]
+    points = contact_sweep(transmission, tmp_path, positions, FORCE, settings=coarse, ccx=CCX)
+    double, single = points
+    # the followed contact is on the line of action, at the requested position
+    for point, position in zip(points, positions, strict=True):
+        assert point.followed.on_path
+        assert point.followed.position == pytest.approx(position, abs=0.1)
+        # centre of the patch in the displaced position: within a quarter of a flank element
+        assert abs(point.followed.offset) < 0.25 * coarse.flank_size * 2.5
+    # near A two pairs share the load, at the pitch point one pair carries it
+    assert len([p for p in double.patches if p.on_path]) == 2
+    assert len([p for p in single.patches if p.on_path]) == 1
+    # the second call reads the cache: a missing solver would raise FileNotFoundError
+    missing = tmp_path / "no-ccx"
+    again = contact_sweep(transmission, tmp_path, positions, FORCE, settings=coarse, ccx=missing)
+    assert [p.followed.pressure for p in again] == [p.followed.pressure for p in points]
+    assert not list(tmp_path.glob("**/*.frd"))
