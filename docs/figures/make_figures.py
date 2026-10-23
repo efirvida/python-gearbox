@@ -47,7 +47,7 @@ HERE = Path(__file__).parent
 WORK = HERE / "work"
 CACHE = HERE / "cache"  # solved positions of the animations, see solve_cycle
 FORCE = 8000.0  # nominal tangential force [N]
-FRAMES = 18  # positions along the path of contact
+FRAMES = 35  # positions along the path of contact (every second one is a position solved before)
 GIF_SIZE, GIF_DPI = (16, 9), 120  # 1920 x 1080 pixels
 GIF_STYLE = {
     "font.size": 12,
@@ -305,7 +305,7 @@ def save_gif(figures: list, name: str) -> None:
         buffer.seek(0)
         images.append(Image.open(buffer).convert("P", palette=Image.ADAPTIVE, colors=256))
     images[0].save(
-        HERE / name, save_all=True, append_images=images[1:], duration=350, loop=0, optimize=True
+        HERE / name, save_all=True, append_images=images[1:], duration=200, loop=0, optimize=True
     )
 
 
