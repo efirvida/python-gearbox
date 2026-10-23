@@ -1,0 +1,109 @@
+name: Release
+
+# Every push to the release branch (normally a merge from master) publishes the version in
+# src/gearbox/__init__.py to PyPI, tags it and creates the GitHub release, unless that version is
+# already on PyPI. To release: bump __version__, date its section in CHANGELOG.md, merge into
+# release.
+#
+# PyPI accepts the upload through Trusted Publishing (no token is stored). It has to be set up once
+# on https://pypi.org/manage/project/python-gearbox/settings/publishing/ with: owner efirvida,
+# repository python-gearbox, workflow release.yml, environment pypi.
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    needs: checks
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      published: ${{ steps.pypi.outputs.published }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Version to release
+        id: version
+        run: |
+          version=$(python -c "import re; print(re.search(r'__version__ = \"(.+)\"', open('src/gearbox/__init__.py').read())[1])")
+          if [[ "$version" =~ dev ]]; then
+            echo "::error::$version is a development version; set the release version first"
+            exit 1
+          fi
+          if ! grep -q "^## \[$version\] - [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md needs a dated section '## [$version] - YYYY-MM-DD'"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Already on PyPI?
+        id: pypi
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://pypi.org/pypi/python-gearbox/${{ steps.version.outputs.version }}/json")
+          if [ "$status" = "200" ]; then
+            echo "::notice::${{ steps.version.outputs.version }} is already on PyPI; nothing to release"
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build the sdist and the wheel
+        run: |
+          pip install build twine
+          python -m build
+          twine check --strict dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    needs: build
+    if: needs.build.outputs.published == 'false'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/python-gearbox/${{ needs.build.outputs.version }}/
+    permissions:
+      id-token: write  # Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: [build, pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Tag and release notes from CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          # the section of this version, without its heading, up to the next "## [" heading
+          awk -v v="$VERSION" '
+            index($0, "## [" v "]") == 1 { keep = 1; next }
+            keep && /^## \[/ { exit }
+            keep { print }
+          ' CHANGELOG.md > notes.md
+          gh release create "v$VERSION" dist/* --target "$GITHUB_SHA" \
+            --title "python-gearbox $VERSION" --notes-file notes.md

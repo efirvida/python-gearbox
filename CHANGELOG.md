@@ -7,7 +7,7 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
-## [0.2.0] - unreleased
+## [0.2.0] - 2026-10-23
 
 ### Added
 * Double helical gears (`Gear.double_helical`) in ISO 6336 (KI-38).
@@ -24,9 +24,8 @@ All notable changes are documented here. The format follows
   * tooth bending (`solve_bending`, loaded like ISO 6336-3 at the outer point of single pair
     contact with the nominal force of the transmission) and tooth contact of a pair
     (`solve_contact`, frictionless penalty contact under the nominal torque) with the external
-    CalculiX solver. In 2D the root
-    stress is checked against ISO 6336-3 method B (within 2-12 %) and the contact pressure at the
-    pitch point against Hertz (within 3 %);
+    CalculiX solver. In 2D the root stress is checked against ISO 6336-3 method B (within
+    2-12 %) and the contact pressure at the pitch point against Hertz (within 3 %);
   * `gearbox.fem.post`: line of action, contact sweeps along the path of contact, contact per
     tooth and matplotlib plots of meshes, stress fields and the line of action.
 
@@ -41,7 +40,7 @@ All notable changes are documented here. The format follows
   (table 8); only gears of tolerance class 5 or better change, slightly (KI-42).
 
 ### Not implemented
-See "Limitations and pending work" in the [README](README.md).
+See "What is not there yet" in the [README](README.md).
 
 ## [1.0.0]
 
