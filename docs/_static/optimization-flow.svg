@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="740" viewBox="0 0 820 740" role="img" aria-labelledby="title desc">
+<title id="title">Profile-shift optimization algorithm</title><desc id="desc">Keep the sum fixed, build the feasible range, refine its edges, then choose maximum shift or minimum contact stress and return both coefficients.</desc>
+<defs><marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8" fill="#475569"/></marker></defs>
+<rect width="820" height="740" rx="12" fill="#fff"/>
+<g font-family="sans-serif" font-size="17" text-anchor="middle" fill="#172a3a" stroke="#1f5f8b" stroke-width="1.5">
+<rect x="190" y="20" width="440" height="62" rx="10" fill="#edf5fa"/><text x="410" y="46" stroke="none">Input pair and geometric constraints</text><text x="410" y="68" stroke="none">Freeze X = x1 + x2</text>
+<rect x="190" y="110" width="440" height="62" rx="10" fill="#edf5fa"/><text x="410" y="136" stroke="none">Undercut bounds for x1</text><text x="410" y="158" stroke="none">[x_min,1 ; X − x_min,2]</text>
+<rect x="140" y="200" width="540" height="80" rx="10" fill="#edf5fa"/><text x="410" y="228" stroke="none">400-point constraint scan</text><text x="410" y="251" stroke="none">Tip land and contact ratio acceptable on both gears?</text><text x="410" y="273" stroke="none">No feasible run → ValueError</text>
+<rect x="140" y="310" width="540" height="62" rx="10" fill="#edf5fa"/><text x="410" y="336" stroke="none">Keep widest sampled feasible run</text><text x="410" y="358" stroke="none">Refine bracketed edges with Brent root finding</text>
+<rect x="25" y="420" width="350" height="130" rx="10" fill="#fff4ed" stroke="#c2410c"/><text x="200" y="449" stroke="none">Maximum pinion shift</text><text x="200" y="481" stroke="none">Choose upper feasible bound</text><text x="200" y="515" stroke="none">No strength-objective minimization</text>
+<rect x="445" y="420" width="350" height="178" rx="10" fill="#edf5fa"/><text x="620" y="449" stroke="none">Minimum contact stress</text><text x="620" y="481" stroke="none">Evaluate 41 candidate pairs</text><text x="620" y="509" stroke="none">Bracket best sampled candidate</text><text x="620" y="537" stroke="none">Bounded Brent minimization</text><text x="620" y="569" stroke="none">Keep better of sample/refinement</text>
+<rect x="190" y="650" width="440" height="62" rx="10" fill="#edf5fa"/><text x="410" y="676" stroke="none">Return ProfileShifts(x1, X − x1)</text><text x="410" y="698" stroke="none">Original input pair remains unchanged</text>
+</g>
+<g fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow)">
+<path d="M410,82 V108"/><path d="M410,172 V198"/><path d="M410,280 V308"/>
+<path d="M410,372 V394 H200 V418"/><path d="M410,394 H620 V418"/>
+<path d="M200,550 V620 H410 V648"/><path d="M620,598 V620 H410"/>
+</g></svg>
