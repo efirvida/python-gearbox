@@ -152,6 +152,64 @@ pinion root (430 → 428 MPa) while the wheel root gets 40 % worse. The contact 
 around the start point, so the optimizer finds only a modest gain. Optimization tells you where the
 feasible region ends; whether you want to be there is an engineering decision.
 
+## Case study: one pair, two optima, one FEM check
+
+The same 22/40-tooth pair as above (module 2.5 mm, 40 kW, 1450 rpm, application factor 1.3) is
+optimized twice with the contact-stress objective, once per standard, and every result is then
+checked with the 2D FEM model at the same nominal tangential force (9579 N). The shift sum stays
+at zero, so the centre distance never changes.
+
+| Design | $x_1$ | ISO $\sigma_{H}$ (MPa) | ISO min. $S_H$ | ISO min. $S_F$ | AGMA $\sigma_c$ (MPa) | FEM peak pressure (MPa) | FEM wheel root (MPa) |
+|---|---|---|---|---|---|---|---|
+| Original | 0 | 1492 | 0.85 | 1.76 | 1846 | 1392 | 294 |
+| ISO optimum | +0.326 | 1439 | 0.88 | 1.69 | 1762 | 1318 | 328 |
+| AGMA optimum | +1.023 | 1496 | 0.85 | 1.16 | 1689 | 1305 | 466 |
+
+Three things stand out:
+
+* **Each standard finds its own optimum.** The ISO optimum equalizes the pinion and wheel contact
+  stresses; the AGMA optimum goes all the way to the largest feasible shift. Judged by the *other*
+  standard, each one looks worse: the AGMA optimum does not improve the ISO contact stress at all.
+* **Lower contact stress costs wheel-root margin.** The wheel root gets thinner as the pinion gets
+  stronger. The FEM agrees on the direction and size of the trend: wheel-root stress rises 12 %
+  with the ISO optimum and 58 % with the AGMA one, while the peak contact pressure falls only 5-6 %.
+* **The three designs engage differently.** The path of contact moves along the line of action
+  as the shifts change, so the curves below use the normalized position on the whole path
+  (0 = A, 1 = E).
+
+```{figure} figures/optimization/curves.png
+:alt: Contact pressure and pinion and wheel root stress along the path of contact for the original design and the ISO and AGMA optima.
+
+Contact pressure and root-stress envelopes along the full path of contact, 35 FEM positions per
+design. Open markers flag positions where a second pair is in tip-edge contact and its pressure
+peak distorts the neighbouring values.
+```
+
+The FEM solves contact and bending in the same simulation, so each result is a complete stress
+state, not a local number. The first figure shows it at the middle of each path, the animation
+follows it along the whole path.
+
+```{figure} figures/optimization/composite_maps.png
+:alt: Von Mises stress maps of the three designs at the middle of the path of contact.
+
+Von Mises stress at the middle of each path of contact, same colour scale.
+```
+
+```{figure} figures/optimization/path_animation.gif
+:alt: Animation of the von Mises stress of the three designs along the path of contact.
+
+Von Mises stress along the path of contact, one frame per FEM position.
+```
+
+This is a demonstration of the tools, not a research study. The FEM model is 2D plane strain
+without friction, no mesh-convergence study was done, and the ISO and AGMA values are factored
+rating stresses while the FEM values are nominal: they show trends, they do not validate the
+standards. Tip-edge contact where the next pair engages produces local peaks that are artifacts
+of the model. The ISO safety factors below 1 reflect the example loading, not a recommendation.
+
+To reproduce it, run `python docs/figures/optimization_case_study.py --stage ratings`, then
+`--stage fem` (CalculiX needed, about three hours), then `--stage figures` and `--stage animation`.
+
 ## Limits
 
 * **Internal gears** raise `ValueError`: the geometric limits used here are those of external gears.
