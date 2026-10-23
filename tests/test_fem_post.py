@@ -130,3 +130,21 @@ def test_internal_gears_are_rejected():
     t = _transmission()
     with pytest.raises(ValueError, match="external"):
         LineOfAction.of(replace(t, wheel=replace(t.wheel, internal=True)))
+
+
+def test_the_scheme_keeps_the_view_of_the_plot(tmp_path):
+    # the circles of the scheme reach far beyond the teeth; drawn over a plot whose view follows
+    # its data (autoscale), they must not zoom it out
+    matplotlib = pytest.importorskip("matplotlib")
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    t = _transmission()
+    result = mesh_pair(t, tmp_path, "view", settings=ToothMeshSettings(flank_size=0.3))
+    fig, ax = plt.subplots()
+    plot_mesh(ax, read_mesh(result.paths["msh"]))
+    view = ax.get_xlim(), ax.get_ylim()
+    plot_line_of_action(ax, LineOfAction.of(t), contact=(0.0, 27.5))
+    fig.canvas.draw()
+    assert (ax.get_xlim(), ax.get_ylim()) == view
+    plt.close(fig)

@@ -437,13 +437,15 @@ def plot_line_of_action(
         line: The line of action of the pair.
         contact: A contact point to mark, e.g. the followed one.
         labels: Write the names of the points that fall inside the current view, so set the
-            axes limits first.
+            axes limits first. The scheme never changes the view.
         others: Further contact points, marked with hollow circles.
         label_size: Font size of the names.
         label_offset: Distance of the names from the line [mm].
     """
     from matplotlib import patheffects
 
+    # the circles reach far beyond the teeth: keep the view the plot already has
+    view = ax.get_xlim(), ax.get_ylim()
     halo = [patheffects.withStroke(linewidth=3, foreground="black")]
     style = {"color": "white", "path_effects": halo}
     centres = [np.zeros(2), np.array([0.0, sum(line.pitch_radii)])]
@@ -482,6 +484,8 @@ def plot_line_of_action(
     if contact is not None:
         ax.plot(*contact[:2], "o", color="#ff2fd0", markersize=12, markeredgecolor="white",
                 markeredgewidth=2)  # fmt: skip
+    ax.set_xlim(*view[0])
+    ax.set_ylim(*view[1])
 
 
 @dataclass
