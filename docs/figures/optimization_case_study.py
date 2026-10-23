@@ -160,14 +160,18 @@ def animation(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
     import numpy as np
     from matplotlib.animation import PillowWriter
 
-    from gearbox.fem.post import plot_field
+    from gearbox.fem.post import plot_field, plot_line_of_action
 
     points = _solved(pairs, cache)
     out.mkdir(parents=True, exist_ok=True)
     top = 800.0  # MPa, fixed colour scale for every frame and design
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5.4))
-    fig.subplots_adjust(left=0.04, right=0.88, bottom=0.1, top=0.82, wspace=0.12)
-    colour_axis = fig.add_axes([0.9, 0.15, 0.015, 0.62])
+    # One fixed view, as in the pair animations of the guide: the gears turn and the contact
+    # runs along the path A-E. It is wide enough for the contact of every frame of every design.
+    contacts = np.array([p.followed.point for series in points.values() for p in series])
+    low, high = contacts.min(axis=0) - 7.5, contacts.max(axis=0) + 7.5
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5.0))
+    fig.subplots_adjust(left=0.03, right=0.9, bottom=0.04, top=0.88, wspace=0.08)
+    colour_axis = fig.add_axes([0.92, 0.15, 0.014, 0.6])
     writer = PillowWriter(fps=4)
     with writer.saving(fig, str(out / "path_animation.gif"), dpi=90):
         for i in range(POSITIONS):
@@ -175,10 +179,15 @@ def animation(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
             for ax, (name, series) in zip(axes, points.items(), strict=True):
                 ax.clear()
                 p = series[i]
-                centre = np.asarray(p.followed.point)
                 contour = plot_field(ax, p.stress("von_mises"), vmax=top, edges=False)
-                ax.plot(*centre, "o", mfc="white", mec="k", ms=5)
-                ax.set(xlim=(centre[0] - 7, centre[0] + 7), ylim=(centre[1] - 7, centre[1] + 7))
+                ax.set(xlim=(low[0], high[0]), ylim=(low[1], high[1]))
+                plot_line_of_action(
+                    ax,
+                    LineOfAction.of(pairs[name]),
+                    p.followed.point,
+                    labels=False,
+                    others=[q.point for q in p.patches if q is not p.followed],
+                )
                 ax.set_xticks([])
                 ax.set_yticks([])
                 note = "\nsecond pair in tip-edge contact" if _edge_contact(p) else ""
@@ -190,8 +199,8 @@ def animation(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
             colour_axis.clear()
             fig.colorbar(contour, cax=colour_axis, label="von Mises stress [MPa]")
             fig.suptitle(
-                f"Composite stress state along the path of contact, sample {i + 1}/{POSITIONS} "
-                f"(normalized position {i / (POSITIONS - 1):.2f} of the sampled path)"
+                f"Composite stress state along the path of contact (magenta A-E), "
+                f"sample {i + 1}/{POSITIONS}"
             )
             writer.grab_frame()
     print("Wrote path_animation.gif")
