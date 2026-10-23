@@ -1,13 +1,13 @@
 name: Docs
 
 # Builds documentation on pull requests and master pushes (warnings are errors).
-# Publication is a separate explicit manual action from master, never automatic.
+# Every master push publishes the successful build; pull requests never publish.
+# Manual publication remains available from master with publish=true.
 # One-time setup: Settings > Pages > Source: "GitHub Actions".
 
 on:
   push:
     branches: [master]
-    paths: ["docs/**", "src/**", "pyproject.toml", ".github/workflows/docs.yml"]
   pull_request:
     paths: ["docs/**", "src/**", "pyproject.toml", ".github/workflows/docs.yml"]
   workflow_dispatch:
@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: pages
+  group: docs-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -42,7 +42,7 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master' && inputs.publish
+    if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.publish))
     runs-on: ubuntu-latest
     permissions:
       pages: write
