@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import warnings
+from dataclasses import replace
 from math import cos, radians, sqrt
 
 import numpy as np
 import pytest
 
 from gearbox.export.exporters import _build_wheel
-from gearbox.profile import CylindricalGearWheel
+from gearbox.profile import ToothProfile
 from gearbox.standards.iso6336 import bending
 from tests.scenarios import build_transmission
 
@@ -81,17 +82,50 @@ def test_root_and_form_diameters_follow_the_rack():
     assert data["d_Ff"] == pytest.approx(expected, rel=1e-6)
 
 
+def _gear(**changes):
+    return replace(_transmission().pinion, **changes)
+
+
 def test_helical_fillet_is_generated_in_the_transverse_section():
-    # an earlier version refused rho_fP for helical gears
-    wheel = CylindricalGearWheel({"z": 30, "m_n": 2.0, "beta": 20.0, "rho_fP": 0.76, "b": 20.0})
-    assert wheel.data["d_Ff"] > wheel.data["d_f"]
+    profile = ToothProfile(_gear(number_of_teeth=30, module=2.0, helix_angle=20.0))
+    assert profile.data["d_Ff"] > profile.data["d_f"]
+    # the root and tip diameters are those of the gear model
+    gear = _gear(number_of_teeth=30, module=2.0, helix_angle=20.0)
+    assert profile.data["d_f"] == pytest.approx(gear.root_diameter)
+    assert profile.data["d_a"] == pytest.approx(gear.tip_diameter)
 
 
 def test_undercut_gear_keeps_a_valid_profile():
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        wheel = CylindricalGearWheel({"z": 10, "m_n": 2.0, "rho_fP": 0.76, "b": 20.0})
-    form = np.asarray(list(wheel.formcoords.values()), dtype=float)
+    with pytest.warns(UserWarning, match="undercut"):
+        profile = ToothProfile(
+            _gear(number_of_teeth=10, module=2.0, profile_shift_coefficient=0.0, shaft_diameter=8.0)
+        )
+    form = np.asarray(profile.formcoords, dtype=float)
     radius = np.hypot(form[:, 0], form[:, 1])
     assert np.all(np.diff(radius[radius < radius.max() - 1e-9]) > -1e-9)
-    assert wheel.data["d_Ff"] > wheel.data["d_b"]
+    assert profile.data["d_Ff"] > profile.data["d_b"]
+
+
+def test_half_tooth_runs_from_the_gap_to_the_tip():
+    gear = _gear(profile_shift_coefficient=0.0)
+    profile = ToothProfile(gear)
+    form = np.asarray(profile.formcoords)
+    # starts on the root circle in the middle of the gap, ends on the tooth axis at the tip
+    assert np.hypot(*form[0]) == pytest.approx(gear.root_diameter / 2)
+    assert np.arctan2(-form[0, 0], form[0, 1]) == pytest.approx(np.pi / gear.number_of_teeth)
+    assert form[-1] == pytest.approx([0.0, gear.tip_diameter / 2])
+    assert np.all(form[:-1, 0] < 0)
+    # the flank is the involute: tooth thickness on the reference circle s = m (pi/2 + 2 x tan a)
+    radius = np.hypot(form[:, 0], form[:, 1])
+    angle = np.arctan2(-form[:, 0], form[:, 1])
+    flank = (radius > profile.data["d_Ff"] / 2) & (radius < gear.tip_diameter / 2 - 1e-9)
+    order = np.argsort(radius[flank])
+    half = np.interp(gear.reference_diameter / 2, radius[flank][order], angle[flank][order])
+    assert 2 * half * gear.reference_diameter / 2 == pytest.approx(
+        np.pi * gear.module / 2, rel=1e-5
+    )
+
+
+def test_internal_gears_are_refused():
+    with pytest.raises(ValueError, match="external"):
+        ToothProfile(_gear(internal=True, number_of_teeth=60, profile_shift_coefficient=0.0))

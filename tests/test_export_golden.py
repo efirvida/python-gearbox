@@ -97,4 +97,4 @@ def test_exported_tooth_has_the_modelled_root_and_tip_diameters(role):
         data = _build_wheel(gear).data
     assert data["d_f"] == pytest.approx(gear.root_diameter, rel=1e-9)
     assert data["d_a"] == pytest.approx(gear.tip_diameter, rel=1e-9)
-    assert data["rho_f"] == pytest.approx(gear.root_fillet_radius, rel=1e-12)
+    assert data["rho_fP"] == pytest.approx(gear.root_fillet_radius, rel=1e-12)

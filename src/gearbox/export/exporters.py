@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 from jinja2 import Environment, FileSystemLoader
 
 from gearbox.mathutils import inverse_involute, involute, rotate
-from gearbox.profile import CylindricalGearWheel, GearExport
+from gearbox.profile import ToothProfile
 
 if TYPE_CHECKING:
     from gearbox.models import Gear
@@ -214,33 +214,18 @@ def _pair_gears(transmission: Transmission | Sequence[Gear]) -> tuple[Gear, Gear
     return pinion, wheel
 
 
-def _build_wheel(gear: Gear) -> CylindricalGearWheel:
+def _build_wheel(gear: Gear) -> ToothProfile:
     """Generate the tooth geometry of ``gear`` as a fresh object.
 
-    The profile engine takes the tool tip radius and the bottom clearance in millimetres, so the
-    dimensionless tool coefficients are multiplied by the normal module. The root fillet is the
-    curve the rack generates with that tip radius.
-
     Raises:
-        ValueError: For an internal gear (the profile engine only generates external teeth).
+        ValueError: For an internal gear (only external teeth are generated).
     """
     if gear.internal:
         raise ValueError("Export no implementado para engranajes internos")
-    gear_data = {
-        "m_n": gear.module,
-        "z": gear.number_of_teeth,
-        "beta": gear.helix_angle,
-        "alpha_n": gear.pressure_angle,
-        "x": gear.profile_shift_coefficient,
-        "rho_fP": gear.tool.root_fillet_radius_coefficient * gear.module,
-        "d_s": gear.shaft_diameter,
-        "c": gear.tool.bottom_clearance_coefficient * gear.module,
-        "b": gear.face_width,
-    }
-    return GearExport(gear_data).gear
+    return ToothProfile(gear)
 
 
-def _mirror_for_ansys(wheel: CylindricalGearWheel) -> None:
+def _mirror_for_ansys(wheel: ToothProfile) -> None:
     """Complete the half-tooth form and shaft coordinates by mirroring them (ANSYS needs both)."""
     mirrored = [[-x, y] for x, y in wheel.formcoords]
     mirrored.reverse()
@@ -248,7 +233,7 @@ def _mirror_for_ansys(wheel: CylindricalGearWheel) -> None:
     wheel.shaftcoords[0] = [-wheel.shaftcoords[1][0], wheel.shaftcoords[1][1]]
 
 
-def _working_center_distance(pinion: CylindricalGearWheel, wheel: CylindricalGearWheel) -> float:
+def _working_center_distance(pinion: ToothProfile, wheel: ToothProfile) -> float:
     """Return the working centre distance of the pair [mm]."""
     p, w = pinion.data, wheel.data
     involute_wt = involute(p["alpha_t"]) + 2 * (p["x"] + w["x"]) / (p["z"] + w["z"]) * tan(

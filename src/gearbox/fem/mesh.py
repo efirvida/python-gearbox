@@ -9,7 +9,7 @@ quadrilaterals:
 * the *rim block*, between that inner arc and the bore.
 
 The profile is sampled with its own element sizes (fine in the fillet and on the flank), so the
-nodes lie exactly on the tooth form computed by :class:`~gearbox.profile.CylindricalGearWheel`.
+nodes lie exactly on the tooth form computed by :class:`~gearbox.profile.ToothProfile`.
 Helical gears are obtained by extruding the section with a twist; the mesh is then made of
 hexahedra. The idea of block-structured meshes follows the GGGears program (K. Poulios); no code
 of that program is used.
@@ -37,7 +37,7 @@ from gearbox.export.exporters import (
 
 if TYPE_CHECKING:
     from gearbox.models import Gear
-    from gearbox.profile import CylindricalGearWheel
+    from gearbox.profile import ToothProfile
     from gearbox.transmission import Transmission
 
 __all__ = ["GearMesh", "ToothMeshSettings", "mesh_gear", "mesh_pair"]
@@ -308,13 +308,13 @@ def mesh_pair(
     return _run(bodies, output_dir, model_name, dimension, formats)
 
 
-def _require_external(wheel: CylindricalGearWheel) -> None:
+def _require_external(wheel: ToothProfile) -> None:
     """Raise if ``wheel`` is an internal gear, which is not supported yet."""
     if wheel.data["z"] < 0:
         raise ValueError("meshing internal gears is not supported")
 
 
-def _twist_angle(wheel: CylindricalGearWheel, hand: float) -> float:
+def _twist_angle(wheel: ToothProfile, hand: float) -> float:
     """Return the rotation [rad] of the section over the face width (``hand`` is +1 or -1)."""
     data = wheel.data
     return hand * data["b"] * tan(radians(data["beta"])) / (data["d"] / 2)
@@ -332,7 +332,7 @@ def _import_gmsh() -> Any:
 
 
 def _run(
-    bodies: list[tuple[CylindricalGearWheel, _Placement, ToothMeshSettings]],
+    bodies: list[tuple[ToothProfile, _Placement, ToothMeshSettings]],
     output_dir: str | Path,
     model_name: str,
     dimension: Dimension | str | int,
@@ -434,7 +434,7 @@ class _SectionBuilder:
     def __init__(
         self,
         gmsh: Any,
-        wheel: CylindricalGearWheel,
+        wheel: ToothProfile,
         placement: _Placement,
         settings: ToothMeshSettings,
     ) -> None:
