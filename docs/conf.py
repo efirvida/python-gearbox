@@ -89,7 +89,7 @@ html_theme_options = {
     ],
     "logo": {"text": "python-gearbox"},
     "navbar_align": "left",
-    "header_links_before_dropdown": 6,
+    "header_links_before_dropdown": 5,
     "show_toc_level": 2,
     "navigation_with_keys": False,
     "use_edit_page_button": True,

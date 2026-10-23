@@ -11,5 +11,12 @@ html[data-theme="dark"] {
 div.math, .math-wrapper { overflow-x: auto; }
 /* figures of the theory pages */
 figure.align-default img, figure img { max-width: 100%; height: auto; }
+/* Keep desktop navigation on one row on smaller laptops; preserve the search button label
+   for assistive technology through its aria-label. Mobile uses the theme's sidebar menu. */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .bd-header .search-button__default-text,
+  .bd-header .search-button__kbd-shortcut { display: none; }
+  .bd-header .search-button-field { min-width: 0; padding: 0.5rem; }
+}
 /* symbol tables */
 table.symbols td:first-child { white-space: nowrap; }
