@@ -198,7 +198,7 @@ Von Mises stress at the middle of each path of contact, same colour scale.
 ```{figure} figures/optimization/path_animation.gif
 :alt: Animation of the von Mises stress of the three designs along the path of contact.
 
-Von Mises stress along the path of contact, one frame per FEM position.
+Von Mises stress as the teeth turn through the mesh, one frame per FEM position; the magenta line is the path of contact A-E.
 ```
 
 This is a demonstration of the tools, not a research study. The FEM model is 2D plane strain
