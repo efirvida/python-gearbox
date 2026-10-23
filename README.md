@@ -32,9 +32,13 @@ Lengths are in mm, angles in degrees, stresses in MPa, power in kW and speeds in
 ## Install
 
 ```bash
-pip install python-gearbox          # the strength calculations
-pip install "python-gearbox[fem]"   # plus meshing (Gmsh) and plotting (matplotlib)
+pip install "python-gearbox @ git+https://github.com/efirvida/python-gearbox"       # strength calculations
+pip install "python-gearbox[fem] @ git+https://github.com/efirvida/python-gearbox"  # plus meshing and plots
 ```
+
+Version 0.2 is not on PyPI yet: `pip install python-gearbox` still installs the 0.1 release of 2015,
+with a different API. Once 0.2 is published, `pip install python-gearbox` and
+`pip install "python-gearbox[fem]"` will do.
 
 The finite-element analyses also need **CalculiX**, a separate program: install it with
 `conda install -c conda-forge calculix` or `apt install calculix-ccx`, and make sure `ccx` is on
