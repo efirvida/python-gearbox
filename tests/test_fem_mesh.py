@@ -243,11 +243,12 @@ def test_surface_growth_makes_the_first_layer_thinner(transmission, tmp_path):
         ToothMeshSettings(surface_growth=0.9)
 
 
-FILLET_BLOCK = ToothMeshSettings(variant="fillet_block")
+STANDARD = ToothMeshSettings(variant="standard")
 
 
-def test_fillet_block_variant_keeps_geometry_and_quality(transmission, tmp_path):
-    result = mesh_gear(transmission.pinion, tmp_path, "fb", settings=FILLET_BLOCK, teeth=1)
+def test_standard_variant_keeps_geometry_and_quality(transmission, tmp_path):
+    # the default variant is "fillet_block", covered by the tests above
+    result = mesh_gear(transmission.pinion, tmp_path, "st", settings=STANDARD, teeth=1)
     assert result.min_quality > 0.5
     assert {"ROOT", "FILLET", "FLANK", "TIP", "BORE", "GEAR"} <= set(result.groups)
     form = np.asarray(_build_wheel(transmission.pinion).formcoords)
@@ -261,8 +262,8 @@ def test_fillet_block_variant_keeps_geometry_and_quality(transmission, tmp_path)
 
 
 def test_fillet_block_variant_adds_a_block_and_controls_fillet_size(transmission, tmp_path):
-    standard = mesh_gear(transmission.pinion, tmp_path, "s")
-    split = mesh_gear(transmission.pinion, tmp_path, "f", settings=FILLET_BLOCK)
+    standard = mesh_gear(transmission.pinion, tmp_path, "s", settings=STANDARD)
+    split = mesh_gear(transmission.pinion, tmp_path, "f")
     assert split.element_count != standard.element_count
     coarse = mesh_gear(
         transmission.pinion,
@@ -279,11 +280,11 @@ def test_fillet_block_variant_adds_a_block_and_controls_fillet_size(transmission
     assert fine.element_count > coarse.element_count
 
 
-def test_fillet_block_variant_works_in_3d_and_for_pairs(tmp_path):
+def test_standard_variant_works_in_3d_and_for_pairs(tmp_path):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         transmission = build_transmission(helix_angle=15.0)
-    settings = ToothMeshSettings(variant="fillet_block", width_elements=4)
+    settings = ToothMeshSettings(variant="standard", width_elements=4)
     single = mesh_gear(transmission.pinion, tmp_path, "g", "3D", settings, teeth=2)
     assert _element_types(single.paths["msh"], 3) == {"Hexahedron 8"}
     assert single.min_quality > 0.5
@@ -315,6 +316,53 @@ def test_standard_root_block_stays_valid_when_the_flank_starts_high(
             base, number_of_teeth=teeth, profile_shift_coefficient=shift, helix_angle=helix
         )
         bore = 0.5 * _build_wheel(gear).data["d_f"]
-        settings = ToothMeshSettings(bore_diameter=bore).refined(refine)
+        settings = ToothMeshSettings(variant="standard", bore_diameter=bore).refined(refine)
         result = mesh_gear(gear, tmp_path, "high", "2D", settings)
     assert result.min_quality > 0.2
+
+
+@pytest.mark.parametrize("rotation", [-6.0, 4.0])
+def test_rotated_pair_stays_in_mesh(transmission, tmp_path, rotation):
+    # the wheel turns by -rotation * z1 / z2, so the flanks keep touching at zero backlash
+    result = mesh_pair(transmission, tmp_path, "rot", pinion_rotation=rotation)
+    assert result.min_quality > 0.5
+    pinion = _nodes_of(result.paths["msh"], "PINION_FLANK")[:, :2]
+    wheel = _nodes_of(result.paths["msh"], "WHEEL_FLANK")[:, :2]
+    distance, _ = cKDTree(wheel).query(pinion)
+    assert 1e-6 < distance.min() < 0.1
+    axes = result.placements["PINION_"][1]
+    assert axes[1] == pytest.approx(radians(rotation))
+
+
+@pytest.mark.parametrize("teeth", [22, 9])
+def test_fillet_block_closes_the_flank_block_on_the_root_form_circle(tmp_path, teeth):
+    # the corner of the flank block on the tooth axis lies at the radius where the involute
+    # starts, so the fillet block holds the whole fillet, also the neck of an undercut tooth
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # z = 9 is undercut
+        gear = replace(
+            build_transmission().pinion,
+            number_of_teeth=teeth,
+            profile_shift_coefficient=0.0,
+            shaft_diameter=10.0,
+        )
+        data = _build_wheel(gear).data
+        settings = ToothMeshSettings(variant="fillet_block", bore_diameter=0.55 * data["d_f"])
+        result = mesh_gear(gear, tmp_path, "fb", "2D", settings)
+    assert result.min_quality > 0.8
+    nodes = _nodes_of(result.paths["msh"], "GEAR")
+    on_axis = nodes[np.abs(nodes[:, 0]) < 1e-9]
+    assert np.min(np.abs(np.hypot(on_axis[:, 0], on_axis[:, 1]) - data["d_Ff"] / 2)) < 1e-6
+
+
+def test_fillet_block_rim_layers_are_concentric(transmission, tmp_path):
+    # the rim block is closed by an arc, so its node layers are circles (no zigzag under the teeth)
+    gear = transmission.pinion
+    data = _build_wheel(gear).data
+    settings = ToothMeshSettings(variant="fillet_block", rim_elements=6)
+    result = mesh_gear(gear, tmp_path, "rim", "2D", settings, teeth=3)
+    nodes = _nodes_of(result.paths["msh"], "GEAR")
+    radius = np.hypot(nodes[:, 0], nodes[:, 1])
+    rim = radius[radius < data["d_f"] / 2 - 1.5 * gear.module]
+    assert len(rim) > 100
+    assert len(np.unique(np.round(rim, 6))) <= 7

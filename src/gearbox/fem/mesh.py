@@ -67,14 +67,17 @@ class ToothMeshSettings:
             root fillet towards the inside of the tooth. The elements are finest at the surface,
             where contact and root stresses peak; 1 keeps them uniform, 1.2-1.4 grades them
             noticeably.
-        variant: ``"standard"`` meshes the root and the fillet in one block; ``"fillet_block"``
-            gives the fillet a block of its own, split at the point where the profile tangent
-            makes ``fillet_angle`` with the tooth axis. The second variant controls the element
-            size in the critical root section independently, which suits bending analyses.
+        variant: ``"fillet_block"`` (the default) closes the flank block on the root form
+            circle and gives the fillet a block of its own, split at the point where the profile
+            tangent makes ``fillet_angle`` with the tooth axis; the element size in the critical
+            root section is then controlled independently and undercut teeth are meshed evenly.
+            ``"standard"`` meshes the root and the fillet in one block, closed by a line at
+            ``cross_angle``.
         fillet_angle: Angle [deg] between the profile tangent and the tooth axis at the split
             point of the ``"fillet_block"`` variant (30 is the ISO 6336-3 critical section).
         cross_angle: Angle [deg] below the horizontal of the line that closes the flank block
             towards the tooth axis; it sets how deep the flank block reaches into the tooth.
+            ``"standard"`` variant only: ``"fillet_block"`` closes it with the root form circle.
         width_elements: Elements across the face width (3D only). ``None`` makes the layers as
             thick as the flank elements, so the elements at the flank are about cubic; this
             multiplies the element count by ``face_width / flank element size``.
@@ -89,7 +92,7 @@ class ToothMeshSettings:
     tooth_elements: int = 10
     rim_elements: int | None = None
     surface_growth: float = 1.25
-    variant: str = "standard"
+    variant: str = "fillet_block"
     fillet_angle: float = 30.0
     cross_angle: float = 30.0
     width_elements: int | None = None
@@ -244,6 +247,7 @@ def mesh_pair(
     settings: ToothMeshSettings | Sequence[ToothMeshSettings] | None = None,
     teeth: tuple[int, int] = (3, 4),
     formats: Sequence[str] = ("msh",),
+    pinion_rotation: float = 0.0,
 ) -> GearMesh:
     """Mesh a gear pair in meshing position, with a sector of teeth around the pitch point.
 
@@ -251,7 +255,8 @@ def mesh_pair(
     distance. A pinion tooth is centred on the line of centres and the wheel has a tooth gap
     there, so the flanks are in contact at zero backlash. The helix of the wheel has the opposite
     hand to the helix of the pinion. Physical group names are prefixed by ``PINION_`` and
-    ``WHEEL_``.
+    ``WHEEL_``. ``pinion_rotation`` turns the pinion counter-clockwise from that position and the
+    wheel by the matching angle, ``-pinion_rotation * z1 / z2``, so the teeth stay in mesh.
 
     Args:
         transmission: A transmission, or a ``(pinion, wheel)`` sequence of gears.
@@ -261,6 +266,7 @@ def mesh_pair(
         settings: Mesh settings, one for both gears or a ``(pinion, wheel)`` pair.
         teeth: Teeth meshed on the ``(pinion, wheel)``, each between 1 and its tooth count.
         formats: Output formats, see :func:`mesh_gear`.
+        pinion_rotation: Rotation of the pinion from the symmetric position [deg].
 
     Returns:
         A :class:`GearMesh` with the written paths and mesh statistics.
@@ -284,12 +290,14 @@ def mesh_pair(
         pitch = 2 * pi / abs(part.data["z"])
         if prefix == "PINION_":
             first = -((count - 1) // 2)
-            angles = tuple((first + i) * pitch for i in range(count))
+            turn = radians(pinion_rotation)
+            angles = tuple(turn + (first + i) * pitch for i in range(count))
             placement = _Placement(prefix, (0.0, 0.0), angles, _twist_angle(part, 1.0))
         else:
             # the tooth gap faces the pinion (axis angle pi), so teeth sit at half-pitch offsets
             first = -(count // 2)
-            angles = tuple(pi + (first + i + 0.5) * pitch for i in range(count))
+            turn = -radians(pinion_rotation) * pinion.data["z"] / part.data["z"]
+            angles = tuple(turn + pi + (first + i + 0.5) * pitch for i in range(count))
             placement = _Placement(prefix, (0.0, centre_distance), angles, _twist_angle(part, -1.0))
         placements.append(placement)
 
@@ -706,16 +714,19 @@ class _SectionBuilder:
         """Build the tip, fillet, root and rim blocks; return them with the shared curves.
 
         Extra points: ``B`` where the profile tangent makes ``fillet_angle`` with the axis and
-        ``G`` on the axis, reached from ``B`` along the profile normal::
+        ``G`` on the axis, reached from ``B`` along the profile normal. ``F`` lies on the axis at
+        the radius of ``C``, so the flank block ends on the root form circle and the fillet block
+        holds the whole fillet, also below the narrow neck of an undercut tooth::
 
-            tip block     C-D-E-F    flank CD, tip DE, axis EF, cross line FC
-            fillet block  B-C-F-G    upper fillet BC, cross line CF, axis FG, normal GB
-            root block    A-B-G-J    root+lower fillet AB, normal BG, line GJ, gap line JA
-            rim block     H-I-J-G    bore arc HI, gap line IJ, line JG, axis GH
+            tip block     C-D-E-F    flank CD, tip DE, axis EF, root form arc FC
+            fillet block  B-C-F-G    upper fillet BC, root form arc CF, axis FG, normal GB
+            root block    A-B-G-J    root+lower fillet AB, normal BG, axis GK + arc KJ, gap JA
+            rim block     H-I-J-K    bore arc HI, gap line IJ, arc JK, axis KH
 
-        ``GJ`` runs from ``G`` to the gap line at the bisector of the axis and the normal ``GB``,
-        so ``J`` lies deeper than ``G`` and the element layers under the root curve smoothly
-        along the fillet instead of running along a circle.
+        ``J`` is where the gap line meets the line from ``G`` at the bisector of the axis and the
+        normal ``GB``, so it lies deeper than ``G`` and the element layers under the root follow
+        the fillet. ``K`` is on the axis at the radius of ``J``: the rim block is bounded by two
+        arcs and its layers are concentric.
         """
         s = self.settings
         segments = self.segments
@@ -724,50 +735,58 @@ class _SectionBuilder:
         b_xy = segments["FILLET_UP"][0][0]
         b_point = self._point(*self._transform(*b_xy, axis, half_pitch < 0))
 
-        f_radius = c_xy[1] - abs(c_xy[0]) * tan(radians(s.cross_angle))
+        f_radius = float(np.hypot(*c_xy))
         g_radius = b_xy[1] - abs(b_xy[0]) * tan(radians(s.fillet_angle))
         if g_radius <= self.bore_radius:
             raise ValueError("bore diameter too large for the tooth blocks of this gear")
         if f_radius <= g_radius:
-            raise ValueError(
-                "the fillet block does not fit: reduce cross_angle or increase fillet_angle"
-            )
+            raise ValueError("the fillet block does not fit: increase fillet_angle")
         mirror = half_pitch < 0
         f_point = self._polar(f_radius, axis, 0.0)
         g_point = self._polar(g_radius, axis, 0.0)
-        j_point = self._point(
-            *self._transform(*self._gap_point(g_radius, abs(half_pitch)), axis, mirror)
-        )
+        j_xy = self._gap_point(g_radius, abs(half_pitch))
+        j_point = self._point(*self._transform(*j_xy, axis, mirror))
+        k_radius = float(np.hypot(*j_xy))
+        k_point = self._polar(k_radius, axis, 0.0)
         h_point = self._polar(self.bore_radius, axis, 0.0)
         i_point = self._polar(self.bore_radius, axis, half_pitch)
 
         lines = {
             "EF": self._line(e_point, f_point),
-            "FC": self._line(f_point, c_point),
-            "CF": self._line(c_point, f_point),
+            "FC": self._arc(f_point, c_point),
+            "CF": self._arc(c_point, f_point),
             "FG": self._line(f_point, g_point),
             "GB": self._line(g_point, b_point),
-            "GJ": self._line(g_point, j_point),
+            "GK": self._line(g_point, k_point),
+            "KJ": self._arc(k_point, j_point),
             "JA": self._line(j_point, a_point),
             "IJ": self._line(i_point, j_point),
-            "GH": self._line(g_point, h_point),
+            "KH": self._line(k_point, h_point),
         }
         bore_arc = self._arc(h_point, i_point)
-        base = self.base_divisions + 1
+        # the root block side G-K-J matches the root and lower fillet A-B in element count
+        axis_length = g_radius - k_radius
+        arc_length = k_radius * abs(half_pitch)
+        on_axis = min(
+            self.base_divisions - 1,
+            max(1, round(self.base_divisions * axis_length / (axis_length + arc_length))),
+        )
+        on_arc = self.base_divisions - on_axis
         across = s.tooth_elements + 1
-        rim_count = s.rim_elements or self._rim_elements(g_radius)
+        rim_count = s.rim_elements or self._rim_elements(k_radius)
         for key, count in (
             ("EF", segments["FLANK"][1] + 1),
             ("FG", segments["FILLET_UP"][1] + 1),
-            ("GJ", base),
+            ("GK", on_axis + 1),
+            ("KJ", on_arc + 1),
             ("IJ", rim_count + 1),
-            ("GH", rim_count + 1),
+            ("KH", rim_count + 1),
         ):
             self.geo.mesh.setTransfiniteCurve(abs(lines[key]), count)
         # the lines ending on the flank, the fillet and the root are finest there
         for key in ("FC", "GB", "JA"):
             self._set_divisions(lines[key], across, s.surface_growth, from_start=False)
-        self.geo.mesh.setTransfiniteCurve(abs(bore_arc), base)
+        self.geo.mesh.setTransfiniteCurve(abs(bore_arc), on_arc + 1)
 
         low = curves.get("ROOT", []) + curves["FILLET_LOW"]
         tip = self._surface(
@@ -779,12 +798,12 @@ class _SectionBuilder:
             [b_point, c_point, f_point, g_point],
         )
         root = self._surface(
-            [lines["JA"], *low, -lines["GB"], lines["GJ"]],
+            [lines["JA"], *low, -lines["GB"], lines["GK"], lines["KJ"]],
             [a_point, b_point, g_point, j_point],
         )
         rim = self._surface(
-            [bore_arc, lines["IJ"], -lines["GJ"], lines["GH"]],
-            [h_point, i_point, j_point, g_point],
+            [bore_arc, lines["IJ"], -lines["KJ"], lines["KH"]],
+            [h_point, i_point, j_point, k_point],
         )
         return [tip, fillet, root, rim], bore_arc, lines["JA"], lines["IJ"]
 
