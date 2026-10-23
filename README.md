@@ -1,66 +1,44 @@
 # python-gearbox
 
-Strength calculation and finite-element geometry export for **spur and helical involute gears**.
+**Check whether a pair of spur or helical gears will survive, and see why.**
 
-* Surface durability (pitting) and tooth root strength (bending) according to
-  **ISO 6336:2019** (parts 1, 2 and 3, Method B) and **AGMA 2001-D04** (with the AGMA 908-B89
-  geometry factors).
-* Profile shift (addendum modification) helpers.
-* One-tooth 2D/3D geometry export for **MATLAB/COMSOL**, **ABAQUS** and **ANSYS**.
-* Structured quad/hex finite-element meshes of gear sectors and gear pairs with **Gmsh**
-  (`pip install python-gearbox[fem]`), written as `.msh`/`.inp` with named node and element sets.
-* Tooth bending (`gearbox.fem.solve_bending`) and tooth contact of a gear pair
-  (`gearbox.fem.solve_contact`) with **CalculiX**, see [Finite elements](#finite-elements).
+python-gearbox calculates the two classic failure modes of gear teeth — surface pitting and tooth
+root breakage — with **ISO 6336:2019** and **AGMA 2001-D04**, the standards gear designers use.
+When you want to look closer than a standard can, it builds finite-element meshes of the real tooth
+shape and solves them with the free CalculiX solver: you can watch the stresses move as the teeth
+roll through mesh.
 
-> **Status:** version 0.2 is a refactor of the original code (Python ≥ 3.11, typed immutable models,
-> descriptive names, test suite) and an update of the ISO 6336 implementation from the 2006 to the
-> **2019 edition**. Numbers therefore differ from 0.1.x: every change is listed in
-> [KNOWN_ISSUES.md](KNOWN_ISSUES.md) with its effect. Flank tolerances follow ISO 1328-1:2013. Read the
-> known issues before relying on the numbers.
+<img src="docs/figures/mesh_pair_3d.png" width="40%" align="right" alt="3D mesh of a helical gear pair">
 
-## Scope
+What you can do with it:
 
-| Standard | Implemented | Not implemented |
-|----------|-------------|-----------------|
-| ISO 1328-1:2013 | flank tolerances `f_pT`, `F_pT`, `F_αT`, `F_βT`, `f_fαT`, `f_HαT`, `f_HβT`, `f_fβT` (formulae 5-12) | runout, tooth thickness |
-| ISO 6336-1:2019 | `K_A`, `K_γ` (given), `K_v` by method B, method C or a measured value (A), `K_Hβ`/`K_Fβ` (method C), `K_Hα`/`K_Fα` (method B), tooth stiffness `c'`, `c_γα`, `c_γβ` (method B) | method A/B of `K_Hβ`, `K_v` method B for internal gears, multi-mesh resonance (idlers, planets) |
-| ISO 6336-2:2019 | pitting, method B, reference, limited-life and static stress (`Z_H`, `Z_E`, `Z_ε`, `Z_β`, `Z_B`, `Z_D`, `Z_NT` with and without limited pitting, `Z_L`, `Z_v`, `Z_R`, `Z_W`, `Z_X`); internal and double helical gears | the standard gives no formula for `Z_B`/`Z_D` when `ε_α > 2` (clause 6.4), which raises no error but is outside the validated range |
-| ISO 6336-3:2019 | tooth breakage, method B, external gears cut with a hob or a shaper cutter and internal gears cut with a shaper cutter; double helical gears; reference, limited-life and static stress; `Y_Sg` for grinding notches | the graphical `Y_δrelT` for static stress of `St` without a yield point |
-| AGMA 2001-D04 / 908-B89 | pitting and bending stress, `I` and `J` (checked against the 908-B89 tables), `K_v`, `K_s`, `K_m`, `K_B`, `K_o`; allowable stresses and safety factors with `Z_N`, `Y_N`, `C_H`, `K_T`, `K_R` when `s_ac`/`s_at` are given; pitting of internal gears | bending of internal gears (908-B89 gives no `J`), double helical gears, cast-iron stress cycle factors, the critical-service curves of `Z_N`, `s_ac`/`s_at` tables (the numbers must be supplied) |
+* **Rate a gear pair** for pitting and bending with ISO 6336 (parts 1, 2 and 3) or AGMA 2001-D04,
+  with every intermediate factor available for inspection.
+* **Handle the less common cases**: helical, double helical and internal gears, shaper-cut teeth,
+  static and limited-life loads.
+* **Choose profile shifts** that balance the pair or lower the contact stress.
+* **Export one tooth** to MATLAB/COMSOL, ABAQUS or ANSYS.
+* **Mesh and solve with finite elements** a single gear or a pair in mesh, in 2D or 3D.
 
-## Limitations and pending work
+Lengths are in mm, angles in degrees, stresses in MPa, power in kW and speeds in rpm.
 
-Not implemented; each item that depends on a missing source says which one. Details in
-[KNOWN_ISSUES.md](KNOWN_ISSUES.md).
-
-* **Internal gears:** AGMA bending (AGMA 908-B89 gives no `J`), `K_v` method B (ISO 6336-1 only gives
-  the reduced mass of external teeth and of planetary stages), tooth interference checks between
-  pinion and ring (needs ISO 21771), profile shift optimisation and geometry export. These raise
-  `ValueError`.
-* **Double helical gears:** ISO 6336 only. AGMA raises `ValueError`: the AGMA 2001-D04 clauses on face
-  width and `K_m` for this type were not available to check the formulae.
-* **Contact ratio:** the limits by the active root diameter (ISO 6336-2 formulae 34-35) are not
-  applied; they need ISO 21771 data. Formula (33) (base circle) is.
-* **ISO 6336-2:** `Z_B`, `Z_D` for `ε_α > 2` (the standard gives no formula).
-* **ISO 6336-1:** methods A and B of `K_Hβ`, multi-mesh dynamics (idlers, planetary stages).
-* **ISO 6336-3:** graphical `Y_δrelT` for static stress of `St` without a yield point.
-* **AGMA 2001-D04:** cast-iron `Z_N`/`Y_N`, the critical-service edge of `Z_N`; the `s_ac`/`s_at`
-  tables are inputs.
-* **ISO 1328-1:** runout and tooth thickness tolerances.
-* **FEM and export:** external gears only; the tooth form is generated by a rack, so protuberance
-  tools (`s_pr`) and shaper cutters are not reproduced (KI-41). The analyses are linear elastic and
-  frictionless and were validated in 2D only. `solve_contact` also runs in 3D, but a coarse mesh
-  (fine enough to finish in about half an hour for a spur pair) overestimates the contact pressure
-  by some 15 %, and the fine mesh needed in 3D is very expensive.
+<br clear="right">
 
 ## Install
 
 ```bash
-pip install python-gearbox          # released version
-pip install -e ".[dev]"             # development checkout (pytest, ruff)
+pip install python-gearbox          # the strength calculations
+pip install "python-gearbox[fem]"   # plus meshing (Gmsh) and plotting (matplotlib)
 ```
 
-## Quick start
+The finite-element analyses also need **CalculiX**, a separate program: install it with
+`conda install -c conda-forge calculix` or `apt install calculix-ccx`, and make sure `ccx` is on
+your `PATH` (or point the `GEARBOX_CCX` environment variable at it).
+
+## A first calculation
+
+Describe the cutting tool, the material, both gears and how the pair is driven, then ask for the
+pitting check:
 
 ```python
 from gearbox import Gear, Lubricant, Material, MaterialType, ShaftArrangement, Tool, Transmission
@@ -92,94 +70,104 @@ result = iso6336.calculate_pitting(transmission)
 print(result.contact_stress_pinion, result.safety_factor_pinion)
 ```
 
-Units: lengths in mm, angles in degrees, stresses in MPa, power in kW, speed in rpm.
+`result` carries the contact stress of each gear, the stress it may take and the resulting safety
+factor, plus every factor of the standard (`dynamic_factor`, `life_factor_pinion`, …) under its
+full name; the standard's symbol is in each field's docstring. `iso6336.calculate_bending` does the
+same for the tooth root, and `gearbox.standards.agma2101` offers both checks with AGMA.
 
-Double helical gears: `Gear(double_helical=True, face_width=b_B, helix_angle=…)` on both gears, with
-`face_width` the width of *each* helix (ISO 6336 only). Internal gears: `Gear(internal=True)` on the
-wheel, `number_of_teeth` positive, cut with a shaper (`Tool(cutter_type="shaper", cutter_teeth=…)`)
-for the bending calculation; the dynamic factor needs `dynamic_factor_method="C"`. Details and
-limits in [KNOWN_ISSUES.md](KNOWN_ISSUES.md) (KI-38, KI-39).
+A few things worth knowing:
 
-Inputs that select a table of the standard are enums with descriptive members instead of numeric
-codes: `MaterialType`, `ShaftArrangement` (ISO 6336-1 figure 13), `LeadModification` (table 12),
-`FlankModification` (ISO 6336-2 table 3, helical pairs), `Crowning`, `AssemblyCondition` and
-`GearingType` (AGMA). Helical pairs default to `FlankModification.NONE` (`f_ZCa = 1.2`, the
-conservative case); set `Transmission(flank_modification=...)` when the flanks are modified.
+* Every model is immutable. To try a variant, copy it with `dataclasses.replace`, for instance
+  `replace(transmission, power_kw=50)`.
+* Choices that pick a table of the standard are named, not numbered: `MaterialType`,
+  `ShaftArrangement` (ISO 6336-1 figure 13), `LeadModification`, `FlankModification`,
+  `Crowning`, `AssemblyCondition`, `GearingType`. Helical pairs assume unmodified flanks
+  (`FlankModification.NONE`, the safe side) unless you say otherwise.
+* **Double helical gears**: set `double_helical=True` on both gears and give `face_width` as the
+  width of *one* helix (ISO 6336 only).
+* **Internal gears**: set `internal=True` on the wheel, keep `number_of_teeth` positive, use a
+  shaper cutter (`Tool(cutter_type="shaper", cutter_teeth=…)`) for the bending check, and choose
+  `Transmission(dynamic_factor_method="C")`.
 
-All models are immutable; derive variants with `dataclasses.replace`. Results are frozen
-dataclasses whose fields use full names (`life_factor_pinion`, `dynamic_factor`, …) with the
-standard's symbol in each field's docstring.
+> **Coming from version 0.1?** Version 0.2 follows the 2019 edition of ISO 6336 instead of the 2006
+> one and fixes a number of errors of the original code, so your numbers will change. Each change
+> and its effect is listed in [KNOWN_ISSUES.md](KNOWN_ISSUES.md); the new names of the API are in
+> [Upgrading from 0.1.x](#upgrading-from-01x).
 
 ## Finite elements
 
-`gearbox.fem` (`pip install python-gearbox[fem]`) builds structured quadrilateral (2D) and
-hexahedral (3D) Gmsh meshes of a gear sector or of a gear pair in mesh, and solves them with
-**CalculiX**, an external program: `conda install -c conda-forge calculix` or
-`apt install calculix-ccx`, then put `ccx` on the `PATH` or set `GEARBOX_CCX`. The tooth form is
-the one the hob generates, root fillet included (KI-41), and the node and element sets are named
-(`FLANK`, `FILLET`, `BORE`, `TOOTH2_FLANK_CCW`, …).
+The standards reduce a tooth to a handful of factors. The `gearbox.fem` module lets you look at the
+tooth itself: it meshes the exact shape the hob cuts, root fillet included, and solves it with
+CalculiX.
+
+### Meshes
+
+`mesh_gear` meshes a few teeth of one gear and `mesh_pair` a pinion and wheel in mesh, in 2D
+(quadrilaterals) or 3D (hexahedra, twisted along the helix). The meshes are structured, finest at
+the flank and in the root fillet where the stresses peak, and come with named groups (`FLANK`,
+`FILLET`, `BORE`, `TOOTH2_FLANK_CCW`, …) so you can apply loads and read results without picking
+nodes by hand. They are written as Gmsh `.msh` or Abaqus/CalculiX `.inp` files.
 
 ![2D mesh of a gear sector](docs/figures/mesh_gear.png)
 
 <img src="docs/figures/mesh_gear_3d.png" width="48%" alt="3D mesh of a helical gear sector"> <img src="docs/figures/mesh_pair_3d.png" width="48%" alt="3D mesh of a helical pair in mesh">
 
-Two block layouts are available (`ToothMeshSettings(variant=...)`). The default,
-`"fillet_block"`, ends the flank block on the root form circle and gives the fillet a block of its
-own, split where the profile tangent makes 30° with the tooth axis (the ISO 6336-3 critical
-section): the element size there is controlled independently and the neck of an undercut tooth is
-meshed evenly. `"standard"` meshes the root and the fillet in one block:
+Each tooth is split into a few four-sided blocks. By default (`"fillet_block"`) the root fillet gets
+a block of its own, which keeps the elements regular even when the tooth is undercut and lets you
+refine the critical root section on its own. The simpler `"standard"` layout is still available:
 
 ![Mesh variants on a normal and an undercut tooth](docs/figures/mesh_variants.png)
 
 ![2D mesh of a gear pair in mesh](docs/figures/mesh_pair.png)
 
+### Bending and contact
+
 ```python
-from gearbox.fem import mesh_gear, mesh_pair, solve_bending, solve_contact
+from gearbox.fem import mesh_gear, solve_bending, solve_contact
 
 mesh_gear(pinion, "out", "pinion", "3D", teeth=3, formats=("msh", "inp"))
 bending = solve_bending(pinion, "out", tangential_force=8000.0, dimension="2D")
-contact = solve_contact(transmission, "out")  # pitch point, nominal Ft of the transmission
-print(bending.max_principal_stress, contact.max_contact_pressure, contact.max_root_stress_pinion)
+contact = solve_contact(transmission, "out")  # teeth touching at the pitch point
+print(bending.max_principal_stress, contact.max_contact_pressure)
 ```
 
-* `solve_bending` loads one tooth with a pressure band on the flank and fixes the bore. In 2D,
-  loaded at the outer point of single pair contact, the root stress is within 2-12 % of ISO 6336-3
-  method B (`Y_F·Y_S·F_t/(b·m_n)`).
-* `solve_contact` turns the pinion bore against the fixed wheel bore until the pinion torque is
-  `F_t·d_1/2`, with frictionless penalty contact between the flanks. At the pitch point of a spur
-  pair the contact pressure is within 1 % of Hertz' theory. `pinion_rotation` sets the mesh
-  position, so the whole path of contact can be followed, as in the animations below (2D, spur
-  `z = 22/40`, `m = 2.5`, `F_t = 8000 N`, `b = 34 mm`; grey bands: two pairs of teeth in contact).
+* `solve_bending` pushes on one tooth flank and holds the bore. Loaded where ISO 6336-3 puts the
+  load, the 2D root stress lands within 2-12 % of the standard.
+* `solve_contact` turns the pinion against the wheel until it carries the design torque, with
+  frictionless contact between all the flanks of the model. At the pitch point the contact pressure matches
+  Hertz' theory within 1 %.
+
+Because the pair can be meshed at any angle, you can follow a tooth all the way through mesh. That
+is what these two animations show for a spur pair (22 and 40 teeth, module 2.5, 8000 N):
 
 ![Tooth root stress along the path of contact](docs/figures/bending.gif)
 
 ![Contact stress along the path of contact](docs/figures/contact.gif)
 
-The left panels draw the classic scheme of the mesh over the stresses: base circles (dashed),
-working pitch circles (dotted), the line of action `T1 T2` and the path of contact `A-E` in
-magenta, with the single contact zone `B-D`. Along the path:
+On the left, the stresses are drawn under the classic scheme of the mesh: the base and pitch circles
+and the line of action, with the path of contact `A-E` in magenta. On the right, the result for the
+followed tooth as it moves from `A` to `E`:
 
-* in the grey zones two pairs share the load, so the contact pressure lies between Hertz with the
-  whole load and with half of it, and the root stresses stay low;
-* between `B` and `D` one pair carries everything: the contact pressure follows Hertz with the
-  whole load and the root stresses peak;
-* just outside `A` and `E` the sharp tip edge of the leaving or entering tooth still touches,
-  because the teeth deflect under load (the reason for tip relief); the pressure there is
-  singular and depends on the mesh, so it is drawn off scale.
+* **In the grey zones two pairs of teeth share the load.** The contact pressure sits between Hertz
+  for the whole load and for half of it, and the root stresses stay low.
+* **Between `B` and `D` one pair carries everything.** The contact pressure follows Hertz for the
+  whole load and the root stresses reach their peak, close to what ISO 6336-3 predicts.
+* **Just outside `A` and `E` the sharp tip of a tooth still touches**, because loaded teeth bend.
+  This is why real gears get tip relief. The pressure at a sharp edge has no finite value, so it
+  is marked but kept off the scale.
 
-The lines of the standards are drawn for reference only: they are the nominal values of each
-method with all load factors equal to 1 (ISO 6336-3 `Y_F·Y_S`, AGMA 908 `1/J` and the cantilever
-beam `Y_F` for bending; Hertz, ISO 6336-2 `Z_H·Z_E` with and without `Z_ε` and AGMA 2001 `C_p`, `I`
-for contact). Each standard places its load at a different point and simplifies differently, so
-they are not expected to match the curve of the FEM. The figures are made by
+The horizontal lines are the plain values of each method (all load factors set to 1): ISO 6336-3,
+AGMA 908 and a simple cantilever beam for bending; Hertz, ISO 6336-2 and AGMA 2001 for contact.
+Each method idealises the load differently, so they are a reference rather than something the
+curves should hit. The figures are built by
 [`docs/figures/make_figures.py`](docs/figures/make_figures.py).
 
-`gearbox.fem.post` holds the post-processing used for these figures (matplotlib comes with the
-`fem` extra): `LineOfAction` (points `T1 A B C D E T2`, single and double contact zones, Hertzian
-pressure along the line, the mesh position for a point of the line), `contact_sweep` (the contact
-solved along the path of contact, cached), `contact_patches` (the contact of each tooth, with tip
-edge contacts outside `A-E` flagged), and `plot_mesh`, `plot_field`, `plot_line_of_action` to
-draw on a matplotlib axes.
+### Your own plots
+
+The tools behind these figures live in `gearbox.fem.post`: `LineOfAction` (the points `A` to `E`,
+the single and double contact zones, Hertz' pressure along the line), `contact_sweep` (solve the
+contact at several positions along the path, with a cache), `contact_patches` (the contact of each
+tooth) and `plot_mesh`, `plot_field` and `plot_line_of_action` for matplotlib.
 
 ```python
 import matplotlib.pyplot as plt
@@ -194,6 +182,8 @@ plot_line_of_action(ax, line, points[1].followed.point)
 
 ## Examples
 
+Ready-to-run scripts, from a first calculation to finite elements:
+
 | File | Shows |
 |------|-------|
 | [`examples/01_basic_calculation.py`](examples/01_basic_calculation.py) | ISO 6336 and AGMA 2101 checks of a spur pair |
@@ -204,7 +194,48 @@ plot_line_of_action(ax, line, points[1].followed.point)
 | [`examples/06_fem_bending.py`](examples/06_fem_bending.py) | Root stress of a tooth with CalculiX |
 | [`examples/07_fem_contact.py`](examples/07_fem_contact.py) | Contact of a spur pair with CalculiX, against Hertz |
 
-## Migrating from 0.1.x
+## What the standards cover
+
+The calculation follows the formulae of each standard closely; the tests cite the clause they
+check. For each standard, what is in and what is not:
+
+| Standard | Implemented | Not implemented |
+|----------|-------------|-----------------|
+| ISO 1328-1:2013 | flank tolerances `f_pT`, `F_pT`, `F_αT`, `F_βT`, `f_fαT`, `f_HαT`, `f_HβT`, `f_fβT` (formulae 5-12) | runout, tooth thickness |
+| ISO 6336-1:2019 | `K_A`, `K_γ` (given), `K_v` by method B, method C or a measured value (A), `K_Hβ`/`K_Fβ` (method C), `K_Hα`/`K_Fα` (method B), tooth stiffness `c'`, `c_γα`, `c_γβ` (method B) | method A/B of `K_Hβ`, `K_v` method B for internal gears, multi-mesh resonance (idlers, planets) |
+| ISO 6336-2:2019 | pitting, method B, reference, limited-life and static stress (`Z_H`, `Z_E`, `Z_ε`, `Z_β`, `Z_B`, `Z_D`, `Z_NT` with and without limited pitting, `Z_L`, `Z_v`, `Z_R`, `Z_W`, `Z_X`); internal and double helical gears | the standard gives no formula for `Z_B`/`Z_D` when `ε_α > 2` (clause 6.4), which raises no error but is outside the validated range |
+| ISO 6336-3:2019 | tooth breakage, method B, external gears cut with a hob or a shaper cutter and internal gears cut with a shaper cutter; double helical gears; reference, limited-life and static stress; `Y_Sg` for grinding notches | the graphical `Y_δrelT` for static stress of `St` without a yield point |
+| AGMA 2001-D04 / 908-B89 | pitting and bending stress, `I` and `J` (checked against the 908-B89 tables), `K_v`, `K_s`, `K_m`, `K_B`, `K_o`; allowable stresses and safety factors with `Z_N`, `Y_N`, `C_H`, `K_T`, `K_R` when `s_ac`/`s_at` are given; pitting of internal gears | bending of internal gears (908-B89 gives no `J`), double helical gears, cast-iron stress cycle factors, the critical-service curves of `Z_N`, `s_ac`/`s_at` tables (the numbers must be supplied) |
+
+## What is not there yet
+
+Some pieces are missing, usually because the source they need was not available to check them
+against. Where a missing piece would make a result wrong, the call raises a `ValueError` instead of
+returning a doubtful number (marked *raises* below). Details are in
+[KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
+* **Internal gears** (*raises*): AGMA bending (AGMA 908 gives no `J` for them), the dynamic factor
+  by method B, profile shift optimisation and geometry export. Interference checks between pinion
+  and ring are not done (they need ISO 21771).
+* **Double helical gears with AGMA** (*raises*): the clauses of AGMA 2001-D04 on face width and `K_m` for this
+  type were not available to check.
+* **Contact ratio:** limited by the base circle (ISO 6336-2 formula 33) but not yet by the active
+  root diameter (formulae 34-35, they need ISO 21771).
+* **ISO 6336:** methods A and B of `K_Hβ`; dynamics of idlers and planetary stages; the graphical
+  `Y_δrelT` for static bending of steels without a yield point. `Z_B` and `Z_D` above a contact
+  ratio of 2 are computed but fall outside what the standard covers (it gives no formula there).
+* **AGMA 2001-D04:** stress cycle factors of cast iron (*raises*) and the critical-service edge of
+  `Z_N`. The
+  allowable stress numbers `s_ac` and `s_at` are inputs, not tables.
+* **ISO 1328-1:** runout and tooth thickness tolerances.
+* **Finite elements:** external gears only (*raises* for internal ones), cut with a hob (no protuberance or shaper cutter). The
+  analyses are linear elastic and frictionless and were validated in 2D. `solve_contact` runs in
+  3D too, but a mesh coarse enough to finish in half an hour overestimates the contact pressure by
+  about 15 %, and a fine one is very slow.
+
+## Upgrading from 0.1.x
+
+The API was redesigned with descriptive names. The main changes:
 
 | 0.1.x | 0.2 |
 |-------|-----|
@@ -220,28 +251,28 @@ plot_line_of_action(ax, line, points[1].followed.point)
 ## Development
 
 ```bash
+pip install -e ".[dev]"
 pytest
-ruff check . && ruff format --check .
+ruff check . && ruff format --check src tests
 ```
 
 Two kinds of tests protect the numbers:
 
-* **Behavioural tests** (`tests/test_iso6336_*_2019.py`, `test_agma2101_fixes.py`, …) check each
-  factor against the formulae of the standard, with the clause number in the comment.
-* **Golden tests** (`tests/golden/`) pin the full results of six reference scenarios.
-  `tests/golden/baseline_original.json` holds the numbers of the original 0.1.x code for
-  provenance; `reference.json` is the current reference and is regenerated with
-  `python tests/golden/regenerate_reference.py`. A change that moves it must be intentional and
-  explained in the commit and in [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+* **Formula tests** check each factor against the standard, with the clause in a comment.
+* **Golden tests** (`tests/golden/`) pin the complete results of six reference designs.
+  `reference.json` is the current reference (`python tests/golden/regenerate_reference.py`
+  regenerates it); `baseline_original.json` keeps the numbers of the original 0.1 code. A change
+  that moves them has to be intentional and explained in the commit and in
+  [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
 
-The standards themselves are not distributed with the repository. The calculation was reviewed
-against ISO 6336-1/-2/-3:2019, AGMA 2001-D04 and ISO 6336-5:2016; see `KNOWN_ISSUES.md` for what is
-still pending.
+The standards themselves are not part of the repository. The calculation was reviewed against
+ISO 6336-1/-2/-3:2019, ISO 6336-5:2016 and AGMA 2001-D04.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md), the [Code of Conduct](CODE_OF_CONDUCT.md) and the
-[security policy](SECURITY.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
+Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md), the
+[Code of Conduct](CODE_OF_CONDUCT.md) and the [security policy](SECURITY.md). What changed between
+versions is in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
