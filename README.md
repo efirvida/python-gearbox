@@ -300,7 +300,7 @@ versions is in [CHANGELOG.md](https://github.com/efirvida/python-gearbox/blob/ma
 
 ## License
 
-LGPL 2.1 — see [LICENSE](https://github.com/efirvida/python-gearbox/blob/master/LICENSE).
+MIT — see [LICENSE](https://github.com/efirvida/python-gearbox/blob/master/LICENSE).
 
 ## Citing
 

@@ -53,4 +53,4 @@ Python 3.11 or newer. CalculiX is optional (its test is skipped when `ccx` is no
 ## Licence
 
 By contributing you agree that your contribution is licensed under the project's
-[LGPL 2.1](LICENSE) licence.
+[MIT](LICENSE) licence.

@@ -30,6 +30,12 @@ All notable changes are documented here. The format follows
     tooth and matplotlib plots of meshes, stress fields and the line of action.
 
 ### Changed
+* The licence changes from LGPL 2.1 to **MIT**.
+* The tooth form engine (`gearbox.profile`), which derived from the GPL-licensed pygear project,
+  was rewritten from scratch as `ToothProfile`, built from a `Gear`. The tooth form is the same
+  (checked against the previous engine and ISO 6336-3); the points on the tip circle are spaced
+  slightly differently (under 0.1 um), and ABAQUS exports no longer write `np.float64(...)`
+  values, which ABAQUS could not run.
 * Complete refactor: Python >= 3.11, immutable typed dataclasses, descriptive names, test suite.
 * ISO 6336 updated from the 2006 to the **2019** edition. **Numbers differ from 0.1.x**; see
   [KNOWN_ISSUES.md](KNOWN_ISSUES.md) (KI-01 to KI-37) for every change and its effect.

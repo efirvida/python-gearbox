@@ -7,13 +7,13 @@ name = "python-gearbox"
 dynamic = ["version"]  # from gearbox.__version__, see [tool.hatch.version]
 description = "Gear strength with ISO 6336 and AGMA 2001, and finite-element meshes and analyses of spur, helical and internal gears"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Eduardo M. Firvida Donestevez", email = "efirvida@gmail.com" }]
 requires-python = ">=3.11"
 keywords = ["gearbox", "gear", "agma", "iso", "iso-6336", "gear transmission", "engineering", "fem", "calculix", "gmsh"]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

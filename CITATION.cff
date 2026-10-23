@@ -6,7 +6,7 @@ authors:
   - family-names: "Firvida Donéstevez"
     given-names: "Eduardo Miguel"
     email: efirvida@gmail.com
-license: LGPL-2.1-only
+license: MIT
 repository-code: "https://github.com/efirvida/python-gearbox"
 doi: "10.5281/zenodo.3660527"
 keywords: [gears, gearbox, ISO 6336, AGMA 2101, gear transmissions]
