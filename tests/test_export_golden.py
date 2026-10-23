@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import re
 import warnings
 from pathlib import Path
 
@@ -36,7 +37,27 @@ def test_export_matches_golden(name, kind, target, dimension, tmp_path):
     written = _run(kind, scenario(name), target, dimension, out)
 
     expected = (GOLDEN / name / written.name).read_text()
-    assert written.read_text().replace(str(out), "<OUTPUT_DIR>") == expected
+    _assert_same_export(written.read_text().replace(str(out), "<OUTPUT_DIR>"), expected)
+
+
+_NUMBER = re.compile(r"-?\d+\.\d+(?:[eE][-+]?\d+)?")
+
+
+def _assert_same_export(actual: str, expected: str) -> None:
+    """Same text, and the same numbers up to the last bits that differ between platforms."""
+    assert _NUMBER.sub("<N>", actual) == _NUMBER.sub("<N>", expected)
+    numbers = [float(n) for n in _NUMBER.findall(actual)]
+    assert numbers == pytest.approx(
+        [float(n) for n in _NUMBER.findall(expected)], rel=1e-9, abs=1e-9
+    )
+
+
+def test_comparison_ignores_platform_noise_but_not_changes():
+    _assert_same_export("x = [-3.60219719332993, 28.1]", "x = [-3.60219719333006, 28.1]")
+    with pytest.raises(AssertionError):
+        _assert_same_export("x = [-3.6022, 28.1]", "x = [-3.6021, 28.1]")
+    with pytest.raises(AssertionError):
+        _assert_same_export("y = [-3.6022, 28.1]", "x = [-3.6022, 28.1]")
 
 
 def test_scenarios_have_golden_files():
