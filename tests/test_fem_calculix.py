@@ -3,11 +3,17 @@
 from __future__ import annotations
 
 import warnings
-from math import cos, hypot, pi, radians, sqrt
+from math import cos, hypot, pi, radians, sqrt, tan
 
 import pytest
 
-from gearbox.fem import ElasticMaterial, ToothMeshSettings, find_ccx, solve_bending
+from gearbox.fem import (
+    ElasticMaterial,
+    ToothMeshSettings,
+    find_ccx,
+    solve_bending,
+    solve_contact,
+)
 from gearbox.standards.iso6336 import bending
 from tests.scenarios import build_transmission
 
@@ -134,3 +140,49 @@ def test_root_stress_agrees_with_iso6336_3(tmp_path, shift):
         load_radius=single_contact + band / 2, load_height=band, ccx=CCX,
     )  # fmt: skip
     assert result.max_principal_stress == pytest.approx(iso, rel=0.15)
+
+
+@pytest.fixture(scope="module")
+def contact(tmp_path_factory):
+    # x1 = x2 = 0: the pitch point lies in the single pair contact zone (g_a, g_f < p_b)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        transmission = build_transmission(x1=0.0, x2=0.0)
+    folder = tmp_path_factory.mktemp("contact")
+    return transmission, solve_contact(transmission, folder, FORCE, "c", ccx=CCX)
+
+
+def test_contact_reaches_the_torque_at_the_pitch_point(contact):
+    transmission, result = contact
+    assert result.applied_torque == pytest.approx(result.requested_torque, rel=0.05)
+    pinion = transmission.pinion
+    working_pitch_radius = (
+        pinion.module * pinion.number_of_teeth / 2
+        * cos(radians(pinion.pressure_angle))
+        / cos(radians(transmission.working_pressure_angle))
+    )  # fmt: skip
+    assert result.contact_radius == pytest.approx(working_pitch_radius, abs=0.1)
+    assert result.contact_nodes >= 3
+    assert set(result.files) >= {"mesh", "deck", "frd", "dat", "log"}
+
+
+def test_contact_pressure_agrees_with_hertz(contact):
+    # two cylinders in plane strain with the radii of curvature of the flanks at the pitch point
+    transmission, result = contact
+    pinion, wheel = transmission.pinion, transmission.wheel
+    alpha = radians(transmission.working_pressure_angle)
+    base = [
+        g.module * g.number_of_teeth * cos(radians(g.pressure_angle)) / 2 for g in (pinion, wheel)
+    ]
+    radius = 1 / sum(1 / (b * tan(alpha)) for b in base)
+    modulus = 1 / sum(
+        (1 - g.material.poissons_ratio**2) / g.material.elastic_modulus for g in (pinion, wheel)
+    )
+    load = result.requested_torque / base[0]
+    hertz = sqrt(load * modulus / (pi * radius))
+    assert result.max_contact_pressure == pytest.approx(hertz, rel=0.03)
+
+
+def test_contact_needs_a_force_for_bare_gears(tmp_path):
+    with pytest.raises(ValueError, match="tangential_force"):
+        solve_contact((_gear(), _gear()), tmp_path, ccx=CCX)

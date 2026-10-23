@@ -4,11 +4,21 @@ Gmsh is an optional dependency (``pip install python-gearbox[fem]``); the analys
 external CalculiX solver, see :func:`gearbox.fem.find_ccx`.
 """
 
-from gearbox.fem.calculix import BendingResult, ElasticMaterial, find_ccx, solve_bending
+from gearbox.fem.calculix import (
+    CONTACT_SETTINGS,
+    BendingResult,
+    ContactResult,
+    ElasticMaterial,
+    find_ccx,
+    solve_bending,
+    solve_contact,
+)
 from gearbox.fem.mesh import GearMesh, ToothMeshSettings, mesh_gear, mesh_pair
 
 __all__ = [
+    "CONTACT_SETTINGS",
     "BendingResult",
+    "ContactResult",
     "ElasticMaterial",
     "GearMesh",
     "ToothMeshSettings",
@@ -16,4 +26,5 @@ __all__ = [
     "mesh_gear",
     "mesh_pair",
     "solve_bending",
+    "solve_contact",
 ]
