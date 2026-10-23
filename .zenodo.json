@@ -1,0 +1,38 @@
+{
+  "title": "python-gearbox: gear strength with ISO 6336 and AGMA 2001, and finite-element analysis of gear teeth",
+  "description": "<p>Python library to check spur, helical, double helical and internal gear pairs against pitting and tooth root breakage with ISO 6336:2019 (parts 1, 2 and 3) and AGMA 2001-D04, with every factor of the standards available for inspection. It also optimises profile shifts, exports the tooth geometry to COMSOL, ABAQUS and ANSYS, and builds structured finite-element meshes of gears and gear pairs (Gmsh) that it solves for tooth bending and tooth contact with CalculiX, with post-processing along the path of contact.</p>",
+  "upload_type": "software",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Fírvida Donéstevez, Eduardo Miguel",
+      "orcid": "0000-0001-8907-7511"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Moya Rodriguez, Jorge Laurano",
+      "type": "Supervisor",
+      "orcid": "0000-0003-0541-0191"
+    },
+    {
+      "name": "Machado Rodríguez, Ángel Silvio",
+      "type": "Supervisor",
+      "orcid": "0000-0002-7774-8653"
+    }
+  ],
+  "thesis_university": "Universidad Central \"Marta Abreu\" de las Villas",
+  "keywords": [
+    "gears",
+    "gearbox",
+    "gear transmissions",
+    "ISO 6336",
+    "AGMA 2001",
+    "AGMA 908",
+    "gear stress calculation",
+    "finite element method",
+    "CalculiX",
+    "Gmsh"
+  ],
+  "language": "eng"
+}

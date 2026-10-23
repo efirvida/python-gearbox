@@ -3,7 +3,7 @@
 [![CI](https://github.com/efirvida/python-gearbox/actions/workflows/ci.yml/badge.svg)](https://github.com/efirvida/python-gearbox/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)](https://github.com/efirvida/python-gearbox/blob/master/pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/efirvida/python-gearbox/blob/master/LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3660527.svg)](https://doi.org/10.5281/zenodo.3660527)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3660526.svg)](https://doi.org/10.5281/zenodo.3660526)
 
 **Check whether a pair of spur or helical gears will survive, and see why.**
 
@@ -307,28 +307,29 @@ MIT — see [LICENSE](https://github.com/efirvida/python-gearbox/blob/master/LIC
 
 ## Citing
 
-If you use Python-Gearbox for academic research, please use the following:
+If you use python-gearbox in your research, please cite it. The DOI
+[10.5281/zenodo.3660526](https://doi.org/10.5281/zenodo.3660526) stands for all versions and
+resolves to the latest one; each version also has its own DOI on Zenodo (0.2.0:
+[10.5281/zenodo.23594908](https://doi.org/10.5281/zenodo.23594908)). GitHub's "Cite this
+repository" button gives the same reference from [CITATION.cff](https://github.com/efirvida/python-gearbox/blob/master/CITATION.cff).
 
 **BibTeX:**
-```
-@misc{https://doi.org/10.5281/zenodo.3660527,
-  doi = {10.5281/ZENODO.3660527},
-  url = {https://zenodo.org/record/3660527},
-  author = {Donéstevez, Eduardo Miguel Fírvida},
-  keywords = {gearbox, gear transmissions, gears, ISO-6336, AGMA-2101 D04, Gear stresses calculation},
-  language = {en},
-  title = {Python library for design of spur and helical gears transmissions},
+```bibtex
+@software{firvida_python_gearbox,
+  author    = {Fírvida Donéstevez, Eduardo Miguel},
+  title     = {python-gearbox: gear strength with ISO 6336 and AGMA 2001,
+               and finite-element analysis of gear teeth},
   publisher = {Zenodo},
-  year = {2020}
+  version   = {0.2.0},
+  year      = {2026},
+  doi       = {10.5281/zenodo.3660526},
+  url       = {https://doi.org/10.5281/zenodo.3660526}
 }
 ```
 
 **APA:**
 ```
-Donéstevez, E. M. F. (2020). Python library for design of spur and helical gears transmissions (Version 1.0). Zenodo. https://doi.org/10.5281/ZENODO.3660527
-```
-
-**IEEE**
-```
-E. M. F. Donéstevez, “Python library for design of spur and helical gears transmissions.” Zenodo, 09-Feb-2020, doi: 10.5281/ZENODO.3660527.
+Fírvida Donéstevez, E. M. (2026). python-gearbox: gear strength with ISO 6336 and AGMA 2001, and
+finite-element analysis of gear teeth (Version 0.2.0) [Computer software]. Zenodo.
+https://doi.org/10.5281/zenodo.3660526
 ```

@@ -1,12 +1,26 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-title: "Python-Gearbox"
+title: "python-gearbox: gear strength with ISO 6336 and AGMA 2001, and finite-element analysis of gear teeth"
+abstract: >-
+  Python library to check spur, helical, double helical and internal gear pairs against pitting
+  and tooth root breakage with ISO 6336:2019 and AGMA 2001-D04, optimise profile shifts, export
+  the tooth geometry to COMSOL, ABAQUS and ANSYS, and mesh and solve gear teeth with finite
+  elements (Gmsh and CalculiX).
 type: software
 authors:
-  - family-names: "Firvida Donéstevez"
+  - family-names: "Fírvida Donéstevez"
     given-names: "Eduardo Miguel"
     email: efirvida@gmail.com
+    orcid: "https://orcid.org/0000-0001-8907-7511"
+version: "0.2.0"
+date-released: "2026-10-23"
 license: MIT
 repository-code: "https://github.com/efirvida/python-gearbox"
-doi: "10.5281/zenodo.3660527"
-keywords: [gears, gearbox, ISO 6336, AGMA 2101, gear transmissions]
+doi: "10.5281/zenodo.3660526"
+keywords:
+  - gears
+  - gearbox
+  - gear transmissions
+  - ISO 6336
+  - AGMA 2001
+  - finite element method

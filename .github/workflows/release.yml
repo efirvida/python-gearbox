@@ -3,8 +3,10 @@ name: Release
 # Every push to the release branch (normally a merge from master) publishes the version in
 # src/gearbox/__init__.py to PyPI (unless it is already there), tags it and creates the GitHub
 # release (or updates its files if it exists). Note that the Zenodo integration of the repository
-# archives every new GitHub release under a new DOI version. To release: bump __version__, date its section in CHANGELOG.md, merge into
-# release.
+# archives every new GitHub release under a new DOI version.
+#
+# To release: bump __version__, date its section in CHANGELOG.md, set version and date-released
+# in CITATION.cff, merge into release. Zenodo takes the record metadata from .zenodo.json.
 #
 # PyPI accepts the upload through Trusted Publishing (no token is stored). It has to be set up once
 # on https://pypi.org/manage/project/python-gearbox/settings/publishing/ with: owner efirvida,
@@ -44,6 +46,10 @@ jobs:
           fi
           if ! grep -q "^## \[$version\] - [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}" CHANGELOG.md; then
             echo "::error::CHANGELOG.md needs a dated section '## [$version] - YYYY-MM-DD'"
+            exit 1
+          fi
+          if ! grep -q "^version: \"$version\"" CITATION.cff; then
+            echo "::error::CITATION.cff needs version: \"$version\" (Zenodo and GitHub cite it)"
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
