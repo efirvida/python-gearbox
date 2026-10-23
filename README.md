@@ -1,5 +1,11 @@
 # python-gearbox
 
+[![PyPI](https://img.shields.io/pypi/v/python-gearbox)](https://pypi.org/project/python-gearbox/)
+[![Python](https://img.shields.io/pypi/pyversions/python-gearbox)](https://pypi.org/project/python-gearbox/)
+[![CI](https://github.com/efirvida/python-gearbox/actions/workflows/ci.yml/badge.svg)](https://github.com/efirvida/python-gearbox/actions/workflows/ci.yml)
+[![License](https://img.shields.io/pypi/l/python-gearbox)](https://github.com/efirvida/python-gearbox/blob/master/LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3660527.svg)](https://doi.org/10.5281/zenodo.3660527)
+
 **Check whether a pair of spur or helical gears will survive, and see why.**
 
 python-gearbox calculates the two classic failure modes of gear teeth — surface pitting and tooth
@@ -8,7 +14,7 @@ When you want to look closer than a standard can, it builds finite-element meshe
 shape and solves them with the free CalculiX solver: you can watch the stresses move as the teeth
 roll through mesh.
 
-<img src="docs/figures/mesh_pair_3d.png" width="40%" align="right" alt="3D mesh of a helical gear pair">
+<img src="https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/mesh_pair_3d.png" width="40%" align="right" alt="3D mesh of a helical gear pair">
 
 What you can do with it:
 
@@ -91,7 +97,7 @@ A few things worth knowing:
 
 > **Coming from version 0.1?** Version 0.2 follows the 2019 edition of ISO 6336 instead of the 2006
 > one and fixes a number of errors of the original code, so your numbers will change. Each change
-> and its effect is listed in [KNOWN_ISSUES.md](KNOWN_ISSUES.md); the new names of the API are in
+> and its effect is listed in [KNOWN_ISSUES.md](https://github.com/efirvida/python-gearbox/blob/master/KNOWN_ISSUES.md); the new names of the API are in
 > [Upgrading from 0.1.x](#upgrading-from-01x).
 
 ## Finite elements
@@ -108,31 +114,38 @@ the flank and in the root fillet where the stresses peak, and come with named gr
 `FILLET`, `BORE`, `TOOTH2_FLANK_CCW`, …) so you can apply loads and read results without picking
 nodes by hand. They are written as Gmsh `.msh` or Abaqus/CalculiX `.inp` files.
 
-![2D mesh of a gear sector](docs/figures/mesh_gear.png)
+![The named groups of a mesh](https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/mesh_groups.png)
 
-<img src="docs/figures/mesh_gear_3d.png" width="48%" alt="3D mesh of a helical gear sector"> <img src="docs/figures/mesh_pair_3d.png" width="48%" alt="3D mesh of a helical pair in mesh">
+![2D mesh of a gear sector](https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/mesh_gear.png)
+
+<img src="https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/mesh_gear_3d.png" width="48%" alt="3D mesh of a helical gear sector"> <img src="https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/mesh_pair_3d.png" width="48%" alt="3D mesh of a helical pair in mesh">
 
 Each tooth is split into a few four-sided blocks. By default (`"fillet_block"`) the root fillet gets
 a block of its own, which keeps the elements regular even when the tooth is undercut and lets you
 refine the critical root section on its own. The simpler `"standard"` layout is still available:
 
-![Mesh variants on a normal and an undercut tooth](docs/figures/mesh_variants.png)
+![Mesh variants on a normal and an undercut tooth](https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/mesh_variants.png)
 
-![2D mesh of a gear pair in mesh](docs/figures/mesh_pair.png)
+![2D mesh of a gear pair in mesh](https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/mesh_pair.png)
 
 ### Bending and contact
+
+The snippets in this section continue [A first calculation](#a-first-calculation): `pinion` and
+`transmission` are the ones defined there.
 
 ```python
 from gearbox.fem import mesh_gear, solve_bending, solve_contact
 
 mesh_gear(pinion, "out", "pinion", "3D", teeth=3, formats=("msh", "inp"))
-bending = solve_bending(pinion, "out", tangential_force=8000.0, dimension="2D")
-contact = solve_contact(transmission, "out")  # teeth touching at the pitch point
+bending = solve_bending(transmission, "out", dimension="2D")  # force and load point from the pair
+contact = solve_contact(transmission, "out")                  # teeth touching at the pitch point
 print(bending.max_principal_stress, contact.max_contact_pressure)
 ```
 
-* `solve_bending` pushes on one tooth flank and holds the bore. Loaded where ISO 6336-3 puts the
-  load, the 2D root stress lands within 2-12 % of the standard.
+* `solve_bending` pushes on one tooth flank and holds the bore. Given the transmission, it takes
+  the nominal tangential force from it and loads the tooth where ISO 6336-3 does, at the outer
+  point of single pair contact (`member="wheel"` checks the wheel); the 2D root stress lands
+  within 2-12 % of the standard. A single `Gear` works too, with the force given by you.
 * `solve_contact` turns the pinion against the wheel until it carries the design torque, with
   frictionless contact between all the flanks of the model. At the pitch point the contact pressure matches
   Hertz' theory within 1 %.
@@ -140,9 +153,9 @@ print(bending.max_principal_stress, contact.max_contact_pressure)
 Because the pair can be meshed at any angle, you can follow a tooth all the way through mesh. That
 is what these two animations show for a spur pair (22 and 40 teeth, module 2.5, 8000 N):
 
-![Tooth root stress along the path of contact](docs/figures/bending.gif)
+![Tooth root stress along the path of contact](https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/bending.gif)
 
-![Contact stress along the path of contact](docs/figures/contact.gif)
+![Contact stress along the path of contact](https://raw.githubusercontent.com/efirvida/python-gearbox/master/docs/figures/contact.gif)
 
 On the left, the stresses are drawn under the classic scheme of the mesh: the base and pitch circles
 and the line of action, with the path of contact `A-E` in magenta. On the right, the result for the
@@ -160,7 +173,7 @@ The horizontal lines are the plain values of each method (all load factors set t
 AGMA 908 and a simple cantilever beam for bending; Hertz, ISO 6336-2 and AGMA 2001 for contact.
 Each method idealises the load differently, so they are a reference rather than something the
 curves should hit. The figures are built by
-[`docs/figures/make_figures.py`](docs/figures/make_figures.py).
+[`docs/figures/make_figures.py`](https://github.com/efirvida/python-gearbox/blob/master/docs/figures/make_figures.py).
 
 ### Your own plots
 
@@ -173,26 +186,37 @@ tooth) and `plot_mesh`, `plot_field` and `plot_line_of_action` for matplotlib.
 import matplotlib.pyplot as plt
 from gearbox.fem.post import LineOfAction, contact_sweep, plot_field, plot_line_of_action
 
-line = LineOfAction.of(transmission)
-points = contact_sweep(transmission, "sweep", [line.points()["A"] + 0.2, 0.0])
-fig, ax = plt.subplots()
+line = LineOfAction.of(transmission)  # the pair of "A first calculation"
+# solve near the start of contact (two pairs share the load) and at the pitch point;
+# a few minutes per position, cached in the folder "sweep"
+points = contact_sweep(transmission, "sweep", [line.points()["A"] + 1.0, 0.0])
+fig, ax = plt.subplots(figsize=(8, 7))
 plot_field(ax, points[1].stress("von_mises"))
+x, y = line.point(0.0)  # zoom on the pitch point, then draw the scheme over it
+ax.set_xlim(x - 8, x + 8)
+ax.set_ylim(y - 7, y + 7)
 plot_line_of_action(ax, line, points[1].followed.point)
+fig.savefig("contact.png")
 ```
+
+[`examples/08_fem_post_processing.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/08_fem_post_processing.py) walks through it step
+by step.
 
 ## Examples
 
-Ready-to-run scripts, from a first calculation to finite elements:
+Each example is a short guided tour: it explains what it does step by step and prints a result
+you can read. Start with the first one and go on in order:
 
-| File | Shows |
-|------|-------|
-| [`examples/01_basic_calculation.py`](examples/01_basic_calculation.py) | ISO 6336 and AGMA 2101 checks of a spur pair |
-| [`examples/02_helical_gears_and_what_if.py`](examples/02_helical_gears_and_what_if.py) | spur vs helical, parameter sweeps with `replace` |
-| [`examples/03_profile_shift_optimization.py`](examples/03_profile_shift_optimization.py) | profile shift scan and optimisation |
-| [`examples/04_export_geometry.py`](examples/04_export_geometry.py) | COMSOL / ABAQUS / ANSYS export |
-| [`examples/05_fem_mesh.py`](examples/05_fem_mesh.py) | Structured Gmsh meshes (sector and pair) |
-| [`examples/06_fem_bending.py`](examples/06_fem_bending.py) | Root stress of a tooth with CalculiX |
-| [`examples/07_fem_contact.py`](examples/07_fem_contact.py) | Contact of a spur pair with CalculiX, against Hertz |
+| Example | What you learn |
+|---------|----------------|
+| [`01_basic_calculation.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/01_basic_calculation.py) | Describe a gear pair, check it with ISO 6336 and AGMA 2001, read the verdict |
+| [`02_helical_gears_and_what_if.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/02_helical_gears_and_what_if.py) | Fix a failing design: wider face, helix angle, harder steel; the largest power it carries |
+| [`03_profile_shift_optimization.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/03_profile_shift_optimization.py) | Share the profile shift between pinion and wheel to balance the pair |
+| [`04_export_geometry.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/04_export_geometry.py) | Take the tooth geometry to COMSOL, ABAQUS or ANSYS |
+| [`05_fem_mesh.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/05_fem_mesh.py) | Mesh a gear and a pair in 2D and 3D, named groups and element quality |
+| [`06_fem_bending.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/06_fem_bending.py) | Root stress of a tooth with CalculiX, side by side with ISO 6336-3 |
+| [`07_fem_contact.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/07_fem_contact.py) | Contact stress of two teeth with CalculiX, checked against Hertz |
+| [`08_fem_post_processing.py`](https://github.com/efirvida/python-gearbox/blob/master/examples/08_fem_post_processing.py) | Follow a tooth through mesh and see how two pairs share the load |
 
 ## What the standards cover
 
@@ -212,7 +236,7 @@ check. For each standard, what is in and what is not:
 Some pieces are missing, usually because the source they need was not available to check them
 against. Where a missing piece would make a result wrong, the call raises a `ValueError` instead of
 returning a doubtful number (marked *raises* below). Details are in
-[KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+[KNOWN_ISSUES.md](https://github.com/efirvida/python-gearbox/blob/master/KNOWN_ISSUES.md).
 
 * **Internal gears** (*raises*): AGMA bending (AGMA 908 gives no `J` for them), the dynamic factor
   by method B, profile shift optimisation and geometry export. Interference checks between pinion
@@ -263,20 +287,20 @@ Two kinds of tests protect the numbers:
   `reference.json` is the current reference (`python tests/golden/regenerate_reference.py`
   regenerates it); `baseline_original.json` keeps the numbers of the original 0.1 code. A change
   that moves them has to be intentional and explained in the commit and in
-  [KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+  [KNOWN_ISSUES.md](https://github.com/efirvida/python-gearbox/blob/master/KNOWN_ISSUES.md).
 
 The standards themselves are not part of the repository. The calculation was reviewed against
 ISO 6336-1/-2/-3:2019, ISO 6336-5:2016 and AGMA 2001-D04.
 
 ## Contributing
 
-Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md), the
-[Code of Conduct](CODE_OF_CONDUCT.md) and the [security policy](SECURITY.md). What changed between
-versions is in [CHANGELOG.md](CHANGELOG.md).
+Contributions are welcome: see [CONTRIBUTING.md](https://github.com/efirvida/python-gearbox/blob/master/CONTRIBUTING.md), the
+[Code of Conduct](https://github.com/efirvida/python-gearbox/blob/master/CODE_OF_CONDUCT.md) and the [security policy](https://github.com/efirvida/python-gearbox/blob/master/SECURITY.md). What changed between
+versions is in [CHANGELOG.md](https://github.com/efirvida/python-gearbox/blob/master/CHANGELOG.md).
 
 ## License
 
-LGPL 2.1 — see [LICENSE](LICENSE).
+LGPL 2.1 — see [LICENSE](https://github.com/efirvida/python-gearbox/blob/master/LICENSE).
 
 ## Citing
 
