@@ -1,0 +1,15 @@
+/* python-gearbox: small adjustments to the pydata theme */
+html[data-theme="light"] {
+  --pst-color-primary: #1f5f8b;
+  --pst-color-secondary: #c2410c;
+}
+html[data-theme="dark"] {
+  --pst-color-primary: #6cb4e4;
+  --pst-color-secondary: #fb923c;
+}
+/* wide equations scroll instead of overflowing the column */
+div.math, .math-wrapper { overflow-x: auto; }
+/* figures of the theory pages */
+figure.align-default img, figure img { max-width: 100%; height: auto; }
+/* symbol tables */
+table.symbols td:first-child { white-space: nowrap; }

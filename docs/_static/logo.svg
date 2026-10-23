@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100" width="64" height="64">
+  <title>python-gearbox</title>
+  <g fill="#1f5f8b">
+    <circle r="30"/>
+    <g id="t"><path d="M-6,-28 L-4.5,-42 L4.5,-42 L6,-28 Z"/></g>
+    <use href="#t" transform="rotate(30)"/><use href="#t" transform="rotate(60)"/>
+    <use href="#t" transform="rotate(90)"/><use href="#t" transform="rotate(120)"/>
+    <use href="#t" transform="rotate(150)"/><use href="#t" transform="rotate(180)"/>
+    <use href="#t" transform="rotate(210)"/><use href="#t" transform="rotate(240)"/>
+    <use href="#t" transform="rotate(270)"/><use href="#t" transform="rotate(300)"/>
+    <use href="#t" transform="rotate(330)"/>
+  </g>
+  <circle r="11" fill="#ffffff"/>
+  <circle r="5" fill="#c2410c"/>
+</svg>

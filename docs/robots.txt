@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://efirvida.github.io/python-gearbox/sitemap.xml

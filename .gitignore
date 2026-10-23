@@ -17,3 +17,5 @@ docs/scribd/
 .playwright-mcp/
 docs/figures/work/
 docs/figures/cache/
+docs/_build/
+docs/api/generated/
