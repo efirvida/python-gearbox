@@ -151,6 +151,32 @@ def _solved(pairs: dict[str, Transmission], cache: Path) -> dict:
     return points
 
 
+STRESS_TOP = 800.0  # MPa
+STRESS_TICKS = [0, 25, 50, 100, 200, 400, 800]
+
+
+def _draw_stress(ax, point):
+    """Von Mises map with a quadratic colour scale: the bending field stays readable.
+
+    The contact peaks are an order of magnitude above the root stresses, so a linear scale
+    paints the whole tooth blue. Colours are spaced by level index; levels grow quadratically.
+    """
+    import numpy as np
+    from matplotlib.colors import BoundaryNorm
+
+    triangulation, values = point.stress("von_mises")
+    levels = STRESS_TOP * np.linspace(0, 1, 64) ** 2
+    contour = ax.tricontourf(
+        triangulation,
+        np.clip(values, 0, STRESS_TOP),
+        levels=levels,
+        cmap="turbo",
+        norm=BoundaryNorm(levels, 256),
+    )
+    ax.set_aspect("equal")
+    return contour
+
+
 def animation(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
     """Animate the composite von Mises state of the three designs along the path of contact.
 
@@ -160,11 +186,10 @@ def animation(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
     import numpy as np
     from matplotlib.animation import PillowWriter
 
-    from gearbox.fem.post import plot_field, plot_line_of_action
+    from gearbox.fem.post import plot_line_of_action
 
     points = _solved(pairs, cache)
     out.mkdir(parents=True, exist_ok=True)
-    top = 800.0  # MPa, fixed colour scale for every frame and design
     # One fixed view, as in the pair animations of the guide: the gears turn and the contact
     # runs along the path A-E. It is wide enough for the contact of every frame of every design.
     contacts = np.array([p.followed.point for series in points.values() for p in series])
@@ -179,15 +204,13 @@ def animation(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
             for ax, (name, series) in zip(axes, points.items(), strict=True):
                 ax.clear()
                 p = series[i]
-                contour = plot_field(ax, p.stress("von_mises"), vmax=top, edges=False)
+                contour = _draw_stress(ax, p)
                 ax.set(xlim=(low[0], high[0]), ylim=(low[1], high[1]))
-                plot_line_of_action(
-                    ax,
-                    LineOfAction.of(pairs[name]),
-                    p.followed.point,
-                    labels=False,
-                    others=[q.point for q in p.patches if q is not p.followed],
-                )
+                plot_line_of_action(ax, LineOfAction.of(pairs[name]), labels=False)
+                ax.plot(*p.followed.point, "o", mfc="none", mec="k", ms=4, mew=1)
+                for q in p.patches:
+                    if q is not p.followed:
+                        ax.plot(*q.point, "o", mfc="none", mec="0.35", ms=3, mew=0.8)
                 ax.set_xticks([])
                 ax.set_yticks([])
                 note = "\nsecond pair in tip-edge contact" if _edge_contact(p) else ""
@@ -197,7 +220,9 @@ def animation(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
                     fontsize=9,
                 )
             colour_axis.clear()
-            fig.colorbar(contour, cax=colour_axis, label="von Mises stress [MPa]")
+            fig.colorbar(
+                contour, cax=colour_axis, ticks=STRESS_TICKS, label="von Mises stress [MPa]"
+            )
             fig.suptitle(
                 f"Composite stress state along the path of contact (magenta A-E), "
                 f"sample {i + 1}/{POSITIONS}"
@@ -213,8 +238,6 @@ def figures(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
     """
     import matplotlib.pyplot as plt
     import numpy as np
-
-    from gearbox.fem.post import plot_field
 
     points = _solved(pairs, cache)
     force = pairs["baseline"].nominal_tangential_force
@@ -273,20 +296,21 @@ def figures(pairs: dict[str, Transmission], cache: Path, out: Path) -> None:
     for name, p in peaks.items():
         centre = np.asarray(p.followed.point)
         windows[name] = (centre, np.linalg.norm(p.nodes - centre, axis=1) < 7.0)
-    vmax = max(float(np.nanmax(p.von_mises[windows[n][1]])) for n, p in peaks.items())
     fig, axes = plt.subplots(1, 3, figsize=(16, 5.6))
     contour = None
     for ax, (name, p) in zip(axes, peaks.items(), strict=True):
         centre = windows[name][0]
-        contour = plot_field(ax, p.stress("von_mises"), vmax=vmax, edge_width=0.1)
-        ax.plot(*centre, "o", mfc="white", mec="k", ms=6)
+        contour = _draw_stress(ax, p)
+        ax.plot(*centre, "o", mfc="none", mec="k", ms=4, mew=1)
         ax.set(xlim=(centre[0] - 7, centre[0] + 7), ylim=(centre[1] - 7, centre[1] + 7))
         ax.set_title(
             f"{LABELS[name][0]}\ncontact pressure {p.followed.pressure:.0f} MPa at s = {p.position:+.2f} mm",
             fontsize=10,
         )
         ax.set_xlabel("x [mm]")
-    fig.colorbar(contour, ax=list(axes), shrink=0.8, label="von Mises stress [MPa]")
+    fig.colorbar(
+        contour, ax=list(axes), shrink=0.8, ticks=STRESS_TICKS, label="von Mises stress [MPa]"
+    )
     fig.suptitle(
         "Composite stress state: contact and bending in the same solution at the middle of the path of contact (same colour scale)"
     )
