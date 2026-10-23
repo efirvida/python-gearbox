@@ -85,3 +85,18 @@ def test_method_c_needs_a_tolerance_class_between_3_and_11():
     )
     with pytest.raises(ValueError, match="3 to 11"):
         dynamic_factor(bad)
+
+
+@pytest.mark.parametrize(
+    ("contact_stress_limit", "expected"),
+    # ISO 6336-1:2019 table 8, note 1: C_ay = (sigma_Hlim / 97 - 18.45)^2 / 18 + 1.5; figure 3
+    # reads about 12.5, 5 and 2 um at 400, 1000 and 1500 MPa
+    [(400.0, 12.90), (1000.0, 5.182), (1500.0, 1.995)],
+)
+def test_running_in_tip_relief_follows_table_8(contact_stress_limit, expected):
+    from gearbox.standards.iso6336._load_factors import running_in_tip_relief
+
+    pinion = scenario("spur_sr20").pinion
+    material = replace(pinion.material, contact_stress_limit=contact_stress_limit)
+    gear = replace(pinion, material=material)
+    assert running_in_tip_relief(gear) == pytest.approx(expected, rel=1e-3)

@@ -290,6 +290,14 @@ def dynamic_factor_method_c(transmission: Transmission) -> float:
     return spur - overlap * (spur - helical)  # (35)
 
 
+def running_in_tip_relief(gear: Gear) -> float:
+    """Tip relief ``C_ay`` produced by running-in [um], ISO 6336-1:2019 table 8, note 1.
+
+    ``C_ay = (sigma_Hlim / 97 - 18.45)^2 / 18 + 1.5``, figure 3.
+    """
+    return ((gear.material.contact_stress_limit / 97.0) - 18.45) ** 2 / 18 + 1.5
+
+
 def dynamic_factor_method_b(transmission: Transmission) -> float:
     """Dynamic factor ``K_v``, method B of ISO 6336-1.
 
@@ -358,10 +366,7 @@ def dynamic_factor_method_b(transmission: Transmission) -> float:
     elif total_contact_ratio > 2.5:
         cv7 = 1.0
 
-    def _allowance_coefficient(gear: Gear) -> float:
-        return 1.0 / 8 * (((gear.material.contact_stress_limit / 97.0) - 18.45) ** 2) + 1.5
-
-    c_ay = 0.5 * (_allowance_coefficient(p) + _allowance_coefficient(w))
+    c_ay = 0.5 * (running_in_tip_relief(p) + running_in_tip_relief(w))  # table 8, note 2
     deviations = profile_deviations(transmission)
     single = stiffness.single_stiffness
     pitch_term = single * deviations.effective_base_pitch / line_load  # B_p, formula (15)
