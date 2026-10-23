@@ -49,9 +49,12 @@ T6 [done] S19 | route: cards by foundations/methods/interpretation, desktop/mobi
 T7 [done] S20 | route: FEM before optimization, five visible header links, responsive browser | commit: 703c11b
 
 T8 [done] S21,S23 | route: workflow regression tests, strict build, independent verify; Risk: item 5 (CI and deployment) | commit: a6ea379 (independent verification passed; parent spot check 4 passed)
-T9 [in_progress] S21-S25 | route: metadata/Pages configured and checked; master merge/push and live deployment follow verified CI | commit: a6ea379 (README); delivery pending
+T9 [done] S21-S25 | route: metadata/Pages configured and checked; master merge/push, successful Docs deployment and 12 live-page browser checks | commits: a6ea379 (README),6ce3dcd (record),7c2772a (published merge)
 
 ## Log
+
+L24: master merge7c2772a pushed; Docs run39984170448 completed successfully. Live HTTPS site checked in Playwright:12 pages HTTP200, no missing images, no MathJax errors, no horizontal overflow; strength cards render at390px. Initial workflow filename lookup404 was a transient registration race, not a failed deployment; default branch is master.
+L25: General CI39984170458 failed only the existing formatter gate: tests/test_docs_workflow.py had a multiline permissions assertion that Ruff requires on one line. Reproduced RED locally (1 file unformatted/54 formatted), made that exact formatting-only correction, observed GREEN:55 formatted, ruff check passes,4 workflow tests pass. Numerical source and assertions unchanged. Follow-up remote CI result is recorded in Engram rather than claiming the failed run passed. Native assessment of the4-line formatting diff: medium, reviewDue=false, self-verification sufficient.
 
 L23: Independent verifier mvl5mx2j-8-q9rs passed scoped CI unit a6ea379 against 8411b90: no blockers. Observed 4 committed tests pass, lint pass, strict isolated Sphinx build pass; 31 scratch probes passed including deployment-context matrix, Linux import mocks, and all six README documentation URLs. Parent re-ran committed workflow tests: 4 passed. Optional extra probes were not added to the repository. Remote deployment, merge and push remain parent-owned and are performed next with explicit publication authorization.
 

@@ -35,9 +35,7 @@ def test_pull_requests_keep_build_only_permissions_and_strict_checks() -> None:
     commands = [step.get("run", "") for step in build["steps"]]
     assert 'pip install -e ".[docs]"' in commands
     assert "sphinx-build -W --keep-going -b html docs docs/_build/html" in commands
-    assert WORKFLOW["jobs"]["deploy"]["permissions"] == {
-        "pages": "write", "id-token": "write"
-    }
+    assert WORKFLOW["jobs"]["deploy"]["permissions"] == {"pages": "write", "id-token": "write"}
     assert WORKFLOW["jobs"]["deploy"]["environment"]["name"] == "github-pages"
 
 
