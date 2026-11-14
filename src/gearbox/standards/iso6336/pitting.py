@@ -285,13 +285,17 @@ def _relative_radius_of_curvature(transmission: Transmission) -> float:
 
 
 def _lubricant_constant(transmission: Transmission) -> float:
-    """``C_ZL`` from the weaker material (shared by ``Z_L`` and ``Z_v``)."""
+    """``C_ZL`` from the weaker material (shared by ``Z_L`` and ``Z_v``).
+
+    ISO 6336-2:2019 formula (43), corrected version 2020-11: ``σ_Hlim / 4375 + 0.6357``
+    between 850 and 1200 MPa (KI-43).
+    """
     weakest = min(
         transmission.pinion.material.contact_stress_limit,
         transmission.wheel.material.contact_stress_limit,
     )
     if 850 <= weakest <= 1200:
-        return (weakest / 437.5) + 0.6357
+        return (weakest / 4375) + 0.6357
     if weakest < 850:
         return 0.83
     return 0.91

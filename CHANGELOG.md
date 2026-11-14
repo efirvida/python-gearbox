@@ -7,6 +7,10 @@ All notable changes are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+* ISO 6336-2 `C_ZL` (formula 43, corrected version 2020-11): `σ_Hlim / 4375` instead of
+  `/ 437.5`; wrong `Z_L`, `Z_v` and pitting safety factor for `850 <= σ_Hlim <= 1200 MPa` (KI-43, #30).
+
 ## [0.2.0] - 2026-10-23
 
 ### Added
