@@ -171,3 +171,22 @@ def test_lubricant_factor_uses_at_most_500_cst():
     thick = replace(base, lubricant=replace(base.lubricant, kinematic_viscosity_40c=900.0))
     capped = replace(base, lubricant=replace(base.lubricant, kinematic_viscosity_40c=500.0))
     assert pitting.lubricant_factor(thick) == pytest.approx(pitting.lubricant_factor(capped))
+
+
+def test_lubricant_constant_formula_43_is_continuous():
+    """C_ZL = sigma_Hlim/4375 + 0.6357 (version 2020-11); 0.83 below 850, 0.91 above 1200."""
+    base = scenario("spur_sr20")
+
+    def c_zl(limit):
+        t = _with_materials(
+            base,
+            pinion={"contact_stress_limit": limit},
+            wheel={"contact_stress_limit": limit},
+        )
+        return pitting._lubricant_constant(t)
+
+    assert c_zl(849.0) == pytest.approx(0.83)
+    assert c_zl(850.0) == pytest.approx(0.83, abs=1e-3)
+    assert c_zl(1000.0) == pytest.approx(1000.0 / 4375.0 + 0.6357)
+    assert c_zl(1200.0) == pytest.approx(0.91, abs=1e-3)
+    assert c_zl(1201.0) == pytest.approx(0.91)
